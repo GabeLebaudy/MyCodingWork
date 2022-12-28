@@ -1,0 +1,10 @@
+table, tr, td {
+    border: 2px solid black;
+    border-collapse:collapse;
+}
+tr:nth-child(even) {
+    background-color:beige;
+}
+tr:nth-child(odd) {
+    background-color:aliceblue;
+}

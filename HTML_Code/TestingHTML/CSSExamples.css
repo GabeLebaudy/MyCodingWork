@@ -1,0 +1,38 @@
+h1 {
+    font-size: 125%;
+    font-family: Verdana;
+}
+body {
+    background-image: url(https://img.freepik.com/free-vector/abstract-blue-geometric-shapes-background_1035-17545.jpg?w=2000);
+    background-repeat: no-repeat;
+    background-size:cover;
+    background-attachment:fixed;
+}
+hr {
+    border: 1px dotted black;
+}
+h3 {
+    font-size: 30px;
+    color:rgb(67, 67, 67);
+}
+h2 {
+    padding:20px;
+    border: 2px solid black;
+}
+h4 {
+    border: 2px solid black;
+    margin: 50px;
+}
+a:link, a:visited {
+    background-color: #f44336;
+    color: white;
+    padding: 15px 25px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  a:hover, a:active {
+    background-color: red;
+  }
+
