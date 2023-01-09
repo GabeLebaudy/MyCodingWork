@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Working with HTML classes</title>
+        <link href="Classes.CSS" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+        <h1>Classes Examples</h1>
+        <p>
+            This paragraph contains <span class = "span1">several</span> different classes. However this is all within the same element<span class = "span2">This can be shown visually using CSS.</span> 
+            However, one element can belong to multiple classes. For example, take <span class="span3">class 1</span> and <span class="span4">class 2</span>. Both have unique CSS properties which are set by classes
+            We can create a new element <span class ="span3 span4">class 3</span> that has the properties of both classes.
+        </p>
+        <p class="SameExample">
+            Another example is how this text
+        </p>
+        <h4 class="SameExample">and this text have the same class but are different elements</h4>
+        <!-- In JavaScript, you can access elements of a certain class using the getElementsByClassName("ClassName") function.-->
+        <p id="IDExample">
+            In contrast, an ID cannot be used on more than one element. The point of this is so that external files such as CSS and JS can edit a specific element
+
+        </p>
+        <p>This is the same element as the one above, but because the one above has an ID, it is modified in CSS.</p>
+        <a href="#Bookmark">Click here to see how ID's can be used for bookmarks</a>
+        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+        <p id="Bookmark">Bookmark!</p>
+        <!--Similarly, in JS you can use the function getElementByID("IDName") to edit an element with a specific ID-->
+    </body>
+</html>
