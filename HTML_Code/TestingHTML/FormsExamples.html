@@ -11,9 +11,28 @@
         <!--
             Action Attribute: Sends form data to file specified in attribute. The target attribute is the same as for hyperlinks.
         -->
-        <form action="HTMLBasicsDemo.html" target="_self">
+        <!--
+            Elements that can be nested in Form Elements:
+            <input> Used to get user data - dependant on type
+            <label> Used to label input elements. Dependant on ID's
+            <select> Defines a dropdown list where a user can select one option out of many. 
+                Size attribute determines how many options will be visible at one time.
+                multiple attribute allows users to select more than one option at once.(Use ctrl to select more than one)
+            <textarea> Defines area where user can input any string text and size is defined by rows and cols attribute or width and heigh attributes.
+            <button> Self-Explanatory.
+            <fieldset> Defines a group witin a Form element.
+            <legend> Labels a fieldset element
+            <datalist> Similar to select element, but the user types in a value, and options that match that data will show up.
+            <output> Usually used to display the result of a calculation but is a fluid element whose display is based on code and user input from forms.
+            <option> Defines an option on an input type that can be selected. Selected attribute will make an option default.
+            <optgroup> Groups together a bunch of dropdown options.
+        -->
+        <form action="HTMLBasicsDemo.html" method="post" autocomplete="on">
             <label for="textForm">Text Input Example</label>
             <input type="text" id="textForm" name="textForm">
+            <br>
+            <label for="passwordForm">Password Input Example</label>
+            <input type="password" id="passwordForm">
             <br>
             <label for="radioForm1">Radio Option 1</label>
             <input type="radio" id="radioForm1" name="radioForm">
@@ -27,12 +46,71 @@
             <label for="checkboxForm2">Checkbox Input Example 2</label>
             <input type="checkbox" id="checkboxForm2" name="checkboxForm" value="option2">
             <br>
-            <label for="buttonForm">Button Form Example</label>
-            <input type="button" id="buttonForm" name="buttonForm">
+            <label for="colorForm">Color Form Example</label>
+            <input type="color" id="colorForm">
             <br>
+            <!--Min and Max Attributes can be added to restrict date inputs.-->
+            <label for="dateForm">Date Form Example</label>
+            <input type="date" id="dateForm">
+            <br>
+            <label for="emailForm">Email Form Example</label>
+            <input type="email" id="emailForm">
+            <br>
+            <label for="imageForm">Image Submit Button</label>
+            <input type="image" src="Mars.jfif" alt="Submit" width="16px" height="16px">
+            <br>
+            <label for="fileForm">File Input Example</label>
+            <input type="file" id="fileForm">
+            <br>
+            <label for="monthForm">Month Input Example</label>
+            <input type="month" id="monthForm">
+            <br>
+            <label for="rangeForm">Range Form Example</label>
+            <input type="range" id="rangeForm" min="0" max="100" step="5">
+            <br>
+            <label for="searchForm">Search Form Example</label>
+            <input type="search" id="searchForm">
+            <br>
+            <label for="telForm">Telephone Number Input Example</label>
+            <input type="tel" id="telForm" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
+            <br>
+            <label for="numberForm">Number Input Example</label>
+            <input type="number" id="numberForm" min="1" max="100">
+            <br>
+            <label for="timeForm">Time Form Example</label>
+            <input type="time" id="timeForm">
+            <br>
+            <label for="urlForm">URL Input Example</label>
+            <input type="url" id="urlForm">
+            <br>
+            <label for="weekForm">Week Form Example</label>
+            <input type="week" id="weekForm">
+            <br>
+            <label for="buttonForm">Button Form Example</label>
+            <input type="button" id="buttonForm" name="buttonForm" value="Input Button Example">
+            <br>
+            <button type="button" onclick="alert('Hello World')">Example!</button>
+            <br>
+            <label for="resetForm">Reset Button Example</label>
+            <input type="reset" id="resetForm">
             <label for="submitForm">Submit Form Example</label>
             <input type="submit" id="submitForm" name="submitForm" value="Submit">
             <br>
         </form>
+        <!--
+            Input Restrictions:
+            Checked: Field must be pre-selected when page loads(radio/checkbox)
+            Disabled: Input field should be disabled(?)
+            Max: Maximum value accepted
+            Maxlength: Max length of text input(characters)
+            Min: Minimum value accepted            
+            Pattern: Specifies a regular expression that is compared to the user-input
+            Readonly: Form cannot be edited
+            Required: Form must have a value before submitting
+            Size: Specifies length of input field in characters
+            Step: Specifies a multiple of some value in which a input typeis limited to. Ex. Step 10 in a range input from 0-100 Allows only multiples of 10
+            Value: Specifies default value in a field
+        -->
+        <hr>
     </body>
 </html>
