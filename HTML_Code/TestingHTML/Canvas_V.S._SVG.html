@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Working with HTML Canvas</title>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <h1>Testing out HTML Canvas</h1>
+        <!--These aren't that useful. It's like using Khan academy to make images using JS code. Heres a few Basic examples of what they look like.-->
+        <h3>Using JS to draw a line through the canvas</h3>
+        <canvas id="firstCanvas" width="200" height="100" style="border:1px solid black"></canvas>
+        <!--The JS below draws a diagonal line through the canvas-->
+        <script>
+            var c = document.getElementById("firstCanvas");
+            var ctx = c.getContext("2d");
+            ctx.moveTo(0, 0);
+            ctx.lineTo(200, 100);
+            ctx.stroke();
+        </script>
+        <br>
+        <hr>
+        <!--The example below draws text into the canvas where its size and shape is dependant on style attributes-->
+        <h3>Using JS to draw text in a canvas</h3>
+        <canvas id="secondCanvas" width="200" height="100" style="border:1px solid black"></canvas>
+        <script>
+            var c = document.getElementById("secondCanvas");
+            var ctx = c.getContext("2d");
+            ctx.font = "30px Arial";
+            ctx.fillText("Hello World", 10, 50);
+        </script>
+        <hr>
+        <!--Using JS to draw a linear color gradient-->
+        <h3>Draw a color gradient</h3>
+        <canvas id="thirdCanvas" width="200" height="100" style="border:1px solid black"></canvas>
+        <script>
+            var c = document.getElementById("thirdCanvas");
+            var ctx = c.getContext("2d");
+            
+            // Create gradient
+            var grd = ctx.createLinearGradient(0, 0, 200, 0);
+            grd.addColorStop(0, "red");
+            grd.addColorStop(1, "white");
+            
+            // Fill with gradient
+            ctx.fillStyle = grd;
+            ctx.fillRect(10, 10, 150, 80);
+        </script>
+        <hr>
+        <hr>
+        <hr>
+        <h1>Testing out HTML SVG</h1>
+        <h3>Using SVG to generate a circle</h3>
+        <svg width="100" height="100">
+            <circle cx="50" cy="50" r="40" stroke="black" stroke-width="4" fill="yellow" />
+        </svg>
+    </body>
+</html>
