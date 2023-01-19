@@ -60,3 +60,19 @@
     order:2;
     flex-grow:1;
 }
+.specialBox {
+    padding:25px;
+    flex-grow:3;
+    border:2px solid black;
+    margin:5px;
+    height:200px;
+    align-items:center;
+    display:flex;
+    flex-direction:row;
+    justify-content:space-between;
+}
+.nestedDiv {
+    padding:25px;
+    margin:5px;
+    border:2px solid black;
+}
