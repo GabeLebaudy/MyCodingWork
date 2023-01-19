@@ -7,7 +7,7 @@
     </head>
     <body>
         <header>
-            <h1>Trying to figure out flexboxes</h1>
+            <h1 style="text-align:center">Trying to figure out flexboxes</h1>
         </header>
         <div class="testingNames">
             <div class="flex-box">Space 1</div>
@@ -37,5 +37,31 @@
             - space-between: Items will be displayed with space between the lines(None on the outside)
             - space-evenly: Items will be evenly spaced between each other and the beginning/end of the container
         -->
+        <div class="secondContainer">
+            <div class="innerDiv" style="align-self:flex-start;">Space 1</div>
+            <div class="innerDiv">Space 2</div>
+            <div class="innerDiv">Space 3</div>
+        </div>
+        <!--
+            align-items: Opposite version of justify-content(moves items opposite direction of flex-direction)
+            - Center: Aligns items in the center of the div (I.e. for row it puts items in the center vertically)
+            - flex-start: Aligns items with the start of the container
+            - flex-end: Aligns items with the end of the container
+            - stretch: (default) items stretch to fit container
+            - baseline: aligns items by their text baseline(niche)
+            - space-between: aligns items with the start and end of the container with equal space in between each item.
+            - space-around: has some space on either end of the container, with some space in between each that is equal for each item.
+            - space-evenly: spaced evenly including start and end of container distances.
+        -->
+        <!--Side tip: to center an item, set justify-content and align-items to center-->
     </body>
+    <div class="thirdContainer">
+        <div class="spot1">Space 1</div>
+        <div class="spot2">Space 2</div>
+        <div class="spot3">Space 3</div>
+        <div class="spot4">Space 4</div>
+    </div>
+    <!--Side tip: flex-shrink is the same as flex grow but shrinks the items relative to others-->
+    <!--Side tip: flex: is a all-in-one attribute with three values (flex-grow, flex-shrink, flex-basis)-->
+    <!--Side tip: align-self overrides the align-items attribute-->
 </html>

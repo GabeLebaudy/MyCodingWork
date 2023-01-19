@@ -1,6 +1,7 @@
 .testingNames {
     border:2px solid black;
     padding: 10px;
+    margin:5px;
     display: flex;
     flex-direction:row;
     justify-content:space-between;
@@ -9,4 +10,53 @@
     padding: 20px;
     margin:5px;
     border:2px solid black;
+}
+.secondContainer {
+    border:2px solid black;
+    padding:10px;
+    margin:5px;
+    display: flex;
+    flex-direction:row;
+    height:300px;
+    align-items:center;
+}
+.innerDiv {
+    padding:25px;
+    margin:5px;
+    border:2px solid black;
+}
+.thirdContainer {
+    border:2px solid black;
+    padding:10px;
+    margin:5px;
+    display: flex;
+    flex-direction:row;
+}
+.spot1 {
+    padding:25px;
+    margin:5px;
+    border:2px solid black;
+    order:3;
+    flex-grow:4;
+}
+.spot2 {
+    padding:25px;
+    margin:5px;
+    border:2px solid black;
+    order:1;
+    flex-basis:150px;
+}
+.spot3 {
+    padding:25px;
+    margin:5px;
+    border:2px solid black;
+    order:4;
+    flex-grow:6;
+}
+.spot4 {
+    padding:25px;
+    margin:5px;
+    border:2px solid black;
+    order:2;
+    flex-grow:1;
 }
