@@ -30,9 +30,9 @@ a:link, a:visited {
     text-align: center;
     text-decoration: none;
     display: inline-block;
-  }
+}
   
-  a:hover, a:active {
-    background-color: red;
-  }
+a:hover, a:active {
+    background-color: white;
+}
 
