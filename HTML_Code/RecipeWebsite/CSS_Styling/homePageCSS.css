@@ -1,0 +1,23 @@
+#navigationContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: 2px solid black;
+    margin: 10px;
+}
+#homePageMainArea {
+    display: flex;
+    border: 2px solid black;
+    flex-direction: column;
+    margin: 10px;
+}
+#recentRecipesContainer {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid black;
+    margin: 10px;
+}
+.navLinks {
+    padding: 5px;
+    margin: 5px;
+}
