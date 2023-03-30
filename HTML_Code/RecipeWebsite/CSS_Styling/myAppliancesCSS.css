@@ -20,7 +20,7 @@
     padding: 5px;
     margin: 5px;
 }
-.currentIngredients {
+.currentAppliances {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -36,6 +36,6 @@
     padding: 5px;
     margin: 5px;
 }
-.ingredientFilters {
+.applianceFilters {
     padding: 5px;
 }
