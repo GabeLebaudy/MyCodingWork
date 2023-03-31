@@ -21,7 +21,7 @@ def loss_function(m, b, dataPoints):
         #Error is equal to actual yVal, subtracted by expected value squared to make all values positive
         totalError += (yVal - (m * xVal + b)) ** 2
     
-    #Mean error is equal to total error divided by points    
+    #Mean squared error is equal to total error divided by points    
     totalError /= float(len(dataPoints))
     return totalError
 
