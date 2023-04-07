@@ -27,9 +27,9 @@ class MainWindow(QMainWindow):
         
         #Add color widgets: First param is the widget, second and third are coordinates. Note that if one row or column is completely empty it does not display
         self.layout.addWidget(Color('Red'), 0, 0)
-        self.layout.addWidget(Color('Blue'), 2, 0)
-        self.layout.addWidget(Color('Green'), 1, 1)
-        self.layout.addWidget(Color('Yellow'), 3, 2)
+        self.layout.addWidget(Color('Blue'), 1, 1)
+        self.layout.addWidget(Color('Green'), 0, 1)
+        self.layout.addWidget(Color('Yellow'), 1, 0)
         
         container = QWidget()
         container.setLayout(self.layout) #Container obj to set as central widget, contains previous layouts
