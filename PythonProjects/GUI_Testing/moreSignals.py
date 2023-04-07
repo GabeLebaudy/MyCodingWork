@@ -8,17 +8,17 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Another Examples of Signals")
 
-        self.label = QLabel()
+        self.label = QLabel() #Adds label to Window Obj
 
-        self.input = QLineEdit()
-        self.input.textChanged.connect(self.label.setText)
+        self.input = QLineEdit() #Adds textbox to Window Obj
+        self.input.textChanged.connect(self.label.setText)#Sends signal when text input changes. Labels text is set to input's value
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.input)
-        layout.addWidget(self.label)
+        layout = QVBoxLayout() #Create layout object
+        layout.addWidget(self.input)#Add textbox to layout
+        layout.addWidget(self.label)#Add label beneath textbox
 
-        container = QWidget()
-        container.setLayout(layout)
+        container = QWidget()#Container for layout object
+        container.setLayout(layout)#Set layout of container to layout object
 
         #Set Central widget of window
         self.setCentralWidget(container)

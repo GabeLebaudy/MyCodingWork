@@ -1,4 +1,4 @@
-'''
+
 #Testing PyQt6 Signals
 #Import Modules
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton
@@ -37,19 +37,20 @@ class MainWindow(QMainWindow):
         if windowTitle == "Something went wrong":
             self.testButton.setEnabled(False) #Turn off button if the Title switches to something went wrong
 
-    
+    '''
     def buttonToggled(self, checked):
         #Storing Data into variables
         self.checkedStatus = checked
         
         print(self.checkedStatus)
+    '''
     
-    
+    '''
     def buttonReleased(self):
         self.checkedStatus = self.testButton.isChecked() #Sets boolean variable based on status of button
         
         print(self.checkedStatus)
-    
+    '''
 
 #Main Script
 if __name__ == "__main__":
@@ -60,4 +61,3 @@ if __name__ == "__main__":
     window.show()
 
     app.exec()
-'''
