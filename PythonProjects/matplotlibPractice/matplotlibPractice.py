@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 #Main Script
 if __name__ == "__main__":
@@ -135,8 +136,9 @@ if __name__ == "__main__":
     #Combining matplotlib with pandas why does commenting this jawn out not work?
     
     #Import data frame
-    #df = pd.read_csv(r'c:\Users\Gabe\Documents\GitHub\MyCodingWork\PythonProjects\matplotlibPractice\exampleDatabase.csv')
-    '''
+    filePath = os.path.join(os.path.dirname(__file__), 'exampleDatabase.csv')
+    df = pd.read_csv(filePath)
+    
     df = df.sort_values(by='Temperature')
 
     # Convert from Pandas data frame to NumPy array
@@ -159,7 +161,7 @@ if __name__ == "__main__":
     
     plt.bar(xArray2, yArray2)
     plt.show()
-    '''
+    
     
     #TeX Markup
     '''
