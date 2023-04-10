@@ -3,6 +3,7 @@
 
 #Import pandas module
 import pandas as pd
+import os #Saving files
 
 #Main Script
 if __name__ == "__main__":
@@ -29,10 +30,10 @@ if __name__ == "__main__":
     #print(pokemonData[['Name', 'Type 1', 'HP']] [0:5]) #Second brackets are similar to string slicing 'start index:end index' 'x:' = x to end ':x' = start to x
     
     #Print out entire row
-    print(pokemonData.iloc[1:4]) #Prints out second row to fourth row similar index system to printing columns
+    #print(pokemonData.iloc[1:4]) #Prints out second row to fourth row similar index system to printing columns
     
     #Print out specific index, (Row, Column)
-    print(pokemonData.iloc[2, 1]) #Row 3 (index 2) Column 2 (index 1)
+    #print(pokemonData.iloc[2, 1]) #Row 3 (index 2) Column 2 (index 1)
     
     #Loop through dataset row by row
     '''
@@ -50,20 +51,25 @@ if __name__ == "__main__":
     #print(pokemonData.sort_values(['Type 1', 'HP'], ascending=[1,0])) #1 means that Type 1 will be sorted in ascending order and 0 means it will be sorted in descending order
     
     #Make New column thats calculated based on other values
-    #pokemonData['Total_Stats'] = pokemonData['HP'] + pokemonData['Attack'] + pokemonData['Defense'] + pokemonData['Sp. Atk'] + pokemonData['Sp. Def'] + pokemonData['Speed']
+    pokemonData['Total_Stats'] = pokemonData['HP'] + pokemonData['Attack'] + pokemonData['Defense'] + pokemonData['Sp. Atk'] + pokemonData['Sp. Def'] + pokemonData['Speed']
     #print(pokemonData.head(3))
     
     #Drop column from dataset
-    #df = pokemonData.drop(columns=['Total_Stats'])
+    df = pokemonData.drop(columns=['Total_Stats'])
     #print(df.head(3))
     
     #Another way to add total stats column
-    #df['Total_Stats'] = df.iloc[:, 4:10].sum(axis=1)
+    df['Total_Stats'] = df.iloc[:, 4:10].sum(axis=1)
     #print(df.head(3))
     
     #Moves the total stats column to the middle
-    #ols = list(df.columns)
-    #df = df[cols[0:4] + [cols[-1]] + cols[4:12]]
+    cols = list(df.columns)
+    df = df[cols[0:4] + [cols[-1]] + cols[4:12]]
     
-    #print(df.head(3))
+    print(df.head(3))
+    
+    #Save data frames to a file
+    filePath = os.path.join(os.path.dirname(__file__), 'outputData.csv')
+    df.to_csv(filePath)
+    
      
