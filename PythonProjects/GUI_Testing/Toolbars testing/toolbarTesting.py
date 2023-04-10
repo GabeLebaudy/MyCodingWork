@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QApplication, QLabel, QToolBar, QStatusBar
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt, QSize
+import os
 
 class MainWindow(QMainWindow):
     #Constructor method
@@ -17,7 +18,8 @@ class MainWindow(QMainWindow):
         self.toolbar.setIconSize((QSize(16, 16)))
         self.addToolBar(self.toolbar) #Add toolbar to window
 
-        buttonAction = QAction("My Button", self) #Create button with text, self is the parent of the button, in this case the window (not always self)
+        imgFilePath = os.path.join(os.path.dirname(__file__), 'application-search-result.png')
+        buttonAction = QAction(QIcon(imgFilePath), "My Button", self) #Create button with text, self is the parent of the button, in this case the window (not always self)
         buttonAction.setStatusTip("This is my button.") #Text to be displayed on status bar
         buttonAction.triggered.connect(self.onMyToolBarButtonClick)#Send signal
         buttonAction.setCheckable(True) #Makes the button checked or uncheked when you click it
