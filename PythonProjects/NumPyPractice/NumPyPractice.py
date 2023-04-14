@@ -4,7 +4,7 @@ import numpy as np
 
 
 if __name__ == "__main__":
-    xArray = np.linspace(1, 10, 19)
+    xArray = np.linspace(5, 85, 9)
     print(xArray)
     
     
