@@ -29,42 +29,30 @@ class MainWindow(QMainWindow):
 
         self.graphButtons = QGridLayout()
 
-        self.monthWeekBank = QPushButton("4 Week Bank Discount")
-        self.monthWeekCoupon = QPushButton("4 Week Coupon Equivalent")
-
-        self.biMonthWeekBank = QPushButton("8 Week Bank Discount")
-        self.biMonthWeekCoupon = QPushButton("8 Week Coupon Equivalent")
-
-        self.triMonthWeekBank = QPushButton("13 Week Bank Discount")
-        self.triMonthWeekCoupon = QPushButton("13 Week Coupon Equivalent")
-
-        self.quadMonthWeekBank = QPushButton("17 Week Bank Discount")
-        self.quadMonthWeekCoupon = QPushButton("17 Week Coupon Equivalent")
-
-        self.halfYearBank = QPushButton("26 Week Bank Discount")
-        self.halfyearCoupon = QPushButton("26 Week Coupon Equivalent")
-
-        self.fullYearBank = QPushButton("52 Week Bank Discount")
-        self.fullYearCoupon = QPushButton("52 Week Coupon Equivalent")
-
-        self.graphButtons.addWidget(self.monthWeekBank, 0, 0)
-        self.graphButtons.addWidget(self.monthWeekCoupon, 0, 1)
-
-        self.graphButtons.addWidget(self.biMonthWeekBank, 1, 0)
-        self.graphButtons.addWidget(self.biMonthWeekCoupon, 1, 1)
-
-        self.graphButtons.addWidget(self.triMonthWeekBank, 2, 0)
-        self.graphButtons.addWidget(self.triMonthWeekCoupon, 2, 1)
-
-        self.graphButtons.addWidget(self.quadMonthWeekBank, 3, 0)
-        self.graphButtons.addWidget(self.quadMonthWeekCoupon, 3, 1)
-
-        self.graphButtons.addWidget(self.halfYearBank, 4, 0)
-        self.graphButtons.addWidget(self.halfyearCoupon, 4, 1)
-
-        self.graphButtons.addWidget(self.fullYearBank, 5, 0)
-        self.graphButtons.addWidget(self.fullYearCoupon, 5, 1)
-
+        self.buttonLabels = [
+                            '4 Week Bank Discount', '4 Week Coupon Equivalent', '8 Week Bank Discount', '8 Week Coupon Equivalent', 
+                             '13 Week Bank Discount', '13 Week Coupon Equivalent', '17 Week Bank Discount', '17 Week Coupon Equivalent',
+                             '26 Week Bank Discount', '26 Week Coupon Equivalent', '52 Week Bank Discount', '52 Week Coupon Equivalent'
+                             ]
+        #Loop that creates buttons
+        self.termButtonArray = []
+        leftRight = 0
+        for i in range(len(self.buttonLabels)):
+            btnTxt = self.buttonLabels[i]
+            newButton = QPushButton(btnTxt)
+            newButton.setCheckable(True)
+            if i % 2 == 0:
+                newButton.setChecked(True)
+            else:
+                newButton.setChecked(False)
+            newButton.clicked.connect(lambda checked, text=btnTxt: self.toggleTerm(text, checked))
+            self.graphButtons.addWidget(newButton, i // 2, leftRight)
+            self.termButtonArray.append([newButton])
+            if leftRight == 0:
+                leftRight = 1
+            else:
+                leftRight = 0
+    
         self.TBillGraph = TBillGraph()
         self.firstSection.addLayout(self.graphButtons)
         self.firstSection.addWidget(self.TBillGraph)
@@ -79,6 +67,23 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.container)
 
         self.TBillGraph.draw()
+
+
+    #Updates graph with new parameters
+    def updateGraph(self, graph):
+        graph.drawGraph()
+        graph.draw()
+
+    def toggleTerm(self, text, isChecked):
+        splitTxt = text.split(' ')
+        termLength = splitTxt[0]
+        bankOrCoupon = splitTxt[2]
+        if isChecked is True:
+            self.TBillGraph.enableTerm(int(termLength), bankOrCoupon)
+        else:
+            self.TBillGraph.disableTerm(int(termLength), bankOrCoupon)
+        
+        self.updateGraph(self.TBillGraph)
 
 #Main Script
 if __name__ == "__main__":
