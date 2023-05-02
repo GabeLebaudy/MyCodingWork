@@ -9,15 +9,17 @@ from TermObject import TermObj
 import os
 class TBillGraph(FigureCanvas):
     #Constructor
-    def __init__(self, parent = None):    
-        filePath = os.path.join(os.path.dirname(__file__), '2023TBIlldata.csv')
+    def __init__(self, parent = None):
+        folderDir = os.path.join(os.path.dirname(__file__), 'TBillData')
+        filePath = os.path.join(folderDir, 'TBill2023.csv')
+        
         self.TBillDf = pd.read_csv(filePath)
 
         self.TBillDf = self.TBillDf.sort_values(['Date'], ascending = 1)
         self.termObjArray = self.createObjects(self.TBillDf)
 
         self.testFigure = plt.figure(figsize = (10, 6), dpi = 100)
-        self.figAx = self.testFigure.add_axes([0.15, 0.15, 0.8, 0.8])
+        self.figAx = self.testFigure.add_axes([0.15, 0.15, 0.8, 0.75])
         
         self.graphLabels = ['4 Week Bank', '4 Week Coupon', '8 Week Bank', '8 Week Coupon', '13 Week Bank', '13 Week Coupon', '17 Week Bank', '17 Week Coupon', '26 Week Bank', '26 Week Coupon', '52 Week Bank', '52 Week']
 
@@ -86,6 +88,14 @@ class TBillGraph(FigureCanvas):
             return 4
         elif term == 52:
             return 5
+        
+    def loadWholeYear(self, year):
+        dataDir = os.path.join(os.path.dirname(__file__), 'TBillData')
+        fileStr = "TBill%s.csv" % year
+        newDataPath = os.path.join(dataDir, fileStr)
+        
+        self.TBillDf = pd.read_csv(newDataPath)
+        self.termObjArray = self.createObjects(self.TBillDf)
 
     
 
