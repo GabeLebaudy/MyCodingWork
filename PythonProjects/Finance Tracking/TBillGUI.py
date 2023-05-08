@@ -149,6 +149,7 @@ class MainWindow(QMainWindow):
         #TODO: Use if statements to figure out which years have which term lengths. It seems like 2021 and before don't have 17 week ones, probably they are a recent edition.
         #2021, 6--5 2017 5--4, 2007 4---3, 2002 3--4
         self.updateGraph(self.TBillGraph)
+        #Testing GIT commands
 
 #Main Script
 if __name__ == "__main__":
