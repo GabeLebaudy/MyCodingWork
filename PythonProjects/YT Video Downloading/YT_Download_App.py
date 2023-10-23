@@ -1,10 +1,10 @@
 #The purpose of this file will be to download youtube videos, when giving a video URL.
 
 #Import Modules
-from pytube import YouTube
 import guiConstants
 import os
 import urllib.request
+from DownloadThread import Downloader
 
 #GUI Modules
 from PyQt6.QtWidgets import (
@@ -69,6 +69,7 @@ class MainWindow(QMainWindow):
         self.downloadInfoLayout = QHBoxLayout()
         self.chooseFolderContainer = QHBoxLayout()
         self.chooseFormatContainer = QHBoxLayout()
+        self.chooseResLayout = QHBoxLayout()
         
         #Title Section: This section will serve as a display and also provide a help button to explain features
         titleLabel = QLabel("Download YT Videos")
@@ -155,7 +156,7 @@ class MainWindow(QMainWindow):
         self.chooseFolderContainer.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         #Choose File Type Section: This section will allow the user to choose the file extension if they want to switch from the default
-        chooseFileTypeLabel = QLabel("File Type")
+        chooseFileTypeLabel = QLabel("File Type:")
         chooseFileTypeLabel.setFont(urlFont)
 
         #TODO: Make the text align to the right in the combo box
@@ -168,6 +169,18 @@ class MainWindow(QMainWindow):
         self.chooseFormatContainer.addWidget(self.selectFileTypeDD)
         self.chooseFormatContainer.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
+        chooseResLabel = QLabel("Video Resolution:")
+        chooseResLabel.setFont(urlFont)
+
+        self.resDD = QComboBox()
+        resOptions = ['1080p', '720p', '480p', '360p', '144p']
+        self.resDD.addItems(resOptions)
+        self.resDD.setFixedSize(int(60 * self.widthScale), int(25 * self.heightScale))
+
+        self.chooseResLayout.addWidget(chooseResLabel)
+        self.chooseResLayout.addWidget(self.resDD)
+        self.chooseResLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
         #Put the main layout together
         self.mainSection.addLayout(self.titleContainer)
         self.mainSection.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
@@ -179,6 +192,7 @@ class MainWindow(QMainWindow):
         self.mainSection.addLayout(self.chooseFolderContainer)
         self.mainSection.addSpacerItem(QSpacerItem(0, int(10 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.mainSection.addLayout(self.chooseFormatContainer)
+        self.mainSection.addLayout(self.chooseResLayout)
         self.mainSection.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
     #Create the area to host the thumbnail image of the video. Will also display information about the video description, and more depending on the library functionality.
@@ -187,8 +201,10 @@ class MainWindow(QMainWindow):
         self.rightSection = QVBoxLayout()
 
         self.rightTitleContainer = QHBoxLayout()
+        self.vidTitleLayout = QHBoxLayout()
         self.imageContaniner = QHBoxLayout()
         self.videoDescriptionLayout = QVBoxLayout()
+        self.videoDateLayout = QHBoxLayout()
         
         currentVideoLabel = QLabel("Video Information")
         currentVideoFont = QFont()
@@ -198,21 +214,58 @@ class MainWindow(QMainWindow):
         self.rightTitleContainer.addWidget(currentVideoLabel)
         self.rightTitleContainer.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
-        self.thumbnailContainer = QLabel()
+        videoTitleLabel = QLabel("Title:")
+        videoInfoLabelFont = QFont()
+        videoInfoLabelFont.setPointSize(14)
+        videoTitleLabel.setFont(videoInfoLabelFont)
 
+        self.currentVideoTitle = QLabel()
+        self.currentVideoTitle.setFont(videoInfoLabelFont)
+
+        self.vidTitleLayout.addWidget(videoTitleLabel)
+        self.vidTitleLayout.addWidget(self.currentVideoTitle)
+        self.vidTitleLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self.thumbnailContainer = QLabel()
+        thumbnailLabel = QLabel('Thumbnail:')
+        thumbnailLabel.setFont(videoInfoLabelFont)
+        thumbnailLabel.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.imageContaniner.addWidget(thumbnailLabel)
         self.imageContaniner.addWidget(self.thumbnailContainer)
+        self.imageContaniner.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        descLabel = QLabel("Description:")
+        descLabel.setFont(videoInfoLabelFont)
 
         self.videoDescription = QLabel()
         descriptionFont = QFont()
         descriptionFont.setPointSize(12)
         self.videoDescription.setFont(descriptionFont)
+        self.videoDescription.setFixedWidth(int(500 * self.widthScale))
+        self.videoDescription.setWordWrap(True)
 
+        self.videoDescriptionLayout.addWidget(descLabel)
         self.videoDescriptionLayout.addWidget(self.videoDescription)
+        self.videoDescriptionLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        dateLabel = QLabel("Publish Date:")
+        dateLabel.setFont(videoInfoLabelFont)
+
+        self.publishDateLabel = QLabel()
+        self.publishDateLabel.setFont(videoInfoLabelFont)
+        
+        self.videoDateLayout.addWidget(dateLabel)
+        self.videoDateLayout.addWidget(self.publishDateLabel)
+        self.videoDateLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.rightSection.addSpacerItem(QSpacerItem(0, int(100 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.rightSection.addLayout(self.rightTitleContainer)
+        self.rightSection.addSpacerItem(QSpacerItem(0, int(10 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        self.rightSection.addLayout(self.vidTitleLayout)
         self.rightSection.addLayout(self.imageContaniner)
         self.rightSection.addLayout(self.videoDescriptionLayout)
+        self.rightSection.addLayout(self.videoDateLayout)
         self.rightSection.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
     #Combine all previous layouts and set the main window's central widget to be a QWidget object with it's layout set to the combined layout.
@@ -251,7 +304,13 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(centralWidget)
 
-    #Load in a thumbnail picture
+        #Create the downloader thread
+        self.downloadThread = Downloader()
+        
+        #Connect Signals
+        self.downloadThread.videoInformationSignal.connect(self.loadVideoInformation)
+        self.downloadThread.downloadInfo.connect(self.updateDownloadInfo)
+        self.downloadThread.invalidUrlSignal.connect(self.invalidUrl)
     
     #------------------------
     #Start-up Functions
@@ -284,6 +343,8 @@ class MainWindow(QMainWindow):
     #------------------------
     #Slot Functions
     #------------------------
+    
+    #- GUI Slots
 
     #Choose New Output Folder
     def chooseOutputFolder(self):
@@ -297,28 +358,56 @@ class MainWindow(QMainWindow):
 
     #Download a video using the URL
     def downloadVideo(self):
-        try:        
-            url = self.urlInput.text()
-            yt = YouTube(url)
-            stream = yt.streams.get_highest_resolution()
-        except:
-            self.urlInput.setText('')
-            self.openStandardDialog('Error', 'Please enter a valid youtube URL.')
+        self.downloadInfoLabel.setText('Processing Video Info...')
+        
+        url = self.urlInput.text()
+        self.downloadThread.setURL(url)
+
+        outputDirectory = self.selectFolderInput.text()
+        if outputDirectory:
+            if os.path.exists(outputDirectory):
+                self.downloadThread.setOutputPath(outputDirectory)
+            else:
+                self.openStandardDialog('Error', 'Please use a valid folder directory in your computer system.')
+                return None
+        else:
+            self.openStandardDialog('Error', 'You must set the output folder directory before downloading videos.')
             return None
         
-        #Set the thumbnail picture under the current video tab
+        self.downloadThread.start()
+
+    #-Thread Slots
+    
+    #Load in video information
+    def loadVideoInformation(self, videoInfo):
+        #Video Title
+        self.currentVideoTitle.setText(videoInfo[0])
+
+        #Video Thumbnail
         videoThumbnail = QPixmap()
 
-        sampleUrl = yt.thumbnail_url
-        urlResponse = urllib.request.urlopen(sampleUrl).read()
+        urlResponse = urllib.request.urlopen(videoInfo[1]).read()
         videoThumbnail.loadFromData(urlResponse)
         videoThumbnail.setDevicePixelRatio(1.75)
 
         self.thumbnailContainer.setPixmap(videoThumbnail)
 
-        #Add a description beneath the video thumbnail
-        ytDescription = yt.description
-        self.videoDescription.setText(ytDescription)
+        #Video Description
+        self.videoDescription.setText(videoInfo[2])
+
+        #Video Date 
+        self.publishDateLabel.setText(videoInfo[3])
+
+    #Update download info tracker
+    def updateDownloadInfo(self, info):
+        self.downloadInfoLabel.setText(info)
+
+    #User entered an invalid URL
+    def invalidUrl(self):
+        self.urlInput.setText('')
+        self.openStandardDialog('Error', 'Please enter a valid youtube URL.')
+    
+
     
     #------------------------
     #Dialog Functions

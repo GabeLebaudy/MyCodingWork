@@ -8,48 +8,44 @@ from pytube import YouTube
 #Download Thread
 class Downloader(QThread):
     #Signals
-    thumbnailUrlSignal = pyqtSignal(str)
-    descriptionSignal = pyqtSignal(str)
-    videoLoadedSignal = pyqtSignal()
+    videoInformationSignal = pyqtSignal(list)
+    downloadInfo = pyqtSignal(str)
+    invalidUrlSignal = pyqtSignal()
 
     #Constructor
     def __init__(self):
+        super().__init__()
         self.videoURL = None
-
+        self.outputDir = None
 
     #Setter Methods
     def setURL(self, url):
         self.videoURL = url
+
+    #Set File Output Path
+    def setOutputPath(self, path):
+        self.outputDir = path
 
     #Download function. Set as the threads main function as to create a new execution point for the code so that the code doesn't time out
     def run(self):
         try:        
             url = self.videoURL
             yt = YouTube(url)
-            stream = yt.streams.get_highest_resolution()
-            self.videoLoadedSignal.emit()
+            stream = yt.streams.get_by_itag(22)
         except:
-            self.urlInput.setText('')
-            self.openStandardDialog('Error', 'Please enter a valid youtube URL.')
+            self.invalidUrlSignal.emit()
             return None
         
-        #Set the thumbnail picture under the current video tab
+        #Get Information about the video
+        vidTitle = yt.title
         thumbnailURL = yt.thumbnail_url
-        self.thumbnailUrlSignal.emit(thumbnailURL)
-        
-        '''
-        videoThumbnail = QPixmap()
-
-        sampleUrl = yt.thumbnail_url
-        urlResponse = urllib.request.urlopen(sampleUrl).read()
-        videoThumbnail.loadFromData(urlResponse)
-        videoThumbnail.setDevicePixelRatio(1.75)
-
-        self.thumbnailContainer.setPixmap(videoThumbnail)
-        '''
-
-        #Add a description beneath the video thumbnail
         ytDescription = yt.description
-        #self.videoDescription.setText(ytDescription)
-    
+        publishDate = yt.publish_date
+        publishDate = publishDate.strftime("%m/%d/%Y")
+
+        self.videoInformationSignal.emit([vidTitle, thumbnailURL, ytDescription, publishDate])
+
+        self.downloadInfo.emit('Downloading Video...')
+
+        stream.download(self.outputDir)
 
