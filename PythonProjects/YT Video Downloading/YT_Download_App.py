@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
 
         #Will add widgets to the container, this layout will contain video names from the current output folder
         self.videoNameContainer = QVBoxLayout()
+        self.videoNameContainer.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         #Create label for section
         allVideosLabel = QLabel("Current Videos")
@@ -51,10 +52,18 @@ class MainWindow(QMainWindow):
         videoLabelFont.setPointSize(20)
         videoLabelFont.setUnderline(True)
         allVideosLabel.setFont(videoLabelFont)
+        allVideosLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+        #Add all video names in the output folder to the layout
+        self.videoLabelFont = QFont()
+        self.videoLabelFont.setPointSize(14)
+
+        self.fillCurrentVideos()
         
         #Put together layout
-        self.leftSection.addSpacerItem(QSpacerItem(0, int(100 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        self.leftSection.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.leftSection.addWidget(allVideosLabel)
+        self.leftSection.addLayout(self.videoNameContainer)
         self.leftSection.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
 
     #Create the main display for the downloading of the youtube video. This should include the progress bar, and the input field for the youtube link. May add more later
@@ -104,24 +113,26 @@ class MainWindow(QMainWindow):
         self.urlContainer.addWidget(urlLabel)
         self.urlContainer.addWidget(self.urlInput)
         self.urlContainer.addWidget(self.urlButton)
-        self.urlContainer.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.urlContainer.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         #Download Bar Section: This section will display the current progress of the video download. 
 
         #TODO: Incorporate section for displaying that the file type is changing if that takes a signifigant portion of time to complete.
-        progressBarLabel = QLabel("Progress: (0%)")
-        progressBarLabel.setFont(urlFont)
+        self.progressBarLabel = QLabel("Progress: (0%)")
+        self.progressBarLabel.setFont(urlFont)
 
         self.progressBarComplete = Color('#6ef246')
         self.progressBarIncomplete = Color('#4a4f48')
 
         self.progressBarComplete.setFixedSize(0, int(30 * self.heightScale))    
-        self.progressBarIncomplete.setFixedSize(int(553 * self.widthScale), int(30 * self.heightScale))
+        self.progressBarIncomplete.setFixedSize(int(550 * self.widthScale), int(30 * self.heightScale))
 
-        self.downloadBarContainer.addWidget(progressBarLabel)
+        self.downloadBarContainer.addWidget(self.progressBarLabel)
+        self.downloadBarContainer.addSpacerItem(QSpacerItem(int(10 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
         self.downloadBarContainer.addWidget(self.progressBarComplete)
         self.downloadBarContainer.addWidget(self.progressBarIncomplete)
-        self.downloadBarContainer.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.downloadBarContainer.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.downloadBarContainer.setSpacing(0)
 
         #Download Information Section: This area will display info about the download process to the user
         statusLabel = QLabel("Status:")
@@ -153,7 +164,7 @@ class MainWindow(QMainWindow):
         self.chooseFolderContainer.addWidget(selectFolderLabel)
         self.chooseFolderContainer.addWidget(self.selectFolderInput)
         self.chooseFolderContainer.addWidget(self.changeFolderButton)
-        self.chooseFolderContainer.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.chooseFolderContainer.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         #Choose File Type Section: This section will allow the user to choose the file extension if they want to switch from the default
         chooseFileTypeLabel = QLabel("File Type:")
@@ -197,7 +208,6 @@ class MainWindow(QMainWindow):
 
     #Create the area to host the thumbnail image of the video. Will also display information about the video description, and more depending on the library functionality.
     def createRightSection(self):
-        #TODO: Create the widgets and layouts for this section. 
         self.rightSection = QVBoxLayout()
 
         self.rightTitleContainer = QHBoxLayout()
@@ -233,7 +243,7 @@ class MainWindow(QMainWindow):
 
         self.imageContaniner.addWidget(thumbnailLabel)
         self.imageContaniner.addWidget(self.thumbnailContainer)
-        self.imageContaniner.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.imageContaniner.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         descLabel = QLabel("Description:")
         descLabel.setFont(videoInfoLabelFont)
@@ -259,7 +269,7 @@ class MainWindow(QMainWindow):
         self.videoDateLayout.addWidget(self.publishDateLabel)
         self.videoDateLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        self.rightSection.addSpacerItem(QSpacerItem(0, int(100 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        self.rightSection.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.rightSection.addLayout(self.rightTitleContainer)
         self.rightSection.addSpacerItem(QSpacerItem(0, int(10 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.rightSection.addLayout(self.vidTitleLayout)
@@ -311,6 +321,7 @@ class MainWindow(QMainWindow):
         self.downloadThread.videoInformationSignal.connect(self.loadVideoInformation)
         self.downloadThread.downloadInfo.connect(self.updateDownloadInfo)
         self.downloadThread.invalidUrlSignal.connect(self.invalidUrl)
+        self.downloadThread.downloadProgressSignal.connect(self.updateProgressBar)
     
     #------------------------
     #Start-up Functions
@@ -338,7 +349,52 @@ class MainWindow(QMainWindow):
             
     #Get the names of all videos inside the current output folder, and list them under current videos
     def fillCurrentVideos(self):
-        pass
+        #Get the path to the folder containing the videos
+        folderConfigPath = os.path.join(os.path.dirname(__file__), 'defaultFolder.txt')
+        with open(folderConfigPath, 'r') as file:
+            videoFolderPath = file.readline()
+
+        #Check if path was set and exists
+        if videoFolderPath:
+            if os.path.exists(videoFolderPath):
+                pass
+            else:
+                #Reset Config File
+                with open(videoFolderPath, 'w'):
+                    pass
+                return None
+        else:
+            return None
+        
+        self.displayFiles(videoFolderPath, 0)
+
+    #Display all video files in a folder
+    def displayFiles(self, folder, indentation):
+        #Get all items in the folder
+        allItems = os.listdir(folder)
+        for item in allItems:
+            #Get the path of the file or folder within the original folder
+            itemPath = os.path.join(folder, item)
+            if os.path.isfile(itemPath):
+                #Get the title of the video without file extension
+                itemParts = item.split('.')
+                currentVidTitle = itemParts[0]
+                if len(currentVidTitle) > 40:
+                    currentVidTitle = currentVidTitle[0:38] + '...'
+                
+                #Create Label and add it to the layout
+                currentVideoLabel = QLabel(currentVidTitle)
+                currentVideoLabel.setFont(self.videoLabelFont)
+
+                self.videoNameContainer.addWidget(currentVideoLabel) 
+
+            if os.path.isdir(itemPath):
+                #Call this function recursively, and increase indentation
+                pass
+            else:
+                #Item is not a folder nor a file, just pass over it.
+                pass
+
 
     #------------------------
     #Slot Functions
@@ -381,7 +437,11 @@ class MainWindow(QMainWindow):
     #Load in video information
     def loadVideoInformation(self, videoInfo):
         #Video Title
-        self.currentVideoTitle.setText(videoInfo[0])
+        vidTitle = videoInfo[0]
+        if len(vidTitle) >= 50:
+            vidTitle = vidTitle[:48] + '...'
+
+        self.currentVideoTitle.setText(vidTitle)
 
         #Video Thumbnail
         videoThumbnail = QPixmap()
@@ -406,7 +466,20 @@ class MainWindow(QMainWindow):
     def invalidUrl(self):
         self.urlInput.setText('')
         self.openStandardDialog('Error', 'Please enter a valid youtube URL.')
-    
+
+    #Update the Progress Bar
+    def updateProgressBar(self, percentDone):
+        progressText = "Progress {:.1f}%".format(percentDone) 
+        self.progressBarLabel.setText(progressText)
+
+        percentDecimal = percentDone / 100
+        widthDone = int((550 * percentDecimal) * self.widthScale)
+        widthToGo = (550 - widthDone) + 1
+        if widthToGo <= 1:
+            widthToGo = 0
+
+        self.progressBarComplete.setFixedSize(widthDone, int(30 * self.heightScale))    
+        self.progressBarIncomplete.setFixedSize(widthToGo, int(30 * self.heightScale))
 
     
     #------------------------

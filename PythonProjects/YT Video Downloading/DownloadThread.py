@@ -11,6 +11,7 @@ class Downloader(QThread):
     videoInformationSignal = pyqtSignal(list)
     downloadInfo = pyqtSignal(str)
     invalidUrlSignal = pyqtSignal()
+    downloadProgressSignal = pyqtSignal(float)
 
     #Constructor
     def __init__(self):
@@ -28,10 +29,13 @@ class Downloader(QThread):
 
     #Download function. Set as the threads main function as to create a new execution point for the code so that the code doesn't time out
     def run(self):
+        #Reset Progress Bar
+        self.downloadProgressSignal.emit(0)
+
         try:        
             url = self.videoURL
-            yt = YouTube(url)
-            stream = yt.streams.get_by_itag(22)
+            yt = YouTube(url, on_progress_callback=self.downloadProgress, on_complete_callback=self.downloadComplete)
+            self.stream = yt.streams.get_by_itag(22)
         except:
             self.invalidUrlSignal.emit()
             return None
@@ -47,5 +51,18 @@ class Downloader(QThread):
 
         self.downloadInfo.emit('Downloading Video...')
 
-        stream.download(self.outputDir)
+        self.stream.download(self.outputDir)
+
+    def downloadProgress(self, stream, rawData, bytesLeft):
+        videoSize = self.stream.filesize
+        bytesDownloaded = videoSize - bytesLeft
+        percentDownloaded = (bytesDownloaded / videoSize) * 100
+        self.downloadProgressSignal.emit(percentDownloaded)
+        
+        
+
+
+    def downloadComplete(self, stream, fileOutputPath):
+        #TODO Play a short audio indicating the downloading is done
+        self.downloadInfo.emit('Complete!')
 
