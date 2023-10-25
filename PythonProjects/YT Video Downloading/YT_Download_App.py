@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication, QFont, QColor, QPalette, QPixmap
 
+
 #Create Widget filled with color (Used for progress bar)
 class Color(QWidget):
     #Constructor
@@ -58,6 +59,12 @@ class MainWindow(QMainWindow):
         self.videoLabelFont = QFont()
         self.videoLabelFont.setPointSize(14)
 
+        self.folderLabelFont = QFont()
+        self.folderLabelFont.setPointSize(14)
+        self.folderLabelFont.setBold(True)
+
+        self.videoTreeStorage = []
+        self.fileTypeOptions = ['.mp4', '.mov', 'mkv', '.flv']
         self.fillCurrentVideos()
         
         #Put together layout
@@ -172,8 +179,7 @@ class MainWindow(QMainWindow):
 
         #TODO: Make the text align to the right in the combo box
         self.selectFileTypeDD = QComboBox()
-        fileTypeOptions = ['.mp4', '.wav']
-        self.selectFileTypeDD.addItems(fileTypeOptions)
+        self.selectFileTypeDD.addItems(self.fileTypeOptions)
         self.selectFileTypeDD.setFixedSize(int(60 * self.widthScale), int(25 * self.heightScale))
 
         self.chooseFormatContainer.addWidget(chooseFileTypeLabel)
@@ -322,6 +328,7 @@ class MainWindow(QMainWindow):
         self.downloadThread.downloadInfo.connect(self.updateDownloadInfo)
         self.downloadThread.invalidUrlSignal.connect(self.invalidUrl)
         self.downloadThread.downloadProgressSignal.connect(self.updateProgressBar)
+
     
     #------------------------
     #Start-up Functions
@@ -346,6 +353,8 @@ class MainWindow(QMainWindow):
                 #Just opens file in write mode, effectively clearing it of all data
                 with open(configFilePath, 'w'):
                     pass
+
+        self.fillCurrentVideos()
             
     #Get the names of all videos inside the current output folder, and list them under current videos
     def fillCurrentVideos(self):
@@ -366,6 +375,20 @@ class MainWindow(QMainWindow):
         else:
             return None
         
+        if len(self.videoTreeStorage) > 0:
+            for i in range(len(self.videoTreeStorage)):
+                self.videoNameContainer.removeWidget(self.videoTreeStorage[i])
+
+        self.videoTreeStorage = []
+        
+        folderItems = videoFolderPath.split('/')
+        mainFolderName = folderItems[-1]
+        mainFolderLabel = QLabel(mainFolderName)
+        mainFolderLabel.setFont(self.folderLabelFont)
+
+        self.videoNameContainer.addWidget(mainFolderLabel)
+        self.videoTreeStorage.append(mainFolderLabel)
+
         self.displayFiles(videoFolderPath, 0)
 
     #Display all video files in a folder
@@ -376,24 +399,44 @@ class MainWindow(QMainWindow):
             #Get the path of the file or folder within the original folder
             itemPath = os.path.join(folder, item)
             if os.path.isfile(itemPath):
-                #Get the title of the video without file extension
+                #Isolate video title and file extension
                 itemParts = item.split('.')
-                currentVidTitle = itemParts[0]
-                if len(currentVidTitle) > 40:
-                    currentVidTitle = currentVidTitle[0:38] + '...'
                 
-                #Create Label and add it to the layout
-                currentVideoLabel = QLabel(currentVidTitle)
-                currentVideoLabel.setFont(self.videoLabelFont)
+                #Check if the file is a video type
+                fileExtension = '.' + itemParts[1]
+                if fileExtension in self.fileTypeOptions:
+                    #Add the title to the tree
+                    currentVidTitle = itemParts[0]
+                    if len(currentVidTitle) > 40:
+                        currentVidTitle = currentVidTitle[0:38] + '...'
+                    
+                    #Temporary Visual of Spacing
+                    currentVidTitle = ('    ' * (indentation + 1)) + currentVidTitle
 
-                self.videoNameContainer.addWidget(currentVideoLabel) 
+                    #Create Label and add it to the layout
+                    currentVideoLabel = QLabel(currentVidTitle)
+                    currentVideoLabel.setFont(self.videoLabelFont)
+
+                    self.videoNameContainer.addWidget(currentVideoLabel) 
+                    self.videoTreeStorage.append(currentVideoLabel)
 
             if os.path.isdir(itemPath):
                 #Call this function recursively, and increase indentation
-                pass
-            else:
-                #Item is not a folder nor a file, just pass over it.
-                pass
+                if os.path.getsize(itemPath) <= 0:
+                    #Folder Exists but is empty, just move on
+                    pass
+                
+                #folderParts = itemPath.split('/')
+                folderParts = os.path.split(itemPath) 
+                folderText = ('    ' * (indentation + 1)) + folderParts[-1]
+                
+                currentFolderLabel = QLabel(folderText)
+                currentFolderLabel.setFont(self.folderLabelFont)
+
+                self.videoNameContainer.addWidget(currentFolderLabel)
+                self.videoTreeStorage.append(currentFolderLabel)
+
+                self.displayFiles(itemPath, indentation + 1)
 
 
     #------------------------
@@ -412,13 +455,19 @@ class MainWindow(QMainWindow):
             with open(configFilePath, 'w') as file:
                 file.write(folder)
 
+            self.fillCurrentVideos()
+
     #Download a video using the URL
     def downloadVideo(self):
         self.downloadInfoLabel.setText('Processing Video Info...')
         
         url = self.urlInput.text()
         self.downloadThread.setURL(url)
+        self.urlInput.setText('')
 
+        outputRes = self.resDD.currentText()
+        self.downloadThread.setVideoRes(outputRes)
+        
         outputDirectory = self.selectFolderInput.text()
         if outputDirectory:
             if os.path.exists(outputDirectory):
