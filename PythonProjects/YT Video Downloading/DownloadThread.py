@@ -3,6 +3,8 @@
 #Imports
 from PyQt6.QtCore import QThread, QMutex, QWaitCondition, pyqtSignal
 from pytube import YouTube
+import ffmpeg
+import os
 
 
 #Download Thread
@@ -47,7 +49,7 @@ class Downloader(QThread):
             yt = YouTube(url, on_progress_callback=self.downloadProgress, on_complete_callback=self.downloadComplete)
             #TODO: Run a filter query to get the best available stream with the selected resolution
             
-            self.streams = self.getBestStream(yt)
+            streams = self.getBestStream(yt)
         except:
             self.invalidUrlSignal.emit()
             return None
@@ -63,8 +65,15 @@ class Downloader(QThread):
 
         self.downloadInfo.emit('Downloading Video...')
 
-        for stream in self.streams:
-            stream.download(self.outputDir)
+        for i in range(len(streams)):
+            #Streams is an audio and video, and the current iteration is for the audio
+            if i == 1:
+                audioTitle = yt.title + ' Audio.mp4'
+                streams[i].download(self.outputDir, audioTitle)
+            else:    
+                streams[i].download(self.outputDir)
+
+        self.mendStreams(yt)
 
     #Progress callback function, emits a float value containing percentage of the video that has been downloaded.
     def downloadProgress(self, stream, rawData, bytesLeft):
@@ -114,4 +123,15 @@ class Downloader(QThread):
                 else:
                     #There are no available streams with that resolution, so try the next highest available option.   
                     startInd += 1 
+
+    #Mend Video and Audio Files
+    def mendStreams(self, yt):
+        mainFileTitle = yt.title + '.mp4'
+        audioFileTitle = yt.title + ' Audio.mp4'
+
+        videoFilePath = os.path.join(self.outputDir, mainFileTitle)
+        audioFilePath = os.path.join(self.outputDir, audioFileTitle)
+
+
+
 

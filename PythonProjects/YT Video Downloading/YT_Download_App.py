@@ -64,8 +64,6 @@ class MainWindow(QMainWindow):
         self.folderLabelFont.setBold(True)
 
         self.videoTreeStorage = []
-        self.fileTypeOptions = ['.mp4', '.mov', 'mkv', '.flv']
-        self.fillCurrentVideos()
         
         #Put together layout
         self.leftSection.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
@@ -162,7 +160,6 @@ class MainWindow(QMainWindow):
         self.selectFolderInput.setFixedWidth(int(325 * self.widthScale))
         self.selectFolderInput.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.selectFolderInput.setReadOnly(True)
-        self.fillOutputFolderDisplay()
 
         self.changeFolderButton = QPushButton("Change Output Folder")
         self.changeFolderButton.setFixedSize(int(150 * self.widthScale), int(25 * self.heightScale))
@@ -179,6 +176,7 @@ class MainWindow(QMainWindow):
 
         #TODO: Make the text align to the right in the combo box
         self.selectFileTypeDD = QComboBox()
+        self.fileTypeOptions = ['.mp4', '.mov', 'mkv', '.flv']
         self.selectFileTypeDD.addItems(self.fileTypeOptions)
         self.selectFileTypeDD.setFixedSize(int(60 * self.widthScale), int(25 * self.heightScale))
 
@@ -320,6 +318,10 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(centralWidget)
 
+        #Call Set-up Functions
+        self.fillOutputFolderDisplay()
+        self.fillCurrentVideos()
+
         #Create the downloader thread
         self.downloadThread = Downloader()
         
@@ -334,6 +336,28 @@ class MainWindow(QMainWindow):
     #Start-up Functions
     #------------------------
 
+    def checkOutputFolder(f):
+        #Wrapper method
+        def wrapper(*args, **kwargs):
+            folderConfigPath = os.path.join(os.path.dirname(__file__), 'defaultFolder.txt')
+            with open(folderConfigPath, 'r') as file:
+                videoFolderPath = file.readline()
+
+            #Check if path was set and exists
+            if videoFolderPath:
+                if os.path.exists(videoFolderPath):
+                    result = f(*args, **kwargs)
+                    return result
+                else:
+                    #Reset Config File
+                    with open(videoFolderPath, 'w'):
+                        pass
+                    return None
+            else:
+                return None
+
+        return wrapper
+        
     #Fill the output folder line edit widget 
     def fillOutputFolderDisplay(self):
         #Start by getting the file path of the config file
@@ -357,7 +381,9 @@ class MainWindow(QMainWindow):
         self.fillCurrentVideos()
             
     #Get the names of all videos inside the current output folder, and list them under current videos
+    @checkOutputFolder
     def fillCurrentVideos(self):
+        '''
         #Get the path to the folder containing the videos
         folderConfigPath = os.path.join(os.path.dirname(__file__), 'defaultFolder.txt')
         with open(folderConfigPath, 'r') as file:
@@ -378,7 +404,9 @@ class MainWindow(QMainWindow):
         if len(self.videoTreeStorage) > 0:
             for i in range(len(self.videoTreeStorage)):
                 self.videoNameContainer.removeWidget(self.videoTreeStorage[i])
+        '''
 
+        videoFolderPath = self.selectFolderInput.text()
         self.videoTreeStorage = []
         
         folderItems = videoFolderPath.split('/')
@@ -467,7 +495,7 @@ class MainWindow(QMainWindow):
 
         outputRes = self.resDD.currentText()
         self.downloadThread.setVideoRes(outputRes)
-        
+
         outputDirectory = self.selectFolderInput.text()
         if outputDirectory:
             if os.path.exists(outputDirectory):
@@ -518,12 +546,19 @@ class MainWindow(QMainWindow):
 
     #Update the Progress Bar
     def updateProgressBar(self, percentDone):
+        if percentDone < 10:
+            totalWidth = 550
+        elif 10 < percentDone < 99:
+            totalWidth = 540
+        else:
+            totalWidth = 530
+
         progressText = "Progress {:.1f}%".format(percentDone) 
         self.progressBarLabel.setText(progressText)
 
         percentDecimal = percentDone / 100
-        widthDone = int((550 * percentDecimal) * self.widthScale)
-        widthToGo = (550 - widthDone) + 1
+        widthDone = int((totalWidth * percentDecimal) * self.widthScale)
+        widthToGo = (totalWidth - widthDone) + 1
         if widthToGo <= 1:
             widthToGo = 0
 
