@@ -5,6 +5,7 @@ import guiConstants
 import os
 import urllib.request
 from DownloadThread import Downloader
+from pytube import YouTube
 
 #GUI Modules
 from PyQt6.QtWidgets import (
@@ -18,6 +19,30 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication, QFont, QColor, QPalette, QPixmap
 
+
+#Decorators
+def checkOutputFolder(f):
+        #Wrapper method
+    def wrapper(*args, **kwargs):
+        folderConfigPath = os.path.join(os.path.dirname(__file__), 'defaultFolder.txt')
+        with open(folderConfigPath, 'r') as file:
+            videoFolderPath = file.readline()
+
+        #Check if path was set and exists
+        if videoFolderPath:
+            if os.path.exists(videoFolderPath):
+                result = f(*args, **kwargs)
+                return result
+            else:
+                #Reset Config File
+                with open(videoFolderPath, 'w'):
+                    pass
+                
+                return None
+        else:
+            return None
+
+    return wrapper
 
 #Create Widget filled with color (Used for progress bar)
 class Color(QWidget):
@@ -84,6 +109,7 @@ class MainWindow(QMainWindow):
         self.chooseFolderContainer = QHBoxLayout()
         self.chooseFormatContainer = QHBoxLayout()
         self.chooseResLayout = QHBoxLayout()
+        self.queueContainer = QVBoxLayout()
         
         #Title Section: This section will serve as a display and also provide a help button to explain features
         titleLabel = QLabel("Download YT Videos")
@@ -122,7 +148,6 @@ class MainWindow(QMainWindow):
 
         #Download Bar Section: This section will display the current progress of the video download. 
 
-        #TODO: Incorporate section for displaying that the file type is changing if that takes a signifigant portion of time to complete.
         self.progressBarLabel = QLabel("Progress: (0%)")
         self.progressBarLabel.setFont(urlFont)
 
@@ -196,6 +221,48 @@ class MainWindow(QMainWindow):
         self.chooseResLayout.addWidget(self.resDD)
         self.chooseResLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
+        #Queue Videos Section
+        self.queueInputSection = QHBoxLayout()
+        self.allQueueItemsContainer = QVBoxLayout()
+
+        #Section Title Label
+        queueTitleLabel = QLabel("Add Video to Download Queue")
+        queueTitleFont = QFont()
+        queueTitleFont.setPointSize(18)
+        queueTitleFont.setUnderline(True)
+        queueTitleLabel.setFont(queueTitleFont)
+        queueTitleLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        #Actual URL Input section
+        queueInputLabel = QLabel("Video URL")
+        queueInputLabel.setFont(urlFont)
+
+        self.queueUrlInput = QLineEdit()
+        self.queueUrlInput.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.queueUrlInput.setFixedWidth(int(250 * self.widthScale))
+
+        self.addUrlButton = QPushButton("Add")
+        self.addUrlButton.clicked.connect(self.addToQue)
+
+        self.startQueueDownloadButton = QPushButton("Start")
+        self.startQueueDownloadButton.clicked.connect(self.startQueueDownload)
+
+        self.queueInputSection.addWidget(queueInputLabel)
+        self.queueInputSection.addWidget(self.queueUrlInput)
+        self.queueInputSection.addWidget(self.addUrlButton)
+        self.queueInputSection.addSpacerItem(QSpacerItem(int(100 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
+        self.queueInputSection.addWidget(self.startQueueDownloadButton)
+
+        self.queueContainer.addWidget(queueTitleLabel)
+        self.queueContainer.addSpacerItem(QSpacerItem(0, int(50 * self.widthScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        self.queueContainer.addLayout(self.queueInputSection)
+        self.queueContainer.addSpacerItem(QSpacerItem(0, int(25 * self.widthScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+
+        #Storage for all widgets added in the video queue
+        self.videoQueueLayoutArr = []
+        self.videoQueueLabelArr = []
+        self.videoQueueButtonArr = []
+
         #Put the main layout together
         self.mainSection.addLayout(self.titleContainer)
         self.mainSection.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
@@ -208,6 +275,8 @@ class MainWindow(QMainWindow):
         self.mainSection.addSpacerItem(QSpacerItem(0, int(10 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.mainSection.addLayout(self.chooseFormatContainer)
         self.mainSection.addLayout(self.chooseResLayout)
+        self.mainSection.addSpacerItem(QSpacerItem(0, int(10 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        self.mainSection.addLayout(self.queueContainer)
         self.mainSection.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
     #Create the area to host the thumbnail image of the video. Will also display information about the video description, and more depending on the library functionality.
@@ -330,33 +399,12 @@ class MainWindow(QMainWindow):
         self.downloadThread.downloadInfo.connect(self.updateDownloadInfo)
         self.downloadThread.invalidUrlSignal.connect(self.invalidUrl)
         self.downloadThread.downloadProgressSignal.connect(self.updateProgressBar)
+        self.downloadThread.downloadCompleteSignal.connect(self.downloadDone)
 
     
     #------------------------
     #Start-up Functions
     #------------------------
-
-    def checkOutputFolder(f):
-        #Wrapper method
-        def wrapper(*args, **kwargs):
-            folderConfigPath = os.path.join(os.path.dirname(__file__), 'defaultFolder.txt')
-            with open(folderConfigPath, 'r') as file:
-                videoFolderPath = file.readline()
-
-            #Check if path was set and exists
-            if videoFolderPath:
-                if os.path.exists(videoFolderPath):
-                    result = f(*args, **kwargs)
-                    return result
-                else:
-                    #Reset Config File
-                    with open(videoFolderPath, 'w'):
-                        pass
-                    return None
-            else:
-                return None
-
-        return wrapper
         
     #Fill the output folder line edit widget 
     def fillOutputFolderDisplay(self):
@@ -383,29 +431,12 @@ class MainWindow(QMainWindow):
     #Get the names of all videos inside the current output folder, and list them under current videos
     @checkOutputFolder
     def fillCurrentVideos(self):
-        '''
-        #Get the path to the folder containing the videos
-        folderConfigPath = os.path.join(os.path.dirname(__file__), 'defaultFolder.txt')
-        with open(folderConfigPath, 'r') as file:
-            videoFolderPath = file.readline()
-
-        #Check if path was set and exists
-        if videoFolderPath:
-            if os.path.exists(videoFolderPath):
-                pass
-            else:
-                #Reset Config File
-                with open(videoFolderPath, 'w'):
-                    pass
-                return None
-        else:
-            return None
-        
+        #Check if the layout has the old video labels
         if len(self.videoTreeStorage) > 0:
             for i in range(len(self.videoTreeStorage)):
                 self.videoNameContainer.removeWidget(self.videoTreeStorage[i])
-        '''
-
+        
+        #Get path to video output folder
         videoFolderPath = self.selectFolderInput.text()
         self.videoTreeStorage = []
         
@@ -486,7 +517,8 @@ class MainWindow(QMainWindow):
             self.fillCurrentVideos()
 
     #Download a video using the URL
-    def downloadVideo(self):
+    @checkOutputFolder
+    def downloadVideo(self, *args, **kwargs):
         self.downloadInfoLabel.setText('Processing Video Info...')
         
         url = self.urlInput.text()
@@ -497,6 +529,7 @@ class MainWindow(QMainWindow):
         self.downloadThread.setVideoRes(outputRes)
 
         outputDirectory = self.selectFolderInput.text()
+        self.downloadThread.setOutputPath(outputDirectory)
         if outputDirectory:
             if os.path.exists(outputDirectory):
                 self.downloadThread.setOutputPath(outputDirectory)
@@ -565,7 +598,50 @@ class MainWindow(QMainWindow):
         self.progressBarComplete.setFixedSize(widthDone, int(30 * self.heightScale))    
         self.progressBarIncomplete.setFixedSize(widthToGo, int(30 * self.heightScale))
 
+    #Download is finished, move on to next video in Queue (if nec) and update visuals
+    def downloadDone(self):
+        self.fillOutputFolderDisplay()
     
+    #Add a video to the queue
+    def addToQue(self):
+        try:        
+            url = self.queueUrlInput.text()
+            yt = YouTube(url)
+        except:
+            self.openStandardDialog('Error', 'URL not valid.')
+            return None
+
+        queueItemLayout = QHBoxLayout()
+        
+        vidTitle = '    - ' + yt.title
+        queueVidTitleLabel = QLabel(vidTitle)
+        font = QFont()
+        font.setPointSize(14)
+        queueVidTitleLabel.setFont(font)
+        
+        removeItemButton = QPushButton('-')
+        removeItemButton.setFixedSize(30, 30)
+        removeItemButton.setStyleSheet(guiConstants.QUEUEBUTTONSTYLE)
+
+        queueItemLayout.addWidget(queueVidTitleLabel)
+        queueItemLayout.addWidget(removeItemButton)
+        queueItemLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self.videoQueueLayoutArr.append(queueItemLayout)
+        self.videoQueueLabelArr.append(queueVidTitleLabel)
+        self.videoQueueButtonArr.append(removeItemButton)
+
+        self.queueContainer.addLayout(queueItemLayout)
+    
+    #Remove an item from the queue
+    def removeQueueItem(self, item):
+        pass
+
+    #Start the que download process
+    @checkOutputFolder
+    def startQueueDownload(self):
+        pass
+
     #------------------------
     #Dialog Functions
     #------------------------

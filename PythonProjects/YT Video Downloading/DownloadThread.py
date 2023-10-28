@@ -14,6 +14,7 @@ class Downloader(QThread):
     downloadInfo = pyqtSignal(str)
     invalidUrlSignal = pyqtSignal()
     downloadProgressSignal = pyqtSignal(float)
+    downloadCompleteSignal = pyqtSignal()
 
     #Constructor
     def __init__(self):
@@ -47,8 +48,6 @@ class Downloader(QThread):
         try:        
             url = self.videoURL
             yt = YouTube(url, on_progress_callback=self.downloadProgress, on_complete_callback=self.downloadComplete)
-            #TODO: Run a filter query to get the best available stream with the selected resolution
-            
             streams = self.getBestStream(yt)
         except:
             self.invalidUrlSignal.emit()
@@ -72,8 +71,10 @@ class Downloader(QThread):
                 streams[i].download(self.outputDir, audioTitle)
             else:    
                 streams[i].download(self.outputDir)
-
-        self.mendStreams(yt)
+        
+        #If audio and video files were both downloaded, combine both files
+        if len(streams) > 1:
+            self.mendStreams(yt)
 
     #Progress callback function, emits a float value containing percentage of the video that has been downloaded.
     def downloadProgress(self, stream, rawData, bytesLeft):
@@ -86,6 +87,7 @@ class Downloader(QThread):
     def downloadComplete(self, stream, fileOutputPath):
         #TODO Play a short audio indicating the downloading is done
         self.downloadInfo.emit('Complete!')
+        self.downloadCompleteSignal.emit()
 
     #Get the stream with the best possible resolution. 
     def getBestStream(self, ytObj):
@@ -128,10 +130,22 @@ class Downloader(QThread):
     def mendStreams(self, yt):
         mainFileTitle = yt.title + '.mp4'
         audioFileTitle = yt.title + ' Audio.mp4'
+        finishedVideoTitle = yt.title + ' Complete.mp4'
 
         videoFilePath = os.path.join(self.outputDir, mainFileTitle)
         audioFilePath = os.path.join(self.outputDir, audioFileTitle)
+        finishedVideoPath = os.path.join(self.outputDir, finishedVideoTitle)
 
+        # Define input video and audio streams
+        vidInput = ffmpeg.input(videoFilePath)
+        audInput = ffmpeg.input(audioFilePath)
+
+        #Combine video and audio streams
+        output = ffmpeg.concat(vidInput, audInput, v=1, a=1).output(finishedVideoPath).run()
+
+        #TODO: Delete audio and video files
+        
+        
 
 
 
