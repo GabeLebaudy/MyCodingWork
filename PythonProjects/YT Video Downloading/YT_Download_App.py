@@ -6,6 +6,7 @@ import os
 import urllib.request
 from DownloadThread import Downloader
 from pytube import YouTube
+from videoQueue import Queue
 
 #GUI Modules
 from PyQt6.QtWidgets import (
@@ -258,10 +259,10 @@ class MainWindow(QMainWindow):
         self.queueContainer.addLayout(self.queueInputSection)
         self.queueContainer.addSpacerItem(QSpacerItem(0, int(25 * self.widthScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
 
-        #Storage for all widgets added in the video queue
-        self.videoQueueLayoutArr = []
-        self.videoQueueLabelArr = []
-        self.videoQueueButtonArr = []
+        #Video Queue Variables
+        self.videoQueue = Queue()
+        self.removeButtonSignals = []
+        self.isQueue = False
 
         #Put the main layout together
         self.mainSection.addLayout(self.titleContainer)
@@ -607,13 +608,19 @@ class MainWindow(QMainWindow):
         try:        
             url = self.queueUrlInput.text()
             yt = YouTube(url)
+            #Clear the input field, regardless if text passed in was a video URL or not.
+            self.queueUrlInput.setText('')
         except:
+            self.queueUrlInput.setText('')
             self.openStandardDialog('Error', 'URL not valid.')
             return None
 
         queueItemLayout = QHBoxLayout()
         
         vidTitle = '    - ' + yt.title
+        if len(vidTitle) > 50:
+            vidTitle = vidTitle[:48] + '...'
+
         queueVidTitleLabel = QLabel(vidTitle)
         font = QFont()
         font.setPointSize(14)
@@ -627,20 +634,75 @@ class MainWindow(QMainWindow):
         queueItemLayout.addWidget(removeItemButton)
         queueItemLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        self.videoQueueLayoutArr.append(queueItemLayout)
-        self.videoQueueLabelArr.append(queueVidTitleLabel)
-        self.videoQueueButtonArr.append(removeItemButton)
+        didQueue = self.videoQueue.enqueue(url, queueVidTitleLabel, removeItemButton, queueItemLayout)
+        if not didQueue:
+            #Delete Widgets from Memory
+            queueVidTitleLabel.deleteLater()
+            removeItemButton.deleteLater()
+            queueItemLayout.deleteLater()
+
+            #Relay Message to User that video has been added already
+            self.openStandardDialog('Error', 'The video URL provided has already been added to the video download queue.')
+            return None
 
         self.queueContainer.addLayout(queueItemLayout)
-    
+        
+        self.updateButtonSignals()
+
+    #Update the remove button signals, correctly linking each one to its corresponding index
+    def updateButtonSignals(self):
+        #Clear Prior Signals
+        for connection in self.removeButtonSignals:
+            connection[0].disconnect()
+
+        #Reset Signal List
+        self.removeButtonSignals = []
+
+        #Loop through remove queue item button array, create a new signal for that button based on index, connect signal to the removeQueueItem method, 
+        for i in range(self.videoQueue.getLength()):
+            removeFunc = lambda checked, x=i: self.removeQueueItem(x, checked)
+            button = self.videoQueue.videoQueue[i].getRemoveButton()
+            buttonConnection = [button.clicked, removeFunc]
+            buttonConnection[0].connect(buttonConnection[1])
+            self.removeButtonSignals.append(buttonConnection)
+
     #Remove an item from the queue
-    def removeQueueItem(self, item):
-        pass
+    def removeQueueItem(self, item, checked):
+        self.videoQueue.removeItem(item)
+        self.updateButtonSignals()
 
     #Start the que download process
     @checkOutputFolder
-    def startQueueDownload(self):
-        pass
+    def startQueueDownload(self, *args, **kwargs):
+        #First check if the queue has any videos at all.
+        if self.videoQueue.isEmpty():
+            self.openStandardDialog('Error', 'No videos were added to the download queue.')
+            return None
+        
+        #Set Queue Flag to True to indicate downloaded videos are part of a queue, and disable main URL input to avoid errors
+        self.isQueue = True
+        self.urlInput.setReadOnly(True)
+
+        self.downloadNextVideo()
+
+    #Run next queue item
+    def downloadNextVideo(self):
+        if self.videoQueue.isEmpty():
+            #TODO: Replace this with a pygame audio noise
+            self.openStandardDialog('Success!', 'All videos queued for download have been successfully retrieved.')
+
+        #Get the first item in the queue
+        queueItem = self.videoQueue.dequeue()
+        
+        #Remove the widgets, and update the button signals
+        queueItem.delWidgets()
+        self.updateButtonSignals()
+
+        #Set the Main URL Input text
+        self.urlInput.setText(queueItem.getURL())
+        
+        #Download the video
+        self.downloadVideo()
 
     #------------------------
     #Dialog Functions

@@ -5,7 +5,7 @@ from PyQt6.QtCore import QThread, QMutex, QWaitCondition, pyqtSignal
 from pytube import YouTube
 import ffmpeg
 import os
-
+import re
 
 #Download Thread
 class Downloader(QThread):
@@ -68,9 +68,15 @@ class Downloader(QThread):
             #Streams is an audio and video, and the current iteration is for the audio
             if i == 1:
                 audioTitle = yt.title + ' Audio.mp4'
+                audioTitle = self.fixYtTitle(audioTitle)
                 streams[i].download(self.outputDir, audioTitle)
             else:    
-                streams[i].download(self.outputDir)
+                if len(streams) > 1:
+                    mainTitle = yt.title + ' Main.mp4'
+                    mainTitle = self.fixYtTitle(mainTitle)
+                    streams[i].download(self.outputDir, mainTitle)
+                else:
+                    streams[i].download(self.outputDir)
         
         #If audio and video files were both downloaded, combine both files
         if len(streams) > 1:
@@ -128,9 +134,12 @@ class Downloader(QThread):
 
     #Mend Video and Audio Files
     def mendStreams(self, yt):
-        mainFileTitle = yt.title + '.mp4'
+        mainFileTitle = yt.title + ' Main.mp4'
+        mainFileTitle = self.fixYtTitle(mainFileTitle)
         audioFileTitle = yt.title + ' Audio.mp4'
+        audioFileTitle = self.fixYtTitle(audioFileTitle)  
         finishedVideoTitle = yt.title + ' Complete.mp4'
+        finishedVideoTitle = self.fixYtTitle(finishedVideoTitle)
 
         videoFilePath = os.path.join(self.outputDir, mainFileTitle)
         audioFilePath = os.path.join(self.outputDir, audioFileTitle)
@@ -146,6 +155,12 @@ class Downloader(QThread):
         #TODO: Delete audio and video files
         
         
+    #Fix the title by removing the characters
+    def fixYtTitle(self, title):
+        title = re.sub(r'[^\w\-_\. ]', '_', title)
+        title = title.replace('|', '_')
+        return title 
+
 
 
 
