@@ -6,6 +6,8 @@ from pytube import YouTube
 import ffmpeg
 import os
 import re
+import subprocess
+import cv2
 
 #Download Thread
 class Downloader(QThread):
@@ -14,7 +16,7 @@ class Downloader(QThread):
     downloadInfo = pyqtSignal(str)
     invalidUrlSignal = pyqtSignal()
     downloadProgressSignal = pyqtSignal(float)
-    downloadCompleteSignal = pyqtSignal()
+    downloadCompleteSignal = pyqtSignal(int)
 
     #Constructor
     def __init__(self):
@@ -23,6 +25,7 @@ class Downloader(QThread):
         self.outputDir = None
         self.videoRes = None
         self.fileExtension = None
+        self.downloadType = 0
 
     #Setter Methods
     def setURL(self, url):
@@ -49,7 +52,8 @@ class Downloader(QThread):
             url = self.videoURL
             yt = YouTube(url, on_progress_callback=self.downloadProgress, on_complete_callback=self.downloadComplete)
             streams = self.getBestStream(yt)
-        except:
+        except Exception as e:
+            print(e)
             self.invalidUrlSignal.emit()
             return None
         
@@ -67,18 +71,23 @@ class Downloader(QThread):
         for i in range(len(streams)):
             #Streams is an audio and video, and the current iteration is for the audio
             if i == 1:
+                self.downloadType = 1
                 audioTitle = yt.title + ' Audio.mp4'
                 audioTitle = self.fixYtTitle(audioTitle)
+                self.downloadInfo.emit('Downloading Audio...')
                 streams[i].download(self.outputDir, audioTitle)
             else:    
                 if len(streams) > 1:
+                    self.downloadType = 1
                     mainTitle = yt.title + ' Main.mp4'
                     mainTitle = self.fixYtTitle(mainTitle)
                     streams[i].download(self.outputDir, mainTitle)
                 else:
+                    self.downloadType = 0
                     streams[i].download(self.outputDir)
         
         #If audio and video files were both downloaded, combine both files
+        self.downloadInfo.emit('Connecting video and audio files...')
         if len(streams) > 1:
             self.mendStreams(yt)
 
@@ -91,9 +100,9 @@ class Downloader(QThread):
     
     #Download complete callback, plays audio, and sets the download info to complete.
     def downloadComplete(self, stream, fileOutputPath):
-        #TODO Play a short audio indicating the downloading is done
-        self.downloadInfo.emit('Complete!')
-        self.downloadCompleteSignal.emit()
+        self.downloadInfo.emit('Download Complete!')
+        #0: Stream contains audio and vide 1: Stream was video only 2: Stream was audio.
+        self.downloadCompleteSignal.emit(self.downloadType)
 
     #Get the stream with the best possible resolution. 
     def getBestStream(self, ytObj):
@@ -145,21 +154,79 @@ class Downloader(QThread):
         audioFilePath = os.path.join(self.outputDir, audioFileTitle)
         finishedVideoPath = os.path.join(self.outputDir, finishedVideoTitle)
 
-        # Define input video and audio streams
+        #Get total amount of video frames
+        video = cv2.VideoCapture(videoFilePath)
+        frameCount = video.get(cv2.CAP_PROP_FRAME_COUNT)
+
+        #Define input video and audio streams
         vidInput = ffmpeg.input(videoFilePath)
         audInput = ffmpeg.input(audioFilePath)
 
-        #Combine video and audio streams
-        output = ffmpeg.concat(vidInput, audInput, v=1, a=1).output(finishedVideoPath).run()
+        
+        #Combine video and audio streams        
+        cmd = ffmpeg.concat(vidInput, audInput, v=1, a=1).output(finishedVideoPath).compile()
+    
+        # Run the command and capture the output
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=1, shell=True)
+
+        prior = 0
+        while True:
+            output = process.stderr.readline()
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                items = output.split()
+                print(items)
+                try:
+                    #Find if the array has the time value, and if so what index of the output line
+                    frameInd = self.findFrames(items)
+                    if frameInd == 0 or frameInd == 1: #Odd syntax, but necessary
+                        if frameInd == 1:
+                            frames = int(items[frameInd])
+                        else:
+                            frameStr = items[frameInd]
+                            frames = int(frameStr[6:])
+                            
+                        percentCompleted = (frames / frameCount) * 100
+                        if prior <= percentCompleted:
+                            prior = percentCompleted
+                            print(percentCompleted, prior)
+                            self.downloadProgressSignal.emit(percentCompleted)
+
+                except Exception as e:
+                    #This will handle all lines that do not follow the progress update format
+                    print(e)
+
+        # Get the return code of the process
+        return_code = process.poll()
+
+        if return_code == 0:
+            self.downloadCompleteSignal.emit(2)
+        else:
+            print(f"Error running ffmpeg command. Return code: {return_code}")
 
         #TODO: Delete audio and video files
         
+        self.downloadInfo.emit('Download Complete!')
         
     #Fix the title by removing the characters
     def fixYtTitle(self, title):
         title = re.sub(r'[^\w\-_\. ]', '_', title)
         title = title.replace('|', '_')
         return title 
+    
+    #Find the time value in the FFmpeg concatenate method
+    def findFrames(self, lineArr):
+        if not lineArr:
+            return False
+        
+
+        if lineArr[0] == 'frame=':
+            return 1
+        if lineArr[0][:6] == 'frame=':
+            return 0
+        return False
+
 
 
 

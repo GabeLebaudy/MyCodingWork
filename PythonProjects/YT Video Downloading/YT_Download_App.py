@@ -600,8 +600,19 @@ class MainWindow(QMainWindow):
         self.progressBarIncomplete.setFixedSize(widthToGo, int(30 * self.heightScale))
 
     #Download is finished, move on to next video in Queue (if nec) and update visuals
-    def downloadDone(self):
+    def downloadDone(self, type):
+        #TODO Play a short audio indicating the downloading is done
+        #If the video is part of a queue, check the download type. If type == 1, then it is either strictly audio or video, and it will wait for the type 2 to be emitted from the mend streams method.
+        if self.isQueue:
+            if type == 0 or type == 2:
+                self.downloadNextVideo()
+        else:
+            #Play audio indicating download completed
+            pass
+        
         self.fillOutputFolderDisplay()
+
+
     
     #Add a video to the queue
     def addToQue(self):
@@ -682,14 +693,20 @@ class MainWindow(QMainWindow):
         #Set Queue Flag to True to indicate downloaded videos are part of a queue, and disable main URL input to avoid errors
         self.isQueue = True
         self.urlInput.setReadOnly(True)
+        self.startQueueDownloadButton.setEnabled(False)
 
         self.downloadNextVideo()
 
     #Run next queue item
     def downloadNextVideo(self):
         if self.videoQueue.isEmpty():
+            self.isQueue = False
+            self.urlInput.setReadOnly(False)
+            self.startQueueDownloadButton.setEnabled(True)
+
             #TODO: Replace this with a pygame audio noise
             self.openStandardDialog('Success!', 'All videos queued for download have been successfully retrieved.')
+            return None
 
         #Get the first item in the queue
         queueItem = self.videoQueue.dequeue()

@@ -60,7 +60,7 @@ class Queue:
 
     #Get the item at the top of the queue
     def dequeue(self):
-        return self.videoQueue.pop()
+        return self.videoQueue.pop(0)
 
     #Remove a specific item from the queue
     def removeItem(self, ind):
