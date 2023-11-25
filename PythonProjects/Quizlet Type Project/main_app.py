@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QGuiApplication, QFont
+from set_obj import Set
 
 #Main Window Class
 class MainWindow(QMainWindow):
@@ -33,15 +34,18 @@ class MainWindow(QMainWindow):
         self.titleBarLayout = QHBoxLayout()
         
         self.createSetButton = QPushButton("Create Set")
-        self.playMatchTab = QPushButton("Match")
+        self.playMatchButton = QPushButton("Match")
         
         buttonSizes = QSize(int(150 * self.widthScale), int(75 * self.heightScale))
         
         self.createSetButton.setFixedSize(buttonSizes)
-        self.playMatchTab.setFixedSize(buttonSizes)
+        self.createSetButton.clicked.connect(self.navCreateSet)
+        
+        self.playMatchButton.setFixedSize(buttonSizes)
+        self.playMatchButton.clicked.connect(self.navMatch)
         
         self.titleBarLayout.addWidget(self.createSetButton)
-        self.titleBarLayout.addWidget(self.playMatchTab)
+        self.titleBarLayout.addWidget(self.playMatchButton)
         self.titleBarLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         
         self.logger.debug('Navigation bar complete.')
@@ -57,6 +61,8 @@ class MainWindow(QMainWindow):
         sideBarLabel.setFont(sideBarFont)
         
         self.sideBarLayout.addWidget(sideBarLabel)
+        self.sideBarLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
         self.logger.debug('Side bar complete.')
         
     
@@ -64,6 +70,8 @@ class MainWindow(QMainWindow):
     def createSetTab(self):
         self.logger.debug('Creating new set area...')
         self.createSetLayout = QVBoxLayout()
+        self.currentSet = Set()
+        self.removeSignalList = []
         
         self.setLabelLayout = QHBoxLayout()
         termLabel = QLabel('Terms')
@@ -75,6 +83,7 @@ class MainWindow(QMainWindow):
         
         self.createSetLayout.addLayout(self.setLabelLayout)
         
+        self.itemPairsLayout = QVBoxLayout()
         for i in range(5):
             self.addSetPair()
             
@@ -82,10 +91,12 @@ class MainWindow(QMainWindow):
         
         self.addPairButton = QPushButton('+')
         self.addPairButton.setFixedSize(int(50 * self.widthScale), int(25 * self.heightScale))
+        self.addPairButton.clicked.connect(self.addSetPair)
         
         self.addPairLayout.addWidget(self.addPairButton)
         self.addPairLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
         
+        self.createSetLayout.addLayout(self.itemPairsLayout)
         self.createSetLayout.addLayout(self.addPairLayout)
         
         self.logger.debug('New set area complete.')
@@ -146,9 +157,55 @@ class MainWindow(QMainWindow):
     # Slot Functions
     #----------------------
     
+    #Go to Create Set Tab
+    def navCreateSet(self):
+        self.mainAreaLayout.addLayout(self.createSetLayout)
+    
+    #Go to Match Tab
+    def navMatch(self):
+        self.mainAreaLayout.removeItem(self.createSetLayout)
+    
     #Add a new term-definition pair in a new set
     def addSetPair(self):
-        pass
+        pairLayout = QHBoxLayout()
+        termInput = QLineEdit()
+        definitionInput = QLineEdit()
+        removeBtn = QPushButton('-')
+        
+        pairLayout.addWidget(termInput)
+        pairLayout.addWidget(definitionInput)
+        pairLayout.addWidget(removeBtn)
+        
+        self.currentSet.addNode(termInput, definitionInput, pairLayout, removeBtn)
+        
+        self.itemPairsLayout.addLayout(pairLayout)
+        
+        #Update Signals
+        self.updateSetSignals()
+        
+    #Update the signals for creating a new set
+    def updateSetSignals(self):
+        #Disconnect Prior Signals
+        for connection in self.removeSignalList:
+            connection[0].disconnect()
+            
+        #Refresh Signal List
+        self.removeSignalList = []
+        
+        #Re-connect the signals
+        for i in range(self.currentSet.getLength()):
+            removeFunc = lambda checked, x=i: self.removeSetPair(x, checked)
+            button = self.currentSet.items[i].getBtn()
+            buttonConnection = [button.clicked, removeFunc]
+            buttonConnection[0].connect(buttonConnection[1])
+            self.removeSignalList.append(buttonConnection)
+            
+    #Remove a pair from the create set menu
+    def removeSetPair(self, index, null):
+        self.currentSet.removeNode(index)
+        self.updateSetSignals()
+                
+        
         
 #Main Method
 if __name__ == "__main__":
