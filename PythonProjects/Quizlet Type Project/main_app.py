@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QDialog,
     QHBoxLayout, QVBoxLayout, QTabWidget,
     QGridLayout, QSizePolicy, QWidget,
-    QSpacerItem
+    QSpacerItem, QTextEdit, QComboBox
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QGuiApplication, QFont
@@ -55,23 +55,22 @@ class MainWindow(QMainWindow):
         self.logger.debug('Creating side bar...')
         self.sideBarLayout = QVBoxLayout()
         
-        sideBarLabel = QLabel("Your Sets")
+        self.sideBarLabel = QLabel("Your Sets")
         sideBarFont = QFont()
         sideBarFont.setPointSize(24)
-        sideBarLabel.setFont(sideBarFont)
+        self.sideBarLabel.setFont(sideBarFont)
         
-        self.sideBarLayout.addWidget(sideBarLabel)
+        self.sideBarLayout.addWidget(self.sideBarLabel)
         self.sideBarLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
+        self.sideBarLayout.addWidget(sideBarLabel)
         self.logger.debug('Side bar complete.')
         
-    
     #Create set tab
     def createSetTab(self):
         self.logger.debug('Creating new set area...')
+        self.createSetContainer = QWidget()
         self.createSetLayout = QVBoxLayout()
-        self.currentSet = Set()
-        self.removeSignalList = []
         
         self.setLabelLayout = QHBoxLayout()
         termLabel = QLabel('Terms')
@@ -98,13 +97,48 @@ class MainWindow(QMainWindow):
         
         self.createSetLayout.addLayout(self.itemPairsLayout)
         self.createSetLayout.addLayout(self.addPairLayout)
+        self.createSetContainer.setLayout(self.createSetLayout)
         
         self.logger.debug('New set area complete.')
         
     #Match tab for testing out sets
     def createMatchTab(self):
-        pass
-    
+        self.logger.debug('Creating Match Tab...')
+        
+        self.matchContainer = QWidget()
+        self.matchMainLayout = QVBoxLayout()
+
+        matchLabel = QLabel("Match!")
+        matchFont = QFont()
+        matchFont.setPointSize(18)
+        matchLabel.setFont(matchFont)
+
+        self.startMatchLayout = QHBoxLayout()
+
+        #Create the options for selecting a set to study
+        self.selectSetDD = QComboBox()
+        self.populateMatchDD()
+
+        self.matchOptionsDD = QComboBox()
+        matchOptions = ['Given Definition, Match Term', 'Given Term, Match Definition', 'Mixed']
+        self.matchOptionsDD.addItems(matchOptions)
+
+        self.startMatchButton = QPushButton('Start')
+        
+        self.startMatchLayout.addWidget(self.selectSetDD)
+        self.startMatchLayout.addWidget(self.matchOptionsDD)
+        self.startMatchLayout.addWidget(self.startMatchButton)
+        self.startMatchLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.matchMainLayout.addWidget(matchLabel)
+        self.matchMainLayout.addLayout(self.startMatchLayout)
+        self.matchMainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        self.matchContainer.setLayout(self.matchMainLayout)
+        self.matchContainer.setHidden(True)
+        
+        self.logger.debug('Match tab complete.')
+
+    #Main Window Construction
     def __init__(self):
         #Calls parent constructor to create the window
         self.initLogger()
@@ -129,12 +163,14 @@ class MainWindow(QMainWindow):
         self.createTitleBar()
         self.createSideBar()
         self.createSetTab()
-        
+        self.createMatchTab()
+
         self.completeLayout = QHBoxLayout()
         self.mainAreaLayout = QVBoxLayout()
         
         self.mainAreaLayout.addLayout(self.titleBarLayout)
-        self.mainAreaLayout.addLayout(self.createSetLayout)
+        self.mainAreaLayout.addWidget(self.createSetContainer)
+        self.mainAreaLayout.addWidget(self.matchContainer)
         
         self.completeLayout.addSpacerItem(QSpacerItem(int(25 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
         self.completeLayout.addLayout(self.sideBarLayout)
@@ -153,59 +189,17 @@ class MainWindow(QMainWindow):
     # Start-up Functions
     #----------------------
     
+    #Populate the select set dropdown menu in the match tab
+    def populateMatchDD(self):
+        pass
+
     #----------------------
     # Slot Functions
     #----------------------
     
-    #Go to Create Set Tab
-    def navCreateSet(self):
-        self.mainAreaLayout.addLayout(self.createSetLayout)
-    
-    #Go to Match Tab
-    def navMatch(self):
-        self.mainAreaLayout.removeItem(self.createSetLayout)
-    
     #Add a new term-definition pair in a new set
     def addSetPair(self):
-        pairLayout = QHBoxLayout()
-        termInput = QLineEdit()
-        definitionInput = QLineEdit()
-        removeBtn = QPushButton('-')
-        
-        pairLayout.addWidget(termInput)
-        pairLayout.addWidget(definitionInput)
-        pairLayout.addWidget(removeBtn)
-        
-        self.currentSet.addNode(termInput, definitionInput, pairLayout, removeBtn)
-        
-        self.itemPairsLayout.addLayout(pairLayout)
-        
-        #Update Signals
-        self.updateSetSignals()
-        
-    #Update the signals for creating a new set
-    def updateSetSignals(self):
-        #Disconnect Prior Signals
-        for connection in self.removeSignalList:
-            connection[0].disconnect()
-            
-        #Refresh Signal List
-        self.removeSignalList = []
-        
-        #Re-connect the signals
-        for i in range(self.currentSet.getLength()):
-            removeFunc = lambda checked, x=i: self.removeSetPair(x, checked)
-            button = self.currentSet.items[i].getBtn()
-            buttonConnection = [button.clicked, removeFunc]
-            buttonConnection[0].connect(buttonConnection[1])
-            self.removeSignalList.append(buttonConnection)
-            
-    #Remove a pair from the create set menu
-    def removeSetPair(self, index, null):
-        self.currentSet.removeNode(index)
-        self.updateSetSignals()
-                
-        
+        pass
         
 #Main Method
 if __name__ == "__main__":
