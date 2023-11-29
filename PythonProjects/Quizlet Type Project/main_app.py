@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QGuiApplication, QFont
 from set_obj import Set
+from sidebar import SideBar
 from decorators import log_start_and_stop
 
 
@@ -46,6 +47,7 @@ class MainWindow(QMainWindow):
     @log_start_and_stop
     def createSideBar(self):
         self.sideBarLayout = QVBoxLayout()
+        self.sideBar = SideBar()
         
         sideBarLabel = QLabel("Your Sets")
         sideBarFont = QFont()
@@ -56,6 +58,7 @@ class MainWindow(QMainWindow):
         self.sideBarLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         self.sideBarLayout.addWidget(sideBarLabel)
+        self.populateSideBar()
         
     #Create set tab
     @log_start_and_stop
@@ -118,7 +121,6 @@ class MainWindow(QMainWindow):
         containerLayout.addLayout(self.createSetLayout)
         containerLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.createSetContainer.setLayout(containerLayout)
-        
         
     #Match tab for testing out sets
     @log_start_and_stop
@@ -204,9 +206,38 @@ class MainWindow(QMainWindow):
     # Start-up Functions
     #----------------------
     
+    #Populate the Side Bar
+    def populateSideBar(self):
+        setsConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
+        with open(setsConfigsPath, 'r') as file:
+            line = file.readline()
+            if ':' not in line:
+                self.addSideBarSet(line)
+    
+    #Add a entry for a set on the side bar
+    def addSideBarSet(self, title):
+        setLayout = QHBoxLayout()
+        titleLabel = QLabel(title)
+        editBtn = QPushButton('Edit')
+        deleteBtn = QPushButton('Delete')
+                
+        setLayout.addWidget(titleLabel)
+        setLayout.addWidget(editBtn)
+        setLayout.addWidget(deleteBtn)
+        setLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        
+        self.sideBarLayout.addLayout(setLayout)
+        self.sideBar.addNode(titleLabel, editBtn, deleteBtn, setLayout)
+        
+        #TODO: Work with edit and delete signals
+    
     #Populate the select set dropdown menu in the match tab
     def populateMatchDD(self):
-        pass
+        setsConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
+        with open(setsConfigsPath, 'r') as file:
+            line = file.readline()
+            if ':' not in line:
+                self.selectSetDD.addItem(line.rstrip())
 
     #----------------------
     # Slot Functions
@@ -291,13 +322,13 @@ class MainWindow(QMainWindow):
                 s = '{}:{}\n'.format(term, setVals[term])
                 file.write(s)
 
+        #Add title to dropdowns and side bar
+        self.addSideBarSet(setName)
+        self.selectSetDD.addItem(setName)
+        
         #Ping user that set was successfully created
         self.openMessageDialog('Success!', 'Your set {} was successfully created!'.format(setName))
             
-
-
-
-    
     #----------------------
     # Dialog Methods
     #----------------------

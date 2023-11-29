@@ -4,3 +4,6 @@ Soup:A broth with added ingredients
 Cereal:Soup, but cold.
 Cinnamon Toast Crunch:Objectively the best cereal
 Wheat Thins:Worst cereal no debate
+Coding Example
+bab:goo
+foo:bar

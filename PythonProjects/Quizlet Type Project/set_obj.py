@@ -95,7 +95,8 @@ class Set:
         finalList = {}
         for i in range(self.getLength()):
             termText, defText = self.items[i].getVals()
-            finalList[termText] = defText
+            if termText:
+                finalList[termText] = defText
 
         return finalList
 
