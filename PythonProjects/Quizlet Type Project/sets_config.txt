@@ -1,9 +1,0 @@
-Format:
-Set Name
-term1:definition1
-term2:definition2
-.
-.
-.
-term(n):definition(n)
-Set Name 2 ...

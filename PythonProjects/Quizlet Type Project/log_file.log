@@ -1,8 +1,16 @@
-Advanced Logging: DEBUG - Initiating Window - on 11/25/2023 at 14:01 PM
-Advanced Logging: DEBUG - Creating navigation layout... - on 11/25/2023 at 14:01 PM
-Advanced Logging: DEBUG - Navigation bar complete. - on 11/25/2023 at 14:01 PM
-Advanced Logging: DEBUG - Creating side bar... - on 11/25/2023 at 14:01 PM
-Advanced Logging: DEBUG - Side bar complete. - on 11/25/2023 at 14:01 PM
-Advanced Logging: DEBUG - Creating new set area... - on 11/25/2023 at 14:01 PM
-Advanced Logging: DEBUG - New set area complete. - on 11/25/2023 at 14:01 PM
-Advanced Logging: DEBUG - Main window created. - on 11/25/2023 at 14:01 PM
+Main Logger: INFO - Starting __init__... - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Starting createTitleBar... - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Finished createTitleBar. - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Starting createSideBar... - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Finished createSideBar. - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Starting createSetTab... - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Finished createSetTab. - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Starting createMatchTab... - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Finished createMatchTab. - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Finished __init__. - on 11/28/2023 at 22:35 PM
+Main Logger: INFO - Starting finalizeSet... - on 11/28/2023 at 22:38 PM
+Main Logger: INFO - Starting isPairsEmpty... - on 11/28/2023 at 22:38 PM
+Main Logger: INFO - Finished isPairsEmpty. - on 11/28/2023 at 22:38 PM
+Main Logger: INFO - Starting getPairData... - on 11/28/2023 at 22:38 PM
+Main Logger: INFO - Finished getPairData. - on 11/28/2023 at 22:38 PM
+Main Logger: INFO - Finished finalizeSet. - on 11/28/2023 at 22:38 PM
