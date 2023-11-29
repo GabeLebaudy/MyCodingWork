@@ -15,6 +15,7 @@ from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QGuiApplication, QFont
 from set_obj import Set
 from sidebar import SideBar
+from match import Match
 from decorators import log_start_and_stop
 
 
@@ -125,13 +126,15 @@ class MainWindow(QMainWindow):
     #Match tab for testing out sets
     @log_start_and_stop
     def createMatchTab(self):
+        self.match = Match()
         self.matchContainer = QWidget()
         self.matchMainLayout = QVBoxLayout()
 
         matchLabel = QLabel("Match!")
         matchFont = QFont()
-        matchFont.setPointSize(18)
+        matchFont.setPointSize(24)
         matchLabel.setFont(matchFont)
+        matchLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.startMatchLayout = QHBoxLayout()
 
@@ -144,14 +147,18 @@ class MainWindow(QMainWindow):
         self.matchOptionsDD.addItems(matchOptions)
 
         self.startMatchButton = QPushButton('Start')
+        self.startMatchButton.clicked.connect(self.startMatch)
         
         self.startMatchLayout.addWidget(self.selectSetDD)
         self.startMatchLayout.addWidget(self.matchOptionsDD)
         self.startMatchLayout.addWidget(self.startMatchButton)
         self.startMatchLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
+        self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.addWidget(matchLabel)
+        self.matchMainLayout.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.matchMainLayout.addLayout(self.startMatchLayout)
+        self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.matchContainer.setLayout(self.matchMainLayout)
         self.matchContainer.setHidden(True)
@@ -207,19 +214,27 @@ class MainWindow(QMainWindow):
     #----------------------
     
     #Populate the Side Bar
+    @log_start_and_stop
     def populateSideBar(self):
         setsConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
         with open(setsConfigsPath, 'r') as file:
-            line = file.readline()
+            lines = file.readlines()
+
+        for line in lines:
+            line = line.rstrip()
             if ':' not in line:
                 self.addSideBarSet(line)
-    
+
     #Add a entry for a set on the side bar
     def addSideBarSet(self, title):
         setLayout = QHBoxLayout()
         titleLabel = QLabel(title)
         editBtn = QPushButton('Edit')
         deleteBtn = QPushButton('Delete')
+
+        #TODO: Fix this word wrap issue
+        titleLabel.setFixedWidth(int(125 * self.widthScale))
+        titleLabel.setWordWrap(True)
                 
         setLayout.addWidget(titleLabel)
         setLayout.addWidget(editBtn)
@@ -232,10 +247,14 @@ class MainWindow(QMainWindow):
         #TODO: Work with edit and delete signals
     
     #Populate the select set dropdown menu in the match tab
+    @log_start_and_stop
     def populateMatchDD(self):
         setsConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
         with open(setsConfigsPath, 'r') as file:
-            line = file.readline()
+            lines = file.readlines()
+
+        for line in lines:
+            line = line.rstrip()
             if ':' not in line:
                 self.selectSetDD.addItem(line.rstrip())
 
@@ -297,6 +316,38 @@ class MainWindow(QMainWindow):
     def removeSetPair(self, index, null):
         self.set.removeNode(index)
         self.updatePairSignals()
+    
+    #Start the match game
+    @log_start_and_stop
+    def startMatch(self, *args, **kwargs):
+        #Pull match parameters
+        matchSet = self.selectSetDD.currentText()
+        gamemode = self.matchOptionsDD.currentIndex()
+
+        #Populate Match Storage
+        configPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
+        with open(configPath, 'r') as f:
+            lines = f.readlines()
+
+        startIndex = -1
+        for i in range(len(lines)):
+            if lines[i].rstrip() == matchSet:
+                startIndex = i
+                break 
+
+        if startIndex == -1:
+            self.openMessageDialog('Error', "The program couldn't find the set selected.")
+            return 
+
+        for i in range(startIndex + 1, len(lines)):
+            lines[i] = lines[i].rstrip()
+            if ':' in lines[i]:
+                contents = lines[i].split(':')
+                self.match.addMatchPair(contents[0], contents[1])
+            else:
+                break                
+
+
 
     #Finalize the creation of a new set
     @log_start_and_stop
