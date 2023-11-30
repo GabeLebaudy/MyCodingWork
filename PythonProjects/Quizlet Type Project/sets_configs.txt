@@ -7,3 +7,10 @@ Wheat Thins:Worst cereal no debate
 Coding Example
 bab:goo
 foo:bar
+Monica 1
+acme:(n) summit, peak, highest point
+adverse:(adj) harmful, opposing
+affable:(adj) warm, friendly
+affectation:(n) fake behavior adopted to give a certain impression
+aggrandize:(v) to exaggerate
+aggregate:(v) to gather together

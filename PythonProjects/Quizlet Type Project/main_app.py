@@ -137,6 +137,7 @@ class MainWindow(QMainWindow):
         matchLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.startMatchLayout = QHBoxLayout()
+        self.startMatchContainer = QWidget()
 
         #Create the options for selecting a set to study
         self.selectSetDD = QComboBox()
@@ -153,11 +154,50 @@ class MainWindow(QMainWindow):
         self.startMatchLayout.addWidget(self.matchOptionsDD)
         self.startMatchLayout.addWidget(self.startMatchButton)
         self.startMatchLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
+        self.startMatchContainer.setLayout(self.startMatchLayout)
+        
+        #Actual Match layout
+        self.mainMatchQLayout = QVBoxLayout()
+        self.mainMatchQContainer = QWidget()
+        
+        self.matchInfoLayout = QHBoxLayout()
+        self.matchInfoLabel = QLabel('0/0')
+        
+        self.matchInfoLayout.addWidget(self.matchInfoLabel)
+        self.matchInfoLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        
+        self.questionLayout = QHBoxLayout()
+        self.questionLabel = QLabel('Sample Question')
+        questionFont = QFont()
+        questionFont.setPointSize(14)
+        self.questionLabel.setFont(questionFont)
+        
+        self.questionLayout.addWidget(self.questionLabel)
+        self.questionLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.answerLayout = QHBoxLayout() 
+        self.answerInput = QLineEdit()
+        self.submitAnswerBtn = QPushButton('Check')
+        
+        self.answerInput.returnPressed.connect(self.checkMatchAnswer)
+        self.submitAnswerBtn.clicked.connect(self.checkMatchAnswer)
+        
+        self.answerInput.setBaseSize(int(500 * self.widthScale), int(40 * self.heightScale))
+        
+        self.answerLayout.addWidget(self.answerInput)
+        self.answerLayout.addWidget(self.submitAnswerBtn)
+        
+        self.mainMatchQLayout.addLayout(self.matchInfoLayout)
+        self.mainMatchQLayout.addLayout(self.questionLayout)
+        self.mainMatchQLayout.addLayout(self.answerLayout)
+        self.mainMatchQContainer.setLayout(self.mainMatchQLayout)
+        self.mainMatchQContainer.setHidden(True)
+        
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.addWidget(matchLabel)
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
-        self.matchMainLayout.addLayout(self.startMatchLayout)
+        self.matchMainLayout.addWidget(self.startMatchContainer)
+        self.matchMainLayout.addWidget(self.mainMatchQContainer)
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.matchContainer.setLayout(self.matchMainLayout)
@@ -346,8 +386,27 @@ class MainWindow(QMainWindow):
                 self.match.addMatchPair(contents[0], contents[1])
             else:
                 break                
-
-
+        
+        #Set the match gamemode from input
+        self.match.setGamemode(gamemode)
+        
+        #Shuffle the pairs
+        self.match.shuffle()
+        
+        #Set match layout
+        self.startMatchContainer.setHidden(True)
+        self.mainMatchQContainer.setHidden(False)
+        
+        #Start game
+        self.startNextMatchPair()
+        
+    #Give user the next match question
+    def startNextMatchPair(self):
+        pass
+    
+    #Check user inputted answer
+    def checkMatchAnswer(self):
+        pass
 
     #Finalize the creation of a new set
     @log_start_and_stop
