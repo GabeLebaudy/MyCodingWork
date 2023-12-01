@@ -130,6 +130,7 @@ class MainWindow(QMainWindow):
         self.matchContainer = QWidget()
         self.matchMainLayout = QVBoxLayout()
 
+        #Match home screen
         matchLabel = QLabel("Match!")
         matchFont = QFont()
         matchFont.setPointSize(24)
@@ -160,16 +161,19 @@ class MainWindow(QMainWindow):
         self.mainMatchQLayout = QVBoxLayout()
         self.mainMatchQContainer = QWidget()
         
+        questionFont = QFont()
+        questionFont.setPointSize(14)
+
         self.matchInfoLayout = QHBoxLayout()
         self.matchInfoLabel = QLabel('0/0')
+        self.matchInfoLabel.setFont(questionFont)
         
         self.matchInfoLayout.addWidget(self.matchInfoLabel)
+        self.matchInfoLayout.addSpacerItem(QSpacerItem(int(300 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
         self.matchInfoLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
         
         self.questionLayout = QHBoxLayout()
         self.questionLabel = QLabel('Sample Question')
-        questionFont = QFont()
-        questionFont.setPointSize(14)
         self.questionLabel.setFont(questionFont)
         
         self.questionLayout.addWidget(self.questionLabel)
@@ -182,22 +186,80 @@ class MainWindow(QMainWindow):
         self.answerInput.returnPressed.connect(self.checkMatchAnswer)
         self.submitAnswerBtn.clicked.connect(self.checkMatchAnswer)
         
-        self.answerInput.setBaseSize(int(500 * self.widthScale), int(40 * self.heightScale))
+        answerFont = QFont()
+        answerFont.setPointSize(16)
+        self.answerInput.setFont(answerFont)
+        self.answerInput.setFixedSize(int(500 * self.widthScale), int(40 * self.heightScale))
+        self.answerInput.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+
+        self.submitAnswerBtn.setFixedSize(int(100 * self.widthScale), int(40 * self.heightScale))
+        self.submitAnswerBtn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         
         self.answerLayout.addWidget(self.answerInput)
         self.answerLayout.addWidget(self.submitAnswerBtn)
-        
+        self.answerLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        #Combine Main Game Layout
         self.mainMatchQLayout.addLayout(self.matchInfoLayout)
         self.mainMatchQLayout.addLayout(self.questionLayout)
+        self.mainMatchQLayout.addSpacerItem(QSpacerItem(0, int(25 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.mainMatchQLayout.addLayout(self.answerLayout)
         self.mainMatchQContainer.setLayout(self.mainMatchQLayout)
         self.mainMatchQContainer.setHidden(True)
+
+        #Layout for correct answer
+        self.answerCorrectLayout = QVBoxLayout()
+        self.answerCorrectContainer = QWidget()
         
+        answerCorrectLabel = QLabel('Correct!')
+        answerCorrectFont = QFont()
+        answerCorrectFont.setPointSize(24)
+        answerCorrectLabel.setFont(answerCorrectFont)
+
+        self.continueMatchBtn = QPushButton('Next')
+        self.continueMatchBtn.setFixedSize(int(100 * self.widthScale), int(40 * self.heightScale))
+        self.continueMatchBtn.clicked.connect(self.startNextMatchPair)
+
+        self.answerCorrectLayout.addWidget(answerCorrectLabel)
+        self.answerCorrectLayout.addSpacerItem(QSpacerItem(0, int(25 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        self.answerCorrectLayout.addWidget(self.continueMatchBtn)
+        self.answerCorrectLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.answerCorrectContainer.setLayout(self.answerCorrectLayout)
+        self.answerCorrectContainer.setHidden(True)
+        
+        #Layout for incorrect answer
+        self.incorrectAnswerContainer = QWidget()
+        self.incorrectAnswerLayout = QVBoxLayout()
+
+        incorrectAnswerLabel = QLabel('Incorrect')
+        incorrectAnswerLabel.setFont(answerCorrectFont)
+
+        self.answerDisplayLabel = QLabel('The correct answer was: ')
+        self.answerDisplayLabel.setFont(answerFont)
+
+        self.incorrectAnswerChoiceLayout = QHBoxLayout()
+        self.overrideBtn = QPushButton('Override, I was right.')
+        self.continueWithWrongAnswerBtn = QPushButton('Continue')
+
+        self.incorrectAnswerChoiceLayout.addWidget(self.overrideBtn)
+        self.incorrectAnswerChoiceLayout.addWidget(self.continueWithWrongAnswerBtn)
+        self.incorrectAnswerChoiceLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.incorrectAnswerLayout.addWidget(incorrectAnswerLabel)
+        self.incorrectAnswerLayout.addWidget(self.answerDisplayLabel)
+        self.incorrectAnswerLayout.addLayout(self.incorrectAnswerChoiceLayout)
+        self.incorrectAnswerLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.incorrectAnswerContainer.setLayout(self.incorrectAnswerLayout)
+        self.incorrectAnswerContainer.setHidden(True)
+
+        #Container for all match layouts
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.addWidget(matchLabel)
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.matchMainLayout.addWidget(self.startMatchContainer)
         self.matchMainLayout.addWidget(self.mainMatchQContainer)
+        self.matchMainLayout.addWidget(self.answerCorrectContainer)
+        self.matchMainLayout.addWidget(self.incorrectAnswerContainer)
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.matchContainer.setLayout(self.matchMainLayout)
@@ -397,16 +459,57 @@ class MainWindow(QMainWindow):
         self.startMatchContainer.setHidden(True)
         self.mainMatchQContainer.setHidden(False)
         
+        #Initialize progress label info
+        self.lenFullSet = self.match.getLength()
+        self.correctCounter = 0
+
         #Start game
         self.startNextMatchPair()
         
     #Give user the next match question
     def startNextMatchPair(self):
-        pass
+        #Show correct layout while hiding post-answer layouts
+        self.answerCorrectContainer.setHidden(True)
+        self.mainMatchQContainer.setHidden(False)
+
+        #Set the progress label text
+        self.matchInfoLabel.setText('{}/{}'.format(self.correctCounter, self.lenFullSet))
+
+        #Pull question text
+        question = self.match.getQuestion()
+        self.questionLabel.setText(question)
     
     #Check user inputted answer
     def checkMatchAnswer(self):
+        #Check is the user entered anything
+        if not self.answerInput.text():
+            return
+        
+        #Pull answer then wipe input
+        userAnswer = self.answerInput.text()
+        self.answerInput.setText('')
+        isCorrect, answer = self.match.isRight(userAnswer)
+
+        #Check answer
+        if isCorrect:
+            #Answer was correct, show correct layout, with button linked to start the next question
+            self.mainMatchQContainer.setHidden(True)
+            self.answerCorrectContainer.setHidden(False)
+            self.correctCounter += 1
+            self.match.answeredCorrect()
+        else:
+            #Answer was incorrect, show incorrect answer layout, with a manual override, or continue button.
+            self.mainMatchQContainer.setHidden(True)
+            self.incorrectAnswerContainer.setHidden(False)
+
+    #Override incorrect answer
+    def overrideWrongAnswer(self):
         pass
+
+    #Continue with wrong answer
+    def continueMatchWrong(self):
+        pass
+        
 
     #Finalize the creation of a new set
     @log_start_and_stop
