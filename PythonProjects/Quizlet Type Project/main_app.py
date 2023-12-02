@@ -237,9 +237,15 @@ class MainWindow(QMainWindow):
         self.answerDisplayLabel = QLabel('The correct answer was: ')
         self.answerDisplayLabel.setFont(answerFont)
 
+        self.yourAnswerDisplayLabel = QLabel('Your answer was: ')
+        self.yourAnswerDisplayLabel.setFont(answerFont)
+
         self.incorrectAnswerChoiceLayout = QHBoxLayout()
         self.overrideBtn = QPushButton('Override, I was right.')
         self.continueWithWrongAnswerBtn = QPushButton('Continue')
+
+        self.overrideBtn.clicked.connect(self.overrideWrongAnswer)
+        self.continueWithWrongAnswerBtn.clicked.connect(self.continueMatchWrong)
 
         self.incorrectAnswerChoiceLayout.addWidget(self.overrideBtn)
         self.incorrectAnswerChoiceLayout.addWidget(self.continueWithWrongAnswerBtn)
@@ -247,10 +253,35 @@ class MainWindow(QMainWindow):
 
         self.incorrectAnswerLayout.addWidget(incorrectAnswerLabel)
         self.incorrectAnswerLayout.addWidget(self.answerDisplayLabel)
+        self.incorrectAnswerLayout.addWidget(self.yourAnswerDisplayLabel)
         self.incorrectAnswerLayout.addLayout(self.incorrectAnswerChoiceLayout)
         self.incorrectAnswerLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.incorrectAnswerContainer.setLayout(self.incorrectAnswerLayout)
         self.incorrectAnswerContainer.setHidden(True)
+
+        #Match completed screen
+        self.matchCompletedContainer = QWidget()
+        self.matchCompletedLayout = QVBoxLayout()
+
+        matchCompletedLabel = QLabel('Good Job!')
+        matchCompletedLabel.setFont(answerCorrectFont)
+
+        self.matchCompletedBtnLayout = QHBoxLayout()
+
+        self.replayMatchBtn = QPushButton('Replay set')
+        self.finishMatchBtn = QPushButton('Finish')
+
+        self.replayMatchBtn.clicked.connect(self.replayMatchGame)
+        self.finishMatchBtn.clicked.connect(self.resetMatchTab)
+
+        self.matchCompletedBtnLayout.addWidget(self.replayMatchBtn)
+        self.matchCompletedBtnLayout.addWidget(self.finishMatchBtn)
+
+        self.matchCompletedLayout.addWidget(matchCompletedLabel)
+        self.matchCompletedLayout.addLayout(self.matchCompletedBtnLayout)
+        self.matchCompletedLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.matchCompletedContainer.setLayout(self.matchCompletedLayout)
+        self.matchCompletedContainer.setHidden(True)
 
         #Container for all match layouts
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
@@ -260,6 +291,7 @@ class MainWindow(QMainWindow):
         self.matchMainLayout.addWidget(self.mainMatchQContainer)
         self.matchMainLayout.addWidget(self.answerCorrectContainer)
         self.matchMainLayout.addWidget(self.incorrectAnswerContainer)
+        self.matchMainLayout.addWidget(self.matchCompletedContainer)
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.matchContainer.setLayout(self.matchMainLayout)
@@ -470,6 +502,7 @@ class MainWindow(QMainWindow):
     def startNextMatchPair(self):
         #Show correct layout while hiding post-answer layouts
         self.answerCorrectContainer.setHidden(True)
+        self.incorrectAnswerContainer.setHidden(True)
         self.mainMatchQContainer.setHidden(False)
 
         #Set the progress label text
@@ -492,24 +525,67 @@ class MainWindow(QMainWindow):
 
         #Check answer
         if isCorrect:
+            self.correctCounter += 1
+            self.match.answeredCorrect()
+
+            #Check if answer was the last question
+            if self.correctCounter >= self.lenFullSet:
+                self.matchComlpeted()
+                return
+             
             #Answer was correct, show correct layout, with button linked to start the next question
             self.mainMatchQContainer.setHidden(True)
             self.answerCorrectContainer.setHidden(False)
-            self.correctCounter += 1
-            self.match.answeredCorrect()
         else:
             #Answer was incorrect, show incorrect answer layout, with a manual override, or continue button.
             self.mainMatchQContainer.setHidden(True)
             self.incorrectAnswerContainer.setHidden(False)
 
+            #Show correct answer
+            self.answerDisplayLabel.setText('The correct answer was: {}'.format(answer))
+            self.yourAnswerDisplayLabel.setText('Your answer was: {}'.format(userAnswer))
+
     #Override incorrect answer
     def overrideWrongAnswer(self):
-        pass
+        #Act as if answer was correct
+        self.correctCounter += 1
+        self.match.answeredCorrect()
+
+        #Check if answer was the last question
+        if self.correctCounter >= self.lenFullSet:
+            self.matchComlpeted()
+            return
+        
+        #Continue with the game
+        self.startNextMatchPair()
+
 
     #Continue with wrong answer
     def continueMatchWrong(self):
-        pass
-        
+        self.match.reshuffleQuestion()
+        self.startNextMatchPair()
+
+    #Show finished match screen
+    @log_start_and_stop
+    def matchComlpeted(self):
+        #Reset match object
+        self.match.resetGame()
+
+        #Show the match complete screen
+        self.answerCorrectContainer.setHidden(True)
+        self.incorrectAnswerContainer.setHidden(True)
+        self.mainMatchQContainer.setHidden(True)
+        self.matchCompletedContainer.setHidden(False)      
+
+    #Replay set button   
+    def replayMatchGame(self):
+        self.matchCompletedContainer.setHidden(True)
+        self.startMatch()
+
+    #Reset match tab
+    def resetMatchTab(self):
+        self.matchCompletedContainer.setHidden(True)
+        self.startMatchContainer.setHidden(False)
 
     #Finalize the creation of a new set
     @log_start_and_stop

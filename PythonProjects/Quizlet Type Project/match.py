@@ -65,18 +65,32 @@ class Match:
     #Return if user was right, and the answer string
     def isRight(self, userAnswer):
         if self.gamemode == 0:
-            wasRight = self.allPairs[0][0] == userAnswer
+            wasRight = self.allPairs[0][0].lower() == userAnswer.lower()
             return wasRight, self.allPairs[0][0]
         elif self.gamemode == 1:
-            wasRight = self.allPairs[0][1] == userAnswer
+            wasRight = self.allPairs[0][1].lower() == userAnswer.lower()
             return wasRight, self.allPairs[0][1]
         else:
-            tupleIndex = 1 if self.mixedFlag == 0 else 1
-            wasRight = self.allPairs[0][tupleIndex] == userAnswer
+            tupleIndex = 1 if self.mixedFlag == 0 else 0
+            wasRight = self.allPairs[0][tupleIndex].lower() == userAnswer.lower()
             return wasRight, self.allPairs[0][tupleIndex]
         
     #Function for if user answered correctly
+    @log_start_and_stop
     def answeredCorrect(self):
         self.allPairs.pop(0)
 
+    #Function for if the user answered incorrectly
+    @log_start_and_stop
+    def reshuffleQuestion(self):
+        item = self.allPairs.pop(0)
+        if len(self.allPairs) >= 1:
+            newIndex = random.randint(1, len(self.allPairs))
+            self.allPairs.insert(newIndex, item)
+
+    #Game is completed, reset the match obj
+    def resetGame(self):
+        self.allPairs = []
+        self.gamemode = 0
+        self.mixedFlag = 0
         
