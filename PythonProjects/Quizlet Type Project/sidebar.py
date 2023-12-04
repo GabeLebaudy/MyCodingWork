@@ -36,6 +36,8 @@ class SideBar:
     #Constructor
     def __init__(self):
         self.items = []
+        self.editSignals = []
+        self.deleteSignals = []
         
     #Add a pair to the set
     def addNode(self, title, edit, delete, layout):
@@ -51,3 +53,20 @@ class SideBar:
     def getLength(self):
         return len(self.items)    
     
+    #Reset the signals
+    def resetSignals(self):
+        for connection in self.editSignals:
+            connection[0].disconnect()
+            
+        for connection in self.deleteSignals:
+            connection[0].disconnect()
+            
+        self.editSignals, self.deleteSignals = [], []
+    
+    #Add edit signal
+    def addEditSignal(self, signal):
+        self.editSignals.append(signal)
+        
+    #Add delete signal
+    def addDeleteSignal(self, signal):
+        self.deleteSignals.append(signal)

@@ -282,6 +282,19 @@ class MainWindow(QMainWindow):
         self.matchCompletedLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.matchCompletedContainer.setLayout(self.matchCompletedLayout)
         self.matchCompletedContainer.setHidden(True)
+        
+        #Cancel Match Game Option
+        self.cancelMatchContainer = QWidget()
+        self.cancelMatchLayout = QHBoxLayout()
+        
+        self.cancelMatchBtn = QPushButton('Exit')
+        self.cancelMatchBtn.clicked.connect(self.cancelMatch)
+        
+        self.cancelMatchLayout.addSpacerItem(QSpacerItem(int(300 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
+        self.cancelMatchLayout.addWidget(self.cancelMatchBtn)
+        self.cancelMatchLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.cancelMatchContainer.setLayout(self.cancelMatchLayout)
+        self.cancelMatchContainer.setHidden(True)
 
         #Container for all match layouts
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
@@ -292,6 +305,8 @@ class MainWindow(QMainWindow):
         self.matchMainLayout.addWidget(self.answerCorrectContainer)
         self.matchMainLayout.addWidget(self.incorrectAnswerContainer)
         self.matchMainLayout.addWidget(self.matchCompletedContainer)
+        self.matchMainLayout.addSpacerItem(QSpacerItem(0, int(40 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
+        self.matchMainLayout.addWidget(self.cancelMatchContainer)
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.matchMainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.matchContainer.setLayout(self.matchMainLayout)
@@ -378,7 +393,7 @@ class MainWindow(QMainWindow):
         self.sideBarLayout.addLayout(setLayout)
         self.sideBar.addNode(titleLabel, editBtn, deleteBtn, setLayout)
         
-        #TODO: Work with edit and delete signals
+        self.updateSideBarSignals()
     
     #Populate the select set dropdown menu in the match tab
     @log_start_and_stop
@@ -490,6 +505,7 @@ class MainWindow(QMainWindow):
         #Set match layout
         self.startMatchContainer.setHidden(True)
         self.mainMatchQContainer.setHidden(False)
+        self.cancelMatchContainer.setHidden(False)
         
         #Initialize progress label info
         self.lenFullSet = self.match.getLength()
@@ -559,7 +575,6 @@ class MainWindow(QMainWindow):
         #Continue with the game
         self.startNextMatchPair()
 
-
     #Continue with wrong answer
     def continueMatchWrong(self):
         self.match.reshuffleQuestion()
@@ -575,6 +590,7 @@ class MainWindow(QMainWindow):
         self.answerCorrectContainer.setHidden(True)
         self.incorrectAnswerContainer.setHidden(True)
         self.mainMatchQContainer.setHidden(True)
+        self.cancelMatchContainer.setHidden(True)
         self.matchCompletedContainer.setHidden(False)      
 
     #Replay set button   
@@ -587,6 +603,16 @@ class MainWindow(QMainWindow):
         self.matchCompletedContainer.setHidden(True)
         self.startMatchContainer.setHidden(False)
 
+    #Cancel match mid-game
+    def cancelMatch(self):
+        self.match.resetGame()
+        
+        self.answerCorrectContainer.setHidden(True)
+        self.incorrectAnswerContainer.setHidden(True)
+        self.mainMatchQContainer.setHidden(True)
+        self.cancelMatchContainer.setHidden(True)
+        self.startMatchContainer.setHidden(False)
+        
     #Finalize the creation of a new set
     @log_start_and_stop
     def finalizeSet(self, *args, **kwargs):
@@ -617,7 +643,35 @@ class MainWindow(QMainWindow):
         
         #Ping user that set was successfully created
         self.openMessageDialog('Success!', 'Your set {} was successfully created!'.format(setName))
+    
+    #Update the signals of the edit button and the delete button for each set on the sidebar
+    def updateSideBarSignals(self):
+        self.sideBar.resetSignals()
+        
+        for i in range(self.sideBar.getLength()):
+            editFunction = lambda checked, x = i: self.editSet(x, checked)
+            deleteFunction = lambda checked, x = i: self.deleteSet(x, checked)
             
+            editButton = self.sideBar.items[i].getEditBtn()
+            deleteButton = self.sideBar.items[i].getDelBtn()
+            
+            editButtonConnection = [editButton.clicked, editFunction]
+            deleteButtonConnection = [deleteButton.clicked, deleteFunction]
+            
+            editButtonConnection[0].connect(editButtonConnection[1])
+            deleteButtonConnection[0].connect(deleteButtonConnection[1])
+            
+            self.sideBar.addEditSignal(editButtonConnection)
+            self.sideBar.addDeleteSignal(deleteButtonConnection) 
+    
+    #Edit a set
+    def editSet(self, index, null): #Null added to force added argument to different parameter\
+        print(index)
+    
+    #Delete a set from the list
+    def deleteSet(self, index, null):
+        print(index)
+    
     #----------------------
     # Dialog Methods
     #----------------------
@@ -685,7 +739,11 @@ class MainWindow(QMainWindow):
             return response
         else:
             return False
-        
+    
+    #Prompt user for a yes or no answer
+    def yesOrNoDialog(self, title, prompt, buttonText):
+        pass
+    
 #Main Method
 if __name__ == "__main__":
     app = QApplication([])

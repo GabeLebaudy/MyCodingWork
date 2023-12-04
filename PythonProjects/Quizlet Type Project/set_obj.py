@@ -32,6 +32,13 @@ class Node:
     def getVals(self):
         return self.termWid.toPlainText(), self.defWid.toPlainText()
     
+    #Setters
+    def setTermVal(self, val):
+        self.termWid.setText(val)
+        
+    def setDefVal(self, val):
+        self.defWid.setText(val)
+    
     #Delete widgets for the pair
     def delWidgets(self):
         self.termWid.deleteLater()
