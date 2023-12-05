@@ -46,12 +46,18 @@ class SideBar:
         
     #Remove a node with a given index
     def removeNode(self, index):
-        self.items[index].delWidgets()
+        self.items[index].deleteWidgets()
         del self.items[index]
 
     #Get the length of the set
     def getLength(self):
         return len(self.items)    
+    
+    def isEmpty(self):
+        return len(self.items) == 0
+    
+    def getSetName(self, index):
+        return self.items[index].titleLabel.text()
     
     #Reset the signals
     def resetSignals(self):

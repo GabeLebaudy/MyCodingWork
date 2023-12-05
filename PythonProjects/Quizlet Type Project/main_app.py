@@ -643,6 +643,13 @@ class MainWindow(QMainWindow):
         
         #Ping user that set was successfully created
         self.openMessageDialog('Success!', 'Your set {} was successfully created!'.format(setName))
+
+        #Reset the tab
+        while not(self.set.isEmpty()):
+            self.set.removeNode(0)
+        
+        for i in range(5):
+            self.addSetPair()
     
     #Update the signals of the edit button and the delete button for each set on the sidebar
     def updateSideBarSignals(self):
@@ -669,14 +676,63 @@ class MainWindow(QMainWindow):
         print(index)
     
     #Delete a set from the list
+    @log_start_and_stop
     def deleteSet(self, index, null):
-        print(index)
-    
+        #Use index to pull set title from sidebar object
+        setName = self.sideBar.getSetName(index)
+
+        testDialog = self.yesOrNoDialog('Deletion Confirmation', 'Are you sure you want to delete the following set:\n{}?'.format(setName), ['Delete', 'Cancel'])
+        if testDialog:
+            #User confirmed the deletion of the set
+            setConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
+            with open(setConfigsPath, 'r') as file:
+                setsData = file.readlines()
+
+            #Find indexes of set data in config file
+            startIndex, stopIndex = 0, 0
+            for i in range(len(setsData)):
+                if setsData[i].rstrip() == setName:
+                    startIndex = i
+                    break
+            
+            for i in range(startIndex + 1, len(setsData)):
+                if not(':' in setsData[i].rstrip()):
+                    stopIndex = i
+                    break
+            
+            #Use indexes to exclude set from complete data
+            if startIndex > 0:
+                firstSection = setsData[:startIndex]
+            else:
+                firstSection = []
+
+            if not(stopIndex == 0):
+                secondSection = setsData[stopIndex:]
+            else:
+                secondSection = []
+
+            #Overwrite file with new comlete data
+            removedSetData = firstSection + secondSection
+            with open(setConfigsPath, 'w') as file:
+                for line in removedSetData:
+                    file.write(line)
+
+            #Update side bar
+            self.sideBar.resetSignals()
+            
+            while not self.sideBar.isEmpty():
+                self.sideBar.removeNode(0)
+
+            self.populateSideBar()
+
+            
+                
     #----------------------
     # Dialog Methods
     #----------------------
     
     #Standard message dialog
+    @log_start_and_stop
     def openMessageDialog(self, title, message):
         standardDialog = QDialog(self)
         standardDialog.setWindowTitle(title)
@@ -702,6 +758,7 @@ class MainWindow(QMainWindow):
         standardDialog.exec()
 
     #Prompt user for input dialog
+    @log_start_and_stop
     def textInputDialog(self, title, prompt):
         titleDialog = QDialog(self)
         titleDialog.setWindowTitle(title)
@@ -741,8 +798,44 @@ class MainWindow(QMainWindow):
             return False
     
     #Prompt user for a yes or no answer
+    @log_start_and_stop
     def yesOrNoDialog(self, title, prompt, buttonText):
-        pass
+        confirmDialog = QDialog(self)
+        confirmDialog.setWindowTitle(title)
+        
+        dialogLayout = QVBoxLayout()
+        removeDialogLayout = QHBoxLayout()
+
+        okBtn = QPushButton(buttonText[0])
+        cancelBtn = QPushButton(buttonText[1])
+
+        removeButtonBox = QDialogButtonBox()
+        removeButtonBox.addButton(okBtn, QDialogButtonBox.ButtonRole.AcceptRole)
+        removeButtonBox.addButton(cancelBtn, QDialogButtonBox.ButtonRole.RejectRole)
+        
+        removeButtonBox.accepted.connect(confirmDialog.accept)
+        removeButtonBox.rejected.connect(confirmDialog.reject)
+        
+        dialogMessage = QLabel(prompt)
+        messageFont = QFont()
+        messageFont.setPointSize(14)
+        dialogMessage.setFont(messageFont)
+        dialogMessage.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        removeDialogLayout.addWidget(dialogMessage)
+        
+        hbox = QHBoxLayout()
+        hbox.addWidget(okBtn)
+        hbox.addStretch(1)
+        hbox.addWidget(cancelBtn)
+        
+        dialogLayout.addLayout(removeDialogLayout)
+        dialogLayout.addLayout(hbox)
+        confirmDialog.setLayout(dialogLayout)
+        
+        if confirmDialog.exec() == QDialog.DialogCode.Accepted:
+            return True
+        else:
+            return False
     
 #Main Method
 if __name__ == "__main__":
