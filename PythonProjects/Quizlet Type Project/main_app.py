@@ -672,9 +672,44 @@ class MainWindow(QMainWindow):
             self.sideBar.addDeleteSignal(deleteButtonConnection) 
     
     #Edit a set
-    def editSet(self, index, null): #Null added to force added argument to different parameter\
-        print(index)
-    
+    def editSet(self, index, null): #Null added to force added argument to different parameter
+        #Check if the create set is currently being edited
+        code = self.set.isPairsEmpty()
+        if code > 0:
+            confirmDialog = self.yesOrNoDialog('Conflict', 'This action will clear all data in the Create Set tab.\n Are you sure you want to continue?', ['Yes', 'No'])
+            if not confirmDialog:
+                return
+        
+        #Clear Previous Set
+        while not self.set.isEmpty():
+            self.set.removeNode(0)
+            
+        #Pull set information
+        setName = self.sideBar.getSetName(index)
+        setConfigFile = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
+        with open(setConfigFile, 'r') as file:
+            data = file.readlines()
+            
+        startInd, stopInd = self.findSetIndexes(data, setName)
+        if stopInd == 0:
+            setData = data[startInd + 1:]
+        else:
+            setData = data[startInd + 1:stopInd]
+            
+        for pair in setData:
+            #Create new widgets
+            self.addSetPair()
+            
+            #Fill in Pairs with data
+            pairItems = pair.rstrip().split(':')
+            self.set.items[-1].setTermVal(pairItems[0])
+            self.set.items[-1].setDefVal(pairItems[1])
+            
+        #Hide the create button layout, and 
+            
+        
+            
+        
     #Delete a set from the list
     @log_start_and_stop
     def deleteSet(self, index, null):
@@ -688,17 +723,8 @@ class MainWindow(QMainWindow):
             with open(setConfigsPath, 'r') as file:
                 setsData = file.readlines()
 
-            #Find indexes of set data in config file
-            startIndex, stopIndex = 0, 0
-            for i in range(len(setsData)):
-                if setsData[i].rstrip() == setName:
-                    startIndex = i
-                    break
-            
-            for i in range(startIndex + 1, len(setsData)):
-                if not(':' in setsData[i].rstrip()):
-                    stopIndex = i
-                    break
+            #Get indexes of set in the config file
+            startIndex, stopIndex = self.findSetIndexes(setsData, setName)
             
             #Use indexes to exclude set from complete data
             if startIndex > 0:
@@ -725,8 +751,21 @@ class MainWindow(QMainWindow):
 
             self.populateSideBar()
 
+    #Get the indexes of the set in the config file
+    def findSetIndexes(self, setsData, setName):
+        startIndex, stopIndex = 0, 0
+        for i in range(len(setsData)):
+            if setsData[i].rstrip() == setName:
+                startIndex = i
+                break
+        
+        for i in range(startIndex + 1, len(setsData)):
+            if not(':' in setsData[i].rstrip()):
+                stopIndex = i
+                break   
             
-                
+        return startIndex, stopIndex     
+    
     #----------------------
     # Dialog Methods
     #----------------------
