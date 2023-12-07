@@ -64,13 +64,53 @@ class MainWindow(QMainWindow):
     #Create set tab
     @log_start_and_stop
     def createSetTab(self):
+        #Set Object containing its data
         self.set = Set()
         self.removePairSignals = []
 
         self.createSetContainer = QWidget()
         containerLayout = QHBoxLayout()
         self.createSetLayout = QVBoxLayout()
-        
+
+        self.setTitleContainer = QWidget()
+        self.setTitleLayout = QHBoxLayout()
+
+        self.setModeLabel = QLabel('Create Set')
+
+        setModeFont = QFont()
+        setModeFont.setPointSize(32)
+        setModeFont.setBold(True)
+
+        self.setModeLabel.setFont(setModeFont)
+        self.setTitleLayout.addWidget(self.setModeLabel)
+        self.setTitleLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.setTitleContainer.setLayout(self.setTitleLayout)
+
+        #Change Set Name Layout
+        self.changeSetNameContainer = QWidget()
+        self.changeSetNameLayout = QHBoxLayout()
+
+        changeNameLabel = QLabel('Set Name:')
+        changeNameFont = QFont()
+        changeNameFont.setPointSize(16)
+        changeNameFont.setBold(True)
+        changeNameLabel.setFont(changeNameFont)
+
+        editSetNameFont = QFont()
+        editSetNameFont.setPointSize(14)
+
+        self.changeSetNameInput = QLineEdit()
+        self.changeSetNameInput.setFont(editSetNameFont)
+        self.changeSetNameInput.setFixedSize(int(300 * self.widthScale), int(30 * self.heightScale))
+        self.changeSetNameInput.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+
+        self.changeSetNameLayout.addWidget(changeNameLabel)
+        self.changeSetNameLayout.addWidget(self.changeSetNameInput)
+        self.changeSetNameLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.changeSetNameContainer.setLayout(self.changeSetNameLayout)
+        self.changeSetNameContainer.setHidden(True)
+
+        #Terms / Definitions / Pairs
         self.setLabelLayout = QHBoxLayout()
         termLabel = QLabel('Terms')
         definitionLabel = QLabel('Definitions')
@@ -88,6 +128,8 @@ class MainWindow(QMainWindow):
         self.setLabelLayout.addWidget(definitionLabel)
         self.setLabelLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         
+        self.createSetLayout.addWidget(self.setTitleContainer)
+        self.createSetLayout.addWidget(self.changeSetNameContainer)
         self.createSetLayout.addLayout(self.setLabelLayout)
         
         self.itemPairsLayout = QVBoxLayout()
@@ -103,6 +145,7 @@ class MainWindow(QMainWindow):
         self.addPairLayout.addWidget(self.addPairButton)
         self.addPairLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
+        self.finishSetContainer = QWidget()
         self.finishSetLayout = QHBoxLayout()
 
         self.finishSetButton = QPushButton("Create")
@@ -111,11 +154,32 @@ class MainWindow(QMainWindow):
 
         self.finishSetLayout.addWidget(self.finishSetButton)
         self.finishSetLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        
+        self.finishSetContainer.setLayout(self.finishSetLayout)
+
+        #For editing a set
+        self.finishEditContainer = QWidget()
+        self.finishEditLayout = QHBoxLayout()
+
+        self.cancelEditBtn = QPushButton('Cancel')
+        self.finishEditingBtn = QPushButton('Finish')
+
+        finishEditButtonSizes = QSize(int(125 * self.widthScale), int(50 * self.heightScale))
+        self.cancelEditBtn.setFixedSize(finishEditButtonSizes)
+        self.finishEditingBtn.setFixedSize(finishEditButtonSizes)
+
+        self.finishEditLayout.addWidget(self.cancelEditBtn)
+        self.finishEditLayout.addStretch(2)
+        self.finishEditLayout.addWidget(self.finishEditingBtn)
+        self.finishEditLayout.addStretch(3)
+        self.finishEditLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.finishEditContainer.setLayout(self.finishEditLayout)
+        self.finishEditContainer.setHidden(True)
+
         self.createSetLayout.addLayout(self.itemPairsLayout)
         self.createSetLayout.addSpacerItem(QSpacerItem(0, int(20 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.createSetLayout.addLayout(self.addPairLayout)
         self.createSetLayout.addLayout(self.finishSetLayout)
+        self.createSetLayout.addWidget(self.finishEditContainer)
         self.createSetLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
         containerLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
@@ -706,9 +770,10 @@ class MainWindow(QMainWindow):
             self.set.items[-1].setDefVal(pairItems[1])
             
         #Hide the create button layout, and 
-            
-        
-            
+        self.finishSetContainer.setHidden(True)
+        self.changeSetNameContainer.setHidden(False)
+        self.finishEditContainer.setHidden(False)
+        self.setModeLabel.setText('Edit Set')
         
     #Delete a set from the list
     @log_start_and_stop
