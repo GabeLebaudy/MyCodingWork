@@ -167,6 +167,9 @@ class MainWindow(QMainWindow):
         self.cancelEditBtn.setFixedSize(finishEditButtonSizes)
         self.finishEditingBtn.setFixedSize(finishEditButtonSizes)
 
+        self.cancelEditBtn.clicked.connect(self.cancelEdit)
+        self.finishEditingBtn.clicked.connect(self.finishEdit)
+
         self.finishEditLayout.addWidget(self.cancelEditBtn)
         self.finishEditLayout.addStretch(2)
         self.finishEditLayout.addWidget(self.finishEditingBtn)
@@ -178,7 +181,7 @@ class MainWindow(QMainWindow):
         self.createSetLayout.addLayout(self.itemPairsLayout)
         self.createSetLayout.addSpacerItem(QSpacerItem(0, int(20 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.createSetLayout.addLayout(self.addPairLayout)
-        self.createSetLayout.addLayout(self.finishSetLayout)
+        self.createSetLayout.addWidget(self.finishSetContainer)
         self.createSetLayout.addWidget(self.finishEditContainer)
         self.createSetLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
@@ -750,6 +753,7 @@ class MainWindow(QMainWindow):
             
         #Pull set information
         setName = self.sideBar.getSetName(index)
+        self.currentSetName = setName
         setConfigFile = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
         with open(setConfigFile, 'r') as file:
             data = file.readlines()
@@ -774,7 +778,83 @@ class MainWindow(QMainWindow):
         self.changeSetNameContainer.setHidden(False)
         self.finishEditContainer.setHidden(False)
         self.setModeLabel.setText('Edit Set')
+        self.changeSetNameInput.setText(setName)
+
+    #Cancle Current Edits 
+    def cancelEdit(self):
+        if self.wasEditChanges():
+            confirmCancel = self.yesOrNoDialog('Confirm', 'Are you sure you want to cancel editing?\nAll changes made will be lost.', ['Confirm', 'Continue Editing'])
+            if confirmCancel:
+                self.revertToDefaultPageSet()
+                return
         
+        self.revertToDefaultPageSet()
+
+    #Finish Edit
+    def finishEdit(self):
+        pass
+
+    #Checks if user had made any changes a set
+    @log_start_and_stop
+    def wasEditChanges(self):
+        #Pull data from the set
+        setName = self.changeSetNameInput.text()
+
+        #Compare Set Names
+        if setName != self.currentSetName:
+            LOGGER.info('Name')
+            return True
+        
+        allPairs = []
+        #Get Current Edited Data
+        for i in range(self.set.getLength()):
+            data = self.set.getConfigData(i)
+            if data:
+                allPairs.append(data)
+
+        #Get File Data
+        filePath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
+        with open(filePath, 'r') as file:
+            fileData = file.readlines()
+
+        #Find set indexes
+        startI, stopI = self.findSetIndexes(fileData, self.currentSetName)
+
+        if stopI != 0:
+            setSegment = fileData[startI: stopI]
+        else:
+            setSegment = fileData[startI:]
+        
+        #If lengths are different, return true
+        if len(allPairs) + 1 != len(setSegment):
+            LOGGER.info('{}, {}'.format(len(allPairs), len(setSegment)))
+            return True
+        
+        #Compare Terms
+        flag = False
+        for i in range(len(allPairs)):
+            if not fileData[i + 1].rstrip() == allPairs[i]:
+                LOGGER.info('Flag')
+                flag = True
+        
+        return flag
+    
+    #Revert back to create set page
+    def revertToDefaultPageSet(self):
+        #Delete Previous Pairs
+        while not self.set.isEmpty():
+            self.set.removeNode(0)
+
+        #Add 5 Empty Pairs
+        for i in range(5):
+            self.addSetPair()
+
+        #Layouts
+        self.changeSetNameContainer.setHidden(True)
+        self.finishEditContainer.setHidden(True)
+        self.finishSetContainer.setHidden(False)
+        self.setModeLabel.setText('Create Set')
+
     #Delete a set from the list
     @log_start_and_stop
     def deleteSet(self, index, null):

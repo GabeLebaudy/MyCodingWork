@@ -75,6 +75,14 @@ class Set:
     def getLength(self):
         return len(self.items)
     
+    #Get Term Value Pair in Config Form
+    def getConfigData(self, index):
+        td, dd = self.items[index].getVals()
+        if not td or not dd:
+            return False
+        
+        return '{}:{}'.format(td, dd)
+
     #Check if the set is empty
     def isEmpty(self):
         return len(self.items) == 0

@@ -58,7 +58,7 @@ class SideBar:
     
     def getSetName(self, index):
         return self.items[index].titleLabel.text()
-    
+        
     #Reset the signals
     def resetSignals(self):
         for connection in self.editSignals:
