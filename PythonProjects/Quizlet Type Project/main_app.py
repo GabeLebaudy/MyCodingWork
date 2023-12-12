@@ -21,6 +21,7 @@ from decorators import log_start_and_stop
 
 #Logging Setup
 LOGGER = logging.getLogger('Main Logger')
+SETS_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
 
 #Main Window Class
 class MainWindow(QMainWindow):
@@ -432,8 +433,7 @@ class MainWindow(QMainWindow):
     #Populate the Side Bar
     @log_start_and_stop
     def populateSideBar(self):
-        setsConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
-        with open(setsConfigsPath, 'r') as file:
+        with open(SETS_CONFIG_PATH, 'r') as file:
             lines = file.readlines()
 
         for line in lines:
@@ -465,8 +465,7 @@ class MainWindow(QMainWindow):
     #Populate the select set dropdown menu in the match tab
     @log_start_and_stop
     def populateMatchDD(self):
-        setsConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
-        with open(setsConfigsPath, 'r') as file:
+        with open(SETS_CONFIG_PATH, 'r') as file:
             lines = file.readlines()
 
         for line in lines:
@@ -541,8 +540,7 @@ class MainWindow(QMainWindow):
         gamemode = self.matchOptionsDD.currentIndex()
 
         #Populate Match Storage
-        configPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
-        with open(configPath, 'r') as f:
+        with open(SETS_CONFIG_PATH, 'r') as f:
             lines = f.readlines()
 
         startIndex = -1
@@ -694,10 +692,11 @@ class MainWindow(QMainWindow):
         
         #Prompt user for name for the set
         setName = self.textInputDialog('Dialog Title', 'Enter a name for this set:')
+        if not setName:
+            return
 
-        configPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
         setVals = self.set.getPairData()
-        with open(configPath, 'a') as file:
+        with open(SETS_CONFIG_PATH, 'a') as file:
             title = '{}\n'.format(setName)
             file.write(title)
             for term in setVals:
@@ -754,8 +753,7 @@ class MainWindow(QMainWindow):
         #Pull set information
         setName = self.sideBar.getSetName(index)
         self.currentSetName = setName
-        setConfigFile = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
-        with open(setConfigFile, 'r') as file:
+        with open(SETS_CONFIG_PATH, 'r') as file:
             data = file.readlines()
             
         startInd, stopInd = self.findSetIndexes(data, setName)
@@ -787,12 +785,49 @@ class MainWindow(QMainWindow):
             if confirmCancel:
                 self.revertToDefaultPageSet()
                 return
+        else:
+            self.revertToDefaultPageSet()
         
-        self.revertToDefaultPageSet()
-
     #Finish Edit
     def finishEdit(self):
-        pass
+        #Check if the user made any changes
+        if not self.wasEditChanges():
+            self.revertToDefaultPageSet()
+            return
+
+        #Check if any data is incomplete
+        if self.set.isPairsEmpty() == 1:
+            self.openMessageDialog('Error', 'At least one (non-empty) pair is incomplete.\nEnsure all entries have both a term and defintion')
+            return
+                
+        #Pull File Data
+        with open(SETS_CONFIG_PATH, 'r') as file:
+            data = file.readlines()
+
+        #Get Indexes of Current Set
+        st, so = self.findSetIndexes(data, self.currentSetName)
+
+        #Pull data from current inputs
+        newSetName = self.changeSetNameInput.text()
+
+        #Create segment to overwrite with
+        newSegment = [newSetName + '\n']
+        for i in range(self.set.getLength()):
+            newSegment.append(self.set.getConfigData(i) + '\n')
+
+        if so != 0:
+            data = data[:st] + newSegment + data[so:]
+        else:
+            data = data = data[:st] + newSegment
+
+        #Write Complete Data back to set
+        with open(SETS_CONFIG_PATH, 'w') as file:
+            for line in data:
+                file.write(line)
+        
+        #Confirm To User that set was completed
+        self.openMessageDialog('Sucess!', 'Your new changes are successful')
+        self.revertToDefaultPageSet()
 
     #Checks if user had made any changes a set
     @log_start_and_stop
@@ -805,16 +840,15 @@ class MainWindow(QMainWindow):
             LOGGER.info('Name')
             return True
         
-        allPairs = []
         #Get Current Edited Data
+        allPairs = []
         for i in range(self.set.getLength()):
             data = self.set.getConfigData(i)
             if data:
                 allPairs.append(data)
 
         #Get File Data
-        filePath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
-        with open(filePath, 'r') as file:
+        with open(SETS_CONFIG_PATH, 'r') as file:
             fileData = file.readlines()
 
         #Find set indexes
@@ -833,8 +867,9 @@ class MainWindow(QMainWindow):
         #Compare Terms
         flag = False
         for i in range(len(allPairs)):
-            if not fileData[i + 1].rstrip() == allPairs[i]:
+            if not setSegment[i + 1].rstrip() == allPairs[i]:
                 LOGGER.info('Flag')
+                LOGGER.info("{}:{}".format(fileData[i + 1].rstrip(), allPairs[i]))
                 flag = True
         
         return flag
@@ -864,13 +899,12 @@ class MainWindow(QMainWindow):
         testDialog = self.yesOrNoDialog('Deletion Confirmation', 'Are you sure you want to delete the following set:\n{}?'.format(setName), ['Delete', 'Cancel'])
         if testDialog:
             #User confirmed the deletion of the set
-            setConfigsPath = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
-            with open(setConfigsPath, 'r') as file:
+            with open(SETS_CONFIG_PATH, 'r') as file:
                 setsData = file.readlines()
 
             #Get indexes of set in the config file
             startIndex, stopIndex = self.findSetIndexes(setsData, setName)
-            
+
             #Use indexes to exclude set from complete data
             if startIndex > 0:
                 firstSection = setsData[:startIndex]
@@ -884,7 +918,7 @@ class MainWindow(QMainWindow):
 
             #Overwrite file with new comlete data
             removedSetData = firstSection + secondSection
-            with open(setConfigsPath, 'w') as file:
+            with open(SETS_CONFIG_PATH, 'w') as file:
                 for line in removedSetData:
                     file.write(line)
 

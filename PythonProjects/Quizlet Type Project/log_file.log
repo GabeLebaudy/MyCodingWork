@@ -1,34 +1,37 @@
-Main Logger: INFO - Starting __init__... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting createTitleBar... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished createTitleBar. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting createSideBar... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting populateSideBar... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished populateSideBar. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished createSideBar. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting createSetTab... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished createSetTab. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting createMatchTab... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting populateMatchDD... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished populateMatchDD. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished createMatchTab. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished __init__. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting isPairsEmpty... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished isPairsEmpty. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting wasEditChanges... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished wasEditChanges. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting yesOrNoDialog... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished yesOrNoDialog. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting isPairsEmpty... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished isPairsEmpty. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting wasEditChanges... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Flag - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished wasEditChanges. - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Starting yesOrNoDialog... - on 12/07/2023 at 19:44 PM
-Main Logger: INFO - Finished yesOrNoDialog. - on 12/07/2023 at 19:44 PM
+Main Logger: INFO - Starting __init__... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting createTitleBar... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished createTitleBar. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting createSideBar... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting populateSideBar... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished populateSideBar. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished createSideBar. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting createSetTab... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished createSetTab. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting createMatchTab... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting populateMatchDD... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished populateMatchDD. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished createMatchTab. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished __init__. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting finalizeSet... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting isPairsEmpty... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished isPairsEmpty. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting textInputDialog... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished textInputDialog. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting getPairData... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished getPairData. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting openMessageDialog... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished openMessageDialog. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished finalizeSet. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting isPairsEmpty... - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Finished isPairsEmpty. - on 12/11/2023 at 21:12 PM
+Main Logger: INFO - Starting wasEditChanges... - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Finished wasEditChanges. - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Starting isPairsEmpty... - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Finished isPairsEmpty. - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Starting wasEditChanges... - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - 3, 5 - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Finished wasEditChanges. - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Starting isPairsEmpty... - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Finished isPairsEmpty. - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Starting openMessageDialog... - on 12/11/2023 at 21:13 PM
+Main Logger: INFO - Finished openMessageDialog. - on 12/11/2023 at 21:13 PM
