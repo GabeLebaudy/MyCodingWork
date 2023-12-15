@@ -16,11 +16,13 @@ from PyQt6.QtGui import QGuiApplication, QFont
 from set_obj import Set
 from sidebar import SideBar
 from match import Match
+from flashcards import FlashCards
 from decorators import log_start_and_stop
 
 
 #Logging Setup
 LOGGER = logging.getLogger('Main Logger')
+#Filepath to set information file
 SETS_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
 
 #Main Window Class
@@ -32,6 +34,7 @@ class MainWindow(QMainWindow):
         
         self.createSetButton = QPushButton("Create Set")
         self.playMatchButton = QPushButton("Match")
+        self.flashCardsBtn = QPushButton("Flash Cards")
         
         buttonSizes = QSize(int(150 * self.widthScale), int(75 * self.heightScale))
         
@@ -41,8 +44,12 @@ class MainWindow(QMainWindow):
         self.playMatchButton.setFixedSize(buttonSizes)
         self.playMatchButton.clicked.connect(self.navMatch)
         
+        self.flashCardsBtn.setFixedSize(buttonSizes)
+        self.flashCardsBtn.clicked.connect(self.navFlashCards)
+        
         self.titleBarLayout.addWidget(self.createSetButton)
         self.titleBarLayout.addWidget(self.playMatchButton)
+        self.titleBarLayout.addWidget(self.flashCardsBtn)
         self.titleBarLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
     
     #Create side bar for showing sets
@@ -405,6 +412,8 @@ class MainWindow(QMainWindow):
         self.createSideBar()
         self.createSetTab()
         self.createMatchTab()
+        self.Flashcards = FlashCards()
+        self.flashContainer = self.Flashcards.getContainer()
 
         self.completeLayout = QHBoxLayout()
         self.mainAreaLayout = QVBoxLayout()
@@ -413,6 +422,7 @@ class MainWindow(QMainWindow):
         self.mainAreaLayout.addSpacerItem(QSpacerItem(0, int(30 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.mainAreaLayout.addWidget(self.createSetContainer)
         self.mainAreaLayout.addWidget(self.matchContainer)
+        self.mainAreaLayout.addWidget(self.flashContainer)
         self.mainAreaLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
         self.completeLayout.addSpacerItem(QSpacerItem(int(25 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
@@ -480,12 +490,20 @@ class MainWindow(QMainWindow):
     #Switch to create set tab
     def navCreateSet(self):
         self.matchContainer.setHidden(True)
+        self.flashContainer.setHidden(True)
         self.createSetContainer.setHidden(False)
 
     #Switch to match tab
     def navMatch(self):
         self.createSetContainer.setHidden(True)
+        self.flashContainer.setHidden(True)
         self.matchContainer.setHidden(False)
+        
+    #Switch to FlashCards Tab
+    def navFlashCards(self):
+        self.createSetContainer.setHidden(True)
+        self.matchContainer.setHidden(True)
+        self.flashContainer.setHidden(False)
 
     #Add a new term-definition pair in a new set
     def addSetPair(self):
