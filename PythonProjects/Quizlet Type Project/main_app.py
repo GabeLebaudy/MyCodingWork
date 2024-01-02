@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QGuiApplication, QFont
-from set_obj import Set
+from Sets import Set, Sets
 from sidebar import SideBar
 from match import Match
 from flashcards import FlashCards
@@ -410,7 +410,8 @@ class MainWindow(QMainWindow):
         
         self.createTitleBar()
         self.createSideBar()
-        self.createSetTab()
+        self.Sets = Sets()
+        self.create_set_container = self.Sets.getSetContainer()
         self.createMatchTab()
         self.Flashcards = FlashCards()
         self.flashContainer = self.Flashcards.getContainer()
@@ -420,7 +421,7 @@ class MainWindow(QMainWindow):
         
         self.mainAreaLayout.addLayout(self.titleBarLayout)
         self.mainAreaLayout.addSpacerItem(QSpacerItem(0, int(30 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
-        self.mainAreaLayout.addWidget(self.createSetContainer)
+        self.mainAreaLayout.addWidget(self.create_set_container)
         self.mainAreaLayout.addWidget(self.matchContainer)
         self.mainAreaLayout.addWidget(self.flashContainer)
         self.mainAreaLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -434,6 +435,9 @@ class MainWindow(QMainWindow):
         centralWidget = QWidget()
         centralWidget.setLayout(self.completeLayout)
         self.setCentralWidget(centralWidget)
+        
+        #Signals
+        self.Sets.messageSignal.connect(self.openMessageDialog)
         
         
     #----------------------
