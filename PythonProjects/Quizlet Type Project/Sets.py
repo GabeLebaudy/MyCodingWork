@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QSizePolicy,
     QPushButton, QSpacerItem, QTextEdit
 )
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
+from PyQt6.QtCore import Qt, QSize, pyqtSignal, QObject
 from PyQt6.QtGui import QFont, QGuiApplication
 
 #Logging
@@ -124,13 +124,17 @@ class Set:
 
         return finalList
 
-class Sets:
+class Sets(QObject):
     #Signals to Main File
     messageSignal = pyqtSignal(list)
     textInputSignal = pyqtSignal(list)
+    yesOrNoSignal = pyqtSignal(list)
     
     #Constructor
     def __init__(self):
+        #Initiate Parent Class
+        super().__init__()
+
         #Intialize Config File Path
         self.config_path = os.path.join(os.path.dirname(__file__), 'sets_configs.txt')
         
@@ -140,7 +144,11 @@ class Sets:
         
         #Create the layout for create set
         self.createSetLayout()
-        
+    
+    #----------------------------------------
+    # General Sets Info
+    #----------------------------------------
+    
     #Create the container for creating and editing a set
     def createSetLayout(self):
         #Get Scales
@@ -282,7 +290,52 @@ class Sets:
     #Set Main Container Hidden
     def setHidden(self, status):
         self.createSetContainer.setHidden(status)
+    
+    #Get a title from the config file given an index
+    def getSetTitle(self, index):
+        #Initialize flag and counter
+        found = False
+        counter = 0
+
+        #Open config file
+        with open(self.config_path, 'r') as file:
+            while not found:
+                line = file.readline().rstrip()
+                if ':' not in line:
+                    if counter == index:
+                        return line
+                    else:
+                        counter += 1
+                
+                if not line:
+                    break
+    
+    #Get the set content in list form given the title
+    def getSetContent(self, set_title):
+        pass
+    
+    #Get the current data in the set menu. If completely empty, it returns 0, if at least one pair is missing it's opposite, returns 1. Otherwise it returns the data
+    def getCurrentData(self):
+        complete_data = []
+        for node in self.current_pairs:
+            term, definition = node.getVals()
+            if not term and not definition:
+                pass
+            if not term or not definition:
+                return 1
+            else:
+                dataStr = term + ':' + definition
+                complete_data.append(dataStr)
         
+        if len(complete_data) > 0:
+            return complete_data
+        else:
+            return 0
+        
+    #-------------------------------------------
+    # Functions for creating a new set
+    #-------------------------------------------
+
     #Add a pair to the create set menu
     def addSetPair(self):
         pairLayout = QHBoxLayout()
@@ -332,12 +385,12 @@ class Sets:
     #Finish the creation of a new set
     @log_start_and_stop
     def finalizeSet(self, *args, **kwargs):
-        emptyFlag = self.set.isPairsEmpty()
+        finalSetData = self.getCurrentData()
 
-        if emptyFlag == 0:
+        if finalSetData == 0:
             self.messageSignal.emit(['Error', 'At least one term is needed'])
             return
-        elif emptyFlag == 1:
+        elif finalSetData == 1:
             self.messageSignal.emit(['Error', 'At least one pair is incomplete'])
             return
         
@@ -346,12 +399,12 @@ class Sets:
         if not setName:
             return
 
-        setVals = self.set.getPairData()
+        #TODO: Change to be done from this class
         with open(self.config_path, 'a') as file:
             title = '{}\n'.format(setName)
             file.write(title)
-            for term in setVals:
-                s = '{}:{}\n'.format(term, setVals[term])
+            for pair in finalSetData:
+                s = '{}\n'.format(pair)
                 file.write(s)
 
         #Add title to dropdowns and side bar
@@ -368,3 +421,216 @@ class Sets:
         
         for i in range(5):
             self.addSetPair()
+
+    #--------------------------------------------
+    # Functions for editing or deleting a set
+    #--------------------------------------------
+            
+    #Edit a set
+    def editSet(self, index, null): #Null added to force added argument to different parameter
+        #Check if the create set is currently being edited
+        code = self.set.isPairsEmpty()
+        if code > 0:
+            confirmDialog = self.yesOrNoSignal(['Conflict', 'This action will clear all data in the Create Set tab.\n Are you sure you want to continue?', ['Yes', 'No']])
+            if not confirmDialog:
+                return
+        
+        #Clear Previous Set
+        while not self.set.isEmpty():
+            self.set.removeNode(0)
+            
+        #Pull set information
+        #TODO: Create a method for pulling a set name and set data using the index in storage
+        setName = self.sideBar.getSetName(index)
+        self.currentSetName = setName
+        with open(self.config_path, 'r') as file:
+            data = file.readlines()
+            
+        startInd, stopInd = self.findSetIndexes(data, setName)
+        if stopInd == 0:
+            setData = data[startInd + 1:]
+        else:
+            setData = data[startInd + 1:stopInd]
+            
+        for pair in setData:
+            #Create new widgets
+            self.addSetPair()
+            
+            #Fill in Pairs with data
+            pairItems = pair.rstrip().split(':')
+            self.current_pairs[-1].setTermVal(pairItems[0])
+            self.current_pairs[-1].setDefVal(pairItems[1])
+            
+        #Hide the create button layout, and 
+        self.finishSetContainer.setHidden(True)
+        self.changeSetNameContainer.setHidden(False)
+        self.finishEditContainer.setHidden(False)
+        self.setModeLabel.setText('Edit Set')
+        self.changeSetNameInput.setText(setName)
+
+    #Cancle Current Edits 
+    def cancelEdit(self):
+        if self.wasEditChanges():
+            confirmCancel = self.yesOrNoSignal.emit(['Confirm', 'Are you sure you want to cancel editing?\nAll changes made will be lost.', ['Confirm', 'Continue Editing']])
+            if confirmCancel:
+                self.revertToDefaultPageSet()
+                return
+        else:
+            self.revertToDefaultPageSet()
+        
+    #Finish Edit
+    def finishEdit(self):
+        #Check if the user made any changes
+        if not self.wasEditChanges():
+            self.revertToDefaultPageSet()
+            return
+
+        #Check if any data is incomplete
+        if self.set.isPairsEmpty() == 1:
+            self.messageSignal.emit(['Error', 'At least one (non-empty) pair is incomplete.\nEnsure all entries have both a term and defintion'])
+            return
+                
+        #Pull File Data
+        with open(self.config_path, 'r') as file:
+            data = file.readlines()
+
+        #Get Indexes of Current Set
+        st, so = self.findSetIndexes(data, self.currentSetName)
+
+        #Pull data from current inputs
+        newSetName = self.changeSetNameInput.text()
+
+        #Create segment to overwrite with
+        newSegment = [newSetName + '\n']
+        for i in range(self.set.getLength()):
+            newSegment.append(self.set.getConfigData(i) + '\n')
+
+        if so != 0:
+            data = data[:st] + newSegment + data[so:]
+        else:
+            data = data = data[:st] + newSegment
+
+        #Write Complete Data back to set
+        with open(self.config_path, 'w') as file:
+            for line in data:
+                file.write(line)
+        
+        #Confirm To User that set was completed
+        self.messageSignal.emit(['Sucess!', 'Your new changes are successful'])
+        self.revertToDefaultPageSet()
+
+    #Checks if user had made any changes a set
+    @log_start_and_stop
+    def wasEditChanges(self):
+        #Pull data from the set
+        setName = self.changeSetNameInput.text()
+
+        #Compare Set Names
+        if setName != self.currentSetName:
+            LOGGER.info('Name')
+            return True
+        
+        #Get Current Edited Data
+        allPairs = []
+        for i in range(self.set.getLength()):
+            data = self.set.getConfigData(i)
+            if data:
+                allPairs.append(data)
+
+        #Get File Data
+        with open(self.config_path, 'r') as file:
+            fileData = file.readlines()
+
+        #Find set indexes
+        startI, stopI = self.findSetIndexes(fileData, self.currentSetName)
+
+        if stopI != 0:
+            setSegment = fileData[startI: stopI]
+        else:
+            setSegment = fileData[startI:]
+        
+        #If lengths are different, return true
+        if len(allPairs) + 1 != len(setSegment):
+            LOGGER.info('{}, {}'.format(len(allPairs), len(setSegment)))
+            return True
+        
+        #Compare Terms
+        flag = False
+        for i in range(len(allPairs)):
+            if not setSegment[i + 1].rstrip() == allPairs[i]:
+                LOGGER.info('Flag')
+                LOGGER.info("{}:{}".format(fileData[i + 1].rstrip(), allPairs[i]))
+                flag = True
+        
+        return flag
+    
+    #Revert back to create set page
+    def revertToDefaultPageSet(self):
+        #Delete Previous Pairs
+        while not self.set.isEmpty():
+            self.set.removeNode(0)
+
+        #Add 5 Empty Pairs
+        for i in range(5):
+            self.addSetPair()
+
+        #Layouts
+        self.changeSetNameContainer.setHidden(True)
+        self.finishEditContainer.setHidden(True)
+        self.finishSetContainer.setHidden(False)
+        self.setModeLabel.setText('Create Set')
+
+    #Delete a set from the list
+    @log_start_and_stop
+    def deleteSet(self, index, null):
+        #Use index to pull set title from sidebar object
+        setName = self.sideBar.getSetName(index)
+
+        testDialog = self.yesOrNoSignal.emit(['Deletion Confirmation', 'Are you sure you want to delete the following set:\n{}?'.format(setName), ['Delete', 'Cancel']])
+        if testDialog:
+            #User confirmed the deletion of the set
+            with open(self.config_path, 'r') as file:
+                setsData = file.readlines()
+
+            #Get indexes of set in the config file
+            startIndex, stopIndex = self.findSetIndexes(setsData, setName)
+
+            #Use indexes to exclude set from complete data
+            if startIndex > 0:
+                firstSection = setsData[:startIndex]
+            else:
+                firstSection = []
+
+            if not(stopIndex == 0):
+                secondSection = setsData[stopIndex:]
+            else:
+                secondSection = []
+
+            #Overwrite file with new comlete data
+            removedSetData = firstSection + secondSection
+            with open(self.config_path, 'w') as file:
+                for line in removedSetData:
+                    file.write(line)
+
+            #Update side bar
+            self.sideBar.resetSignals()
+            
+            while not self.sideBar.isEmpty():
+                self.sideBar.removeNode(0)
+
+            self.populateSideBar()
+
+    #Get the indexes of the set in the config file
+    def findSetIndexes(self, setsData, setName):
+        startIndex, stopIndex = 0, 0
+        for i in range(len(setsData)):
+            if setsData[i].rstrip() == setName:
+                startIndex = i
+                break
+        
+        for i in range(startIndex + 1, len(setsData)):
+            if not(':' in setsData[i].rstrip()):
+                stopIndex = i
+                break   
+            
+        return startIndex, stopIndex     

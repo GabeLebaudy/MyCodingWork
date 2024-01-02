@@ -69,135 +69,6 @@ class MainWindow(QMainWindow):
         self.sideBarLayout.addWidget(sideBarLabel)
         self.populateSideBar()
         
-    #Create set tab
-    @log_start_and_stop
-    def createSetTab(self):
-        #Set Object containing its data
-        self.set = Set()
-        self.removePairSignals = []
-
-        self.createSetContainer = QWidget()
-        containerLayout = QHBoxLayout()
-        self.createSetLayout = QVBoxLayout()
-
-        self.setTitleContainer = QWidget()
-        self.setTitleLayout = QHBoxLayout()
-
-        self.setModeLabel = QLabel('Create Set')
-
-        setModeFont = QFont()
-        setModeFont.setPointSize(32)
-        setModeFont.setBold(True)
-
-        self.setModeLabel.setFont(setModeFont)
-        self.setTitleLayout.addWidget(self.setModeLabel)
-        self.setTitleLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.setTitleContainer.setLayout(self.setTitleLayout)
-
-        #Change Set Name Layout
-        self.changeSetNameContainer = QWidget()
-        self.changeSetNameLayout = QHBoxLayout()
-
-        changeNameLabel = QLabel('Set Name:')
-        changeNameFont = QFont()
-        changeNameFont.setPointSize(16)
-        changeNameFont.setBold(True)
-        changeNameLabel.setFont(changeNameFont)
-
-        editSetNameFont = QFont()
-        editSetNameFont.setPointSize(14)
-
-        self.changeSetNameInput = QLineEdit()
-        self.changeSetNameInput.setFont(editSetNameFont)
-        self.changeSetNameInput.setFixedSize(int(300 * self.widthScale), int(30 * self.heightScale))
-        self.changeSetNameInput.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
-
-        self.changeSetNameLayout.addWidget(changeNameLabel)
-        self.changeSetNameLayout.addWidget(self.changeSetNameInput)
-        self.changeSetNameLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.changeSetNameContainer.setLayout(self.changeSetNameLayout)
-        self.changeSetNameContainer.setHidden(True)
-
-        #Terms / Definitions / Pairs
-        self.setLabelLayout = QHBoxLayout()
-        termLabel = QLabel('Terms')
-        definitionLabel = QLabel('Definitions')
-
-        createSetFont = QFont()
-        createSetFont.setPointSize(16)
-        createSetFont.setBold(True)
-
-        termLabel.setFont(createSetFont)
-        definitionLabel.setFont(createSetFont)
-        
-        self.setLabelLayout.addSpacerItem(QSpacerItem(int(215 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
-        self.setLabelLayout.addWidget(termLabel)
-        self.setLabelLayout.addSpacerItem(QSpacerItem(int(420 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
-        self.setLabelLayout.addWidget(definitionLabel)
-        self.setLabelLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        
-        self.createSetLayout.addWidget(self.setTitleContainer)
-        self.createSetLayout.addWidget(self.changeSetNameContainer)
-        self.createSetLayout.addLayout(self.setLabelLayout)
-        
-        self.itemPairsLayout = QVBoxLayout()
-        for i in range(5):
-            self.addSetPair()
-            
-        self.addPairLayout = QHBoxLayout()
-        
-        self.addPairButton = QPushButton('+')
-        self.addPairButton.setFixedSize(int(75 * self.widthScale), int(40 * self.heightScale))
-        self.addPairButton.clicked.connect(self.addSetPair)
-        
-        self.addPairLayout.addWidget(self.addPairButton)
-        self.addPairLayout.setAlignment(Qt.AlignmentFlag.AlignRight)
-
-        self.finishSetContainer = QWidget()
-        self.finishSetLayout = QHBoxLayout()
-
-        self.finishSetButton = QPushButton("Create")
-        self.finishSetButton.setFixedSize(int(125 * self.widthScale), int(50 * self.heightScale))
-        self.finishSetButton.clicked.connect(self.finalizeSet)
-
-        self.finishSetLayout.addWidget(self.finishSetButton)
-        self.finishSetLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.finishSetContainer.setLayout(self.finishSetLayout)
-
-        #For editing a set
-        self.finishEditContainer = QWidget()
-        self.finishEditLayout = QHBoxLayout()
-
-        self.cancelEditBtn = QPushButton('Cancel')
-        self.finishEditingBtn = QPushButton('Finish')
-
-        finishEditButtonSizes = QSize(int(125 * self.widthScale), int(50 * self.heightScale))
-        self.cancelEditBtn.setFixedSize(finishEditButtonSizes)
-        self.finishEditingBtn.setFixedSize(finishEditButtonSizes)
-
-        self.cancelEditBtn.clicked.connect(self.cancelEdit)
-        self.finishEditingBtn.clicked.connect(self.finishEdit)
-
-        self.finishEditLayout.addWidget(self.cancelEditBtn)
-        self.finishEditLayout.addStretch(2)
-        self.finishEditLayout.addWidget(self.finishEditingBtn)
-        self.finishEditLayout.addStretch(3)
-        self.finishEditLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.finishEditContainer.setLayout(self.finishEditLayout)
-        self.finishEditContainer.setHidden(True)
-
-        self.createSetLayout.addLayout(self.itemPairsLayout)
-        self.createSetLayout.addSpacerItem(QSpacerItem(0, int(20 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
-        self.createSetLayout.addLayout(self.addPairLayout)
-        self.createSetLayout.addWidget(self.finishSetContainer)
-        self.createSetLayout.addWidget(self.finishEditContainer)
-        self.createSetLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-
-        containerLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
-        containerLayout.addLayout(self.createSetLayout)
-        containerLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
-        self.createSetContainer.setLayout(containerLayout)
-        
     #Match tab for testing out sets
     @log_start_and_stop
     def createMatchTab(self):
@@ -437,7 +308,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(centralWidget)
         
         #Signals
-        self.Sets.messageSignal.connect(self.openMessageDialog)
+        self.Sets.messageSignal.connect(self.handleMessageSignal)
+        self.Sets.textInputSignal.connect(self.handleTextInputSignal)
+        self.Sets.yesOrNoSignal.connect(self.handleBinarySignal)
         
         
     #----------------------
@@ -495,64 +368,19 @@ class MainWindow(QMainWindow):
     def navCreateSet(self):
         self.matchContainer.setHidden(True)
         self.flashContainer.setHidden(True)
-        self.createSetContainer.setHidden(False)
+        self.create_set_container.setHidden(False)
 
     #Switch to match tab
     def navMatch(self):
-        self.createSetContainer.setHidden(True)
+        self.create_set_container.setHidden(True)
         self.flashContainer.setHidden(True)
         self.matchContainer.setHidden(False)
         
     #Switch to FlashCards Tab
     def navFlashCards(self):
-        self.createSetContainer.setHidden(True)
+        self.create_set_container.setHidden(True)
         self.matchContainer.setHidden(True)
         self.flashContainer.setHidden(False)
-
-    #Add a new term-definition pair in a new set
-    def addSetPair(self):
-        pairLayout = QHBoxLayout()
-        termInput = QTextEdit()
-        defInput = QTextEdit()
-        removeBtn = QPushButton('-')
-
-        inputSize = QSize(int(500 * self.widthScale), int(50 * self.heightScale))
-        termInput.setFixedSize(inputSize)
-        defInput.setFixedSize(inputSize)
-        
-        termInput.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        defInput.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-
-        pairLayout.addWidget(termInput)
-        pairLayout.addWidget(defInput)
-        pairLayout.addWidget(removeBtn)
-        pairLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        self.itemPairsLayout.addLayout(pairLayout)
-        self.set.addNode(termInput, defInput, pairLayout, removeBtn)
-        self.updatePairSignals()
-
-    #Update the remove pair button signals
-    def updatePairSignals(self):
-        #Clear Prior Signals
-        for connection in self.removePairSignals:
-            connection[0].disconnect()
-
-        #Reset Signal List
-        self.removePairSignals = []
-
-        #Loop through remove queue item button array, create a new signal for that button based on index, connect signal to the removeQueueItem method, 
-        for i in range(self.set.getLength()):
-            removeFunc = lambda checked, x=i: self.removeSetPair(x, checked)
-            button = self.set.items[i].getBtn()
-            buttonConnection = [button.clicked, removeFunc]
-            buttonConnection[0].connect(buttonConnection[1])
-            self.removePairSignals.append(buttonConnection)
-
-    #Remove a pair from the set (Null is added so that index parameter won't get used by checked status of the button)
-    def removeSetPair(self, index, null):
-        self.set.removeNode(index)
-        self.updatePairSignals()
     
     #Start the match game
     @log_start_and_stop
@@ -699,45 +527,6 @@ class MainWindow(QMainWindow):
         self.mainMatchQContainer.setHidden(True)
         self.cancelMatchContainer.setHidden(True)
         self.startMatchContainer.setHidden(False)
-        
-    #Finalize the creation of a new set
-    @log_start_and_stop
-    def finalizeSet(self, *args, **kwargs):
-        emptyFlag = self.set.isPairsEmpty()
-
-        if emptyFlag == 0:
-            self.openMessageDialog('Error', 'At least one term is needed')
-            return
-        elif emptyFlag == 1:
-            self.openMessageDialog('Error', 'At least one pair is incomplete')
-            return
-        
-        #Prompt user for name for the set
-        setName = self.textInputDialog('Dialog Title', 'Enter a name for this set:')
-        if not setName:
-            return
-
-        setVals = self.set.getPairData()
-        with open(SETS_CONFIG_PATH, 'a') as file:
-            title = '{}\n'.format(setName)
-            file.write(title)
-            for term in setVals:
-                s = '{}:{}\n'.format(term, setVals[term])
-                file.write(s)
-
-        #Add title to dropdowns and side bar
-        self.addSideBarSet(setName)
-        self.selectSetDD.addItem(setName)
-        
-        #Ping user that set was successfully created
-        self.openMessageDialog('Success!', 'Your set {} was successfully created!'.format(setName))
-
-        #Reset the tab
-        while not(self.set.isEmpty()):
-            self.set.removeNode(0)
-        
-        for i in range(5):
-            self.addSetPair()
     
     #Update the signals of the edit button and the delete button for each set on the sidebar
     def updateSideBarSignals(self):
@@ -757,215 +546,20 @@ class MainWindow(QMainWindow):
             deleteButtonConnection[0].connect(deleteButtonConnection[1])
             
             self.sideBar.addEditSignal(editButtonConnection)
-            self.sideBar.addDeleteSignal(deleteButtonConnection) 
+            self.sideBar.addDeleteSignal(deleteButtonConnection)  
     
-    #Edit a set
-    def editSet(self, index, null): #Null added to force added argument to different parameter
-        #Check if the create set is currently being edited
-        code = self.set.isPairsEmpty()
-        if code > 0:
-            confirmDialog = self.yesOrNoDialog('Conflict', 'This action will clear all data in the Create Set tab.\n Are you sure you want to continue?', ['Yes', 'No'])
-            if not confirmDialog:
-                return
-        
-        #Clear Previous Set
-        while not self.set.isEmpty():
-            self.set.removeNode(0)
-            
-        #Pull set information
-        setName = self.sideBar.getSetName(index)
-        self.currentSetName = setName
-        with open(SETS_CONFIG_PATH, 'r') as file:
-            data = file.readlines()
-            
-        startInd, stopInd = self.findSetIndexes(data, setName)
-        if stopInd == 0:
-            setData = data[startInd + 1:]
-        else:
-            setData = data[startInd + 1:stopInd]
-            
-        for pair in setData:
-            #Create new widgets
-            self.addSetPair()
-            
-            #Fill in Pairs with data
-            pairItems = pair.rstrip().split(':')
-            self.set.items[-1].setTermVal(pairItems[0])
-            self.set.items[-1].setDefVal(pairItems[1])
-            
-        #Hide the create button layout, and 
-        self.finishSetContainer.setHidden(True)
-        self.changeSetNameContainer.setHidden(False)
-        self.finishEditContainer.setHidden(False)
-        self.setModeLabel.setText('Edit Set')
-        self.changeSetNameInput.setText(setName)
-
-    #Cancle Current Edits 
-    def cancelEdit(self):
-        if self.wasEditChanges():
-            confirmCancel = self.yesOrNoDialog('Confirm', 'Are you sure you want to cancel editing?\nAll changes made will be lost.', ['Confirm', 'Continue Editing'])
-            if confirmCancel:
-                self.revertToDefaultPageSet()
-                return
-        else:
-            self.revertToDefaultPageSet()
-        
-    #Finish Edit
-    def finishEdit(self):
-        #Check if the user made any changes
-        if not self.wasEditChanges():
-            self.revertToDefaultPageSet()
-            return
-
-        #Check if any data is incomplete
-        if self.set.isPairsEmpty() == 1:
-            self.openMessageDialog('Error', 'At least one (non-empty) pair is incomplete.\nEnsure all entries have both a term and defintion')
-            return
-                
-        #Pull File Data
-        with open(SETS_CONFIG_PATH, 'r') as file:
-            data = file.readlines()
-
-        #Get Indexes of Current Set
-        st, so = self.findSetIndexes(data, self.currentSetName)
-
-        #Pull data from current inputs
-        newSetName = self.changeSetNameInput.text()
-
-        #Create segment to overwrite with
-        newSegment = [newSetName + '\n']
-        for i in range(self.set.getLength()):
-            newSegment.append(self.set.getConfigData(i) + '\n')
-
-        if so != 0:
-            data = data[:st] + newSegment + data[so:]
-        else:
-            data = data = data[:st] + newSegment
-
-        #Write Complete Data back to set
-        with open(SETS_CONFIG_PATH, 'w') as file:
-            for line in data:
-                file.write(line)
-        
-        #Confirm To User that set was completed
-        self.openMessageDialog('Sucess!', 'Your new changes are successful')
-        self.revertToDefaultPageSet()
-
-    #Checks if user had made any changes a set
-    @log_start_and_stop
-    def wasEditChanges(self):
-        #Pull data from the set
-        setName = self.changeSetNameInput.text()
-
-        #Compare Set Names
-        if setName != self.currentSetName:
-            LOGGER.info('Name')
-            return True
-        
-        #Get Current Edited Data
-        allPairs = []
-        for i in range(self.set.getLength()):
-            data = self.set.getConfigData(i)
-            if data:
-                allPairs.append(data)
-
-        #Get File Data
-        with open(SETS_CONFIG_PATH, 'r') as file:
-            fileData = file.readlines()
-
-        #Find set indexes
-        startI, stopI = self.findSetIndexes(fileData, self.currentSetName)
-
-        if stopI != 0:
-            setSegment = fileData[startI: stopI]
-        else:
-            setSegment = fileData[startI:]
-        
-        #If lengths are different, return true
-        if len(allPairs) + 1 != len(setSegment):
-            LOGGER.info('{}, {}'.format(len(allPairs), len(setSegment)))
-            return True
-        
-        #Compare Terms
-        flag = False
-        for i in range(len(allPairs)):
-            if not setSegment[i + 1].rstrip() == allPairs[i]:
-                LOGGER.info('Flag')
-                LOGGER.info("{}:{}".format(fileData[i + 1].rstrip(), allPairs[i]))
-                flag = True
-        
-        return flag
+    #For receiving a message signal from any File
+    def handleMessageSignal(self, contents):
+        self.openMessageDialog(contents[0], contents[1])
     
-    #Revert back to create set page
-    def revertToDefaultPageSet(self):
-        #Delete Previous Pairs
-        while not self.set.isEmpty():
-            self.set.removeNode(0)
-
-        #Add 5 Empty Pairs
-        for i in range(5):
-            self.addSetPair()
-
-        #Layouts
-        self.changeSetNameContainer.setHidden(True)
-        self.finishEditContainer.setHidden(True)
-        self.finishSetContainer.setHidden(False)
-        self.setModeLabel.setText('Create Set')
-
-    #Delete a set from the list
-    @log_start_and_stop
-    def deleteSet(self, index, null):
-        #Use index to pull set title from sidebar object
-        setName = self.sideBar.getSetName(index)
-
-        testDialog = self.yesOrNoDialog('Deletion Confirmation', 'Are you sure you want to delete the following set:\n{}?'.format(setName), ['Delete', 'Cancel'])
-        if testDialog:
-            #User confirmed the deletion of the set
-            with open(SETS_CONFIG_PATH, 'r') as file:
-                setsData = file.readlines()
-
-            #Get indexes of set in the config file
-            startIndex, stopIndex = self.findSetIndexes(setsData, setName)
-
-            #Use indexes to exclude set from complete data
-            if startIndex > 0:
-                firstSection = setsData[:startIndex]
-            else:
-                firstSection = []
-
-            if not(stopIndex == 0):
-                secondSection = setsData[stopIndex:]
-            else:
-                secondSection = []
-
-            #Overwrite file with new comlete data
-            removedSetData = firstSection + secondSection
-            with open(SETS_CONFIG_PATH, 'w') as file:
-                for line in removedSetData:
-                    file.write(line)
-
-            #Update side bar
-            self.sideBar.resetSignals()
-            
-            while not self.sideBar.isEmpty():
-                self.sideBar.removeNode(0)
-
-            self.populateSideBar()
-
-    #Get the indexes of the set in the config file
-    def findSetIndexes(self, setsData, setName):
-        startIndex, stopIndex = 0, 0
-        for i in range(len(setsData)):
-            if setsData[i].rstrip() == setName:
-                startIndex = i
-                break
-        
-        for i in range(startIndex + 1, len(setsData)):
-            if not(':' in setsData[i].rstrip()):
-                stopIndex = i
-                break   
-            
-        return startIndex, stopIndex     
+    #For receiving a prompt for a text input from another file
+    def handleTextInputSignal(self, contents):
+        input = self.textInputDialog(contents[0], contents[1])
+        return input
+    
+    def handleBinarySignal(self, contents):
+        answer = self.yesOrNoDialog()
+        return answer
     
     #----------------------
     # Dialog Methods
