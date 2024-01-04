@@ -4,6 +4,8 @@
 import logging
 import os
 
+from PyQt6.QtGui import QGuiApplication
+
 #Logging
 LOGPATH = os.path.join(os.path.dirname(__file__), 'log_file.log')
 LOGGER = logging.getLogger('Main Logger')

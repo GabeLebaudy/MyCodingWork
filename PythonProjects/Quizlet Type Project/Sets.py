@@ -129,6 +129,7 @@ class Sets(QObject):
     messageSignal = pyqtSignal(list)
     textInputSignal = pyqtSignal(list)
     yesOrNoSignal = pyqtSignal(list)
+    newSetSignal = pyqtSignal(str)
     
     #Constructor
     def __init__(self):
@@ -141,8 +142,8 @@ class Sets(QObject):
         #Store Current Pair Widget Data
         self.current_pairs = []
         self.removePairSignals = []
-        
-        #Create the layout for create set
+
+        #Generate layout as it will be difficult to interact from elsewhere without it
         self.createSetLayout()
     
     #----------------------------------------
@@ -156,9 +157,7 @@ class Sets(QObject):
         width, height = screen_resolution.width(), screen_resolution.height()
         self.widthScale = width / 1920
         self.heightScale = height / 1032
-        
-        #Set Object containing its data
-        self.set = Set()
+
         self.removePairSignals = []
 
         self.createSetContainer = QWidget()
@@ -314,13 +313,26 @@ class Sets(QObject):
     def getSetContent(self, set_title):
         pass
     
+    #There are a few times when all titles are needed, so this function grabs all of them
+    def getAllSetTitles(self):
+        #Read all data from file
+        with open(self.config_path, 'r') as f:
+            complete_data = f.readlines()
+        
+        titles = []
+        for line in complete_data:
+            if ':' not in line:
+                titles.append(line.rstrip())
+        
+        return titles
+
     #Get the current data in the set menu. If completely empty, it returns 0, if at least one pair is missing it's opposite, returns 1. Otherwise it returns the data
     def getCurrentData(self):
         complete_data = []
         for node in self.current_pairs:
             term, definition = node.getVals()
             if not term and not definition:
-                pass
+                continue
             if not term or not definition:
                 return 1
             else:
@@ -370,7 +382,7 @@ class Sets(QObject):
         self.removePairSignals = []
 
         #Loop through remove queue item button array, create a new signal for that button based on index, connect signal to the removeQueueItem method, 
-        for i in range(self.set.getLength()):
+        for i in range(len(self.current_pairs)):
             removeFunc = lambda checked, x=i: self.removeSetPair(x, checked)
             button = self.current_pairs[i].getBtn()
             buttonConnection = [button.clicked, removeFunc]
@@ -379,12 +391,14 @@ class Sets(QObject):
 
     #Remove a pair from the set (Null is added so that index parameter won't get used by checked status of the button)
     def removeSetPair(self, index, null):
-        self.current_pairs.pop(index)
+        self.current_pairs[index].delWidgets()
+        del self.current_pairs[index]
         self.updatePairSignals()
     
     #Finish the creation of a new set
     @log_start_and_stop
     def finalizeSet(self, *args, **kwargs):
+        self.setName = None
         finalSetData = self.getCurrentData()
 
         if finalSetData == 0:
@@ -395,53 +409,46 @@ class Sets(QObject):
             return
         
         #Prompt user for name for the set
-        setName = self.textInputSignal.emit(['Dialog Title', 'Enter a name for this set:'])
-        if not setName:
+        self.textInputSignal.emit(['Dialog Title', 'Enter a name for this set:'])
+        if not self.setName:
             return
 
-        #TODO: Change to be done from this class
         with open(self.config_path, 'a') as file:
-            title = '{}\n'.format(setName)
+            title = '{}\n'.format(self.setName)
             file.write(title)
             for pair in finalSetData:
                 s = '{}\n'.format(pair)
                 file.write(s)
 
         #Add title to dropdowns and side bar
-        #TODO: Add SideBar Object, call methods from here
-        #self.addSideBarSet(setName)
-        #self.selectSetDD.addItem(setName)
+        self.newSetSignal.emit(self.setName)
         
         #Ping user that set was successfully created
-        self.messageSignal.emit(['Success!', 'Your set {} was successfully created!'.format(setName)])
+        self.messageSignal.emit(['Success!', 'Your set {} was successfully created!'.format(self.setName)])
 
         #Reset the tab
-        while not(self.set.isEmpty()):
-            self.set.removeNode(0)
+        while len(self.current_pairs) > 0:
+            self.removeSetPair(0, None)
         
         for i in range(5):
             self.addSetPair()
 
+    #For getting user input from a dialog message. Controlled from main window
+    def changeSetName(self, name):
+        self.setName = name
+    
     #--------------------------------------------
     # Functions for editing or deleting a set
     #--------------------------------------------
             
     #Edit a set
-    def editSet(self, index, null): #Null added to force added argument to different parameter
-        #Check if the create set is currently being edited
-        code = self.set.isPairsEmpty()
-        if code > 0:
-            confirmDialog = self.yesOrNoSignal(['Conflict', 'This action will clear all data in the Create Set tab.\n Are you sure you want to continue?', ['Yes', 'No']])
-            if not confirmDialog:
-                return
-        
+    def editSet(self, index): 
         #Clear Previous Set
-        while not self.set.isEmpty():
-            self.set.removeNode(0)
+        while len(self.current_pairs) > 0:
+            self.removeSetPair(0, None)
             
         #Pull set information
-        #TODO: Create a method for pulling a set name and set data using the index in storage
-        setName = self.sideBar.getSetName(index)
+        setName = self.getSetTitle(index)
         self.currentSetName = setName
         with open(self.config_path, 'r') as file:
             data = file.readlines()
@@ -582,44 +589,31 @@ class Sets(QObject):
 
     #Delete a set from the list
     @log_start_and_stop
-    def deleteSet(self, index, null):
-        #Use index to pull set title from sidebar object
-        setName = self.sideBar.getSetName(index)
+    def deleteSet(self, setName):
+        #User confirmed the deletion of the set
+        with open(self.config_path, 'r') as file:
+            setsData = file.readlines()
 
-        testDialog = self.yesOrNoSignal.emit(['Deletion Confirmation', 'Are you sure you want to delete the following set:\n{}?'.format(setName), ['Delete', 'Cancel']])
-        if testDialog:
-            #User confirmed the deletion of the set
-            with open(self.config_path, 'r') as file:
-                setsData = file.readlines()
+        #Get indexes of set in the config file
+        startIndex, stopIndex = self.findSetIndexes(setsData, setName)
 
-            #Get indexes of set in the config file
-            startIndex, stopIndex = self.findSetIndexes(setsData, setName)
+        #Use indexes to exclude set from complete data
+        if startIndex > 0:
+            firstSection = setsData[:startIndex]
+        else:
+            firstSection = []
 
-            #Use indexes to exclude set from complete data
-            if startIndex > 0:
-                firstSection = setsData[:startIndex]
-            else:
-                firstSection = []
+        if not(stopIndex == 0):
+            secondSection = setsData[stopIndex:]
+        else:
+            secondSection = []
 
-            if not(stopIndex == 0):
-                secondSection = setsData[stopIndex:]
-            else:
-                secondSection = []
-
-            #Overwrite file with new comlete data
-            removedSetData = firstSection + secondSection
-            with open(self.config_path, 'w') as file:
-                for line in removedSetData:
-                    file.write(line)
-
-            #Update side bar
-            self.sideBar.resetSignals()
-            
-            while not self.sideBar.isEmpty():
-                self.sideBar.removeNode(0)
-
-            self.populateSideBar()
-
+        #Overwrite file with new comlete data
+        removedSetData = firstSection + secondSection
+        with open(self.config_path, 'w') as file:
+            for line in removedSetData:
+                file.write(line)
+    
     #Get the indexes of the set in the config file
     def findSetIndexes(self, setsData, setName):
         startIndex, stopIndex = 0, 0

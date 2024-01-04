@@ -51,23 +51,6 @@ class MainWindow(QMainWindow):
         self.titleBarLayout.addWidget(self.playMatchButton)
         self.titleBarLayout.addWidget(self.flashCardsBtn)
         self.titleBarLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-    
-    #Create side bar for showing sets
-    @log_start_and_stop
-    def createSideBar(self):
-        self.sideBarLayout = QVBoxLayout()
-        self.sideBar = SideBar()
-        
-        sideBarLabel = QLabel("Your Sets")
-        sideBarFont = QFont()
-        sideBarFont.setPointSize(24)
-        sideBarLabel.setFont(sideBarFont)
-        
-        self.sideBarLayout.addWidget(sideBarLabel)
-        self.sideBarLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        
-        self.sideBarLayout.addWidget(sideBarLabel)
-        self.populateSideBar()
         
     #Match tab for testing out sets
     @log_start_and_stop
@@ -280,10 +263,15 @@ class MainWindow(QMainWindow):
         self.move(window_rect.topLeft())
         
         self.createTitleBar()
-        self.createSideBar()
+        self.SideBar = SideBar()
+        self.SideBar.generateSideBar()
+        self.side_bar_container = self.SideBar.getLayout()
+
         self.Sets = Sets()
         self.create_set_container = self.Sets.getSetContainer()
+
         self.createMatchTab()
+
         self.Flashcards = FlashCards()
         self.flashContainer = self.Flashcards.getContainer()
 
@@ -298,7 +286,7 @@ class MainWindow(QMainWindow):
         self.mainAreaLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
         self.completeLayout.addSpacerItem(QSpacerItem(int(25 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
-        self.completeLayout.addLayout(self.sideBarLayout)
+        self.completeLayout.addLayout(self.side_bar_container)
         self.completeLayout.addSpacerItem(QSpacerItem(int(50 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
         self.completeLayout.addLayout(self.mainAreaLayout)
         self.completeLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
@@ -309,45 +297,14 @@ class MainWindow(QMainWindow):
         
         #Signals
         self.Sets.messageSignal.connect(self.handleMessageSignal)
-        self.Sets.textInputSignal.connect(self.handleTextInputSignal)
-        self.Sets.yesOrNoSignal.connect(self.handleBinarySignal)
+        self.Sets.textInputSignal.connect(self.handleSetTextInputSignal)
+        self.SideBar.yesOrNoSignal.connect(self.handleSideBarBinarySignal)
+        self.Sets.newSetSignal.connect(self.handleNewSet)
         
         
     #----------------------
     # Start-up Functions
     #----------------------
-    
-    #Populate the Side Bar
-    @log_start_and_stop
-    def populateSideBar(self):
-        with open(SETS_CONFIG_PATH, 'r') as file:
-            lines = file.readlines()
-
-        for line in lines:
-            line = line.rstrip()
-            if ':' not in line:
-                self.addSideBarSet(line)
-
-    #Add a entry for a set on the side bar
-    def addSideBarSet(self, title):
-        setLayout = QHBoxLayout()
-        titleLabel = QLabel(title)
-        editBtn = QPushButton('Edit')
-        deleteBtn = QPushButton('Delete')
-
-        #TODO: Fix this word wrap issue
-        titleLabel.setFixedWidth(int(125 * self.widthScale))
-        titleLabel.setWordWrap(True)
-                
-        setLayout.addWidget(titleLabel)
-        setLayout.addWidget(editBtn)
-        setLayout.addWidget(deleteBtn)
-        setLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        
-        self.sideBarLayout.addLayout(setLayout)
-        self.sideBar.addNode(titleLabel, editBtn, deleteBtn, setLayout)
-        
-        self.updateSideBarSignals()
     
     #Populate the select set dropdown menu in the match tab
     @log_start_and_stop
@@ -526,44 +483,33 @@ class MainWindow(QMainWindow):
         self.incorrectAnswerContainer.setHidden(True)
         self.mainMatchQContainer.setHidden(True)
         self.cancelMatchContainer.setHidden(True)
-        self.startMatchContainer.setHidden(False)
+        self.startMatchContainer.setHidden(False)  
     
-    #Update the signals of the edit button and the delete button for each set on the sidebar
-    def updateSideBarSignals(self):
-        self.sideBar.resetSignals()
-        
-        for i in range(self.sideBar.getLength()):
-            editFunction = lambda checked, x = i: self.editSet(x, checked)
-            deleteFunction = lambda checked, x = i: self.deleteSet(x, checked)
-            
-            editButton = self.sideBar.items[i].getEditBtn()
-            deleteButton = self.sideBar.items[i].getDelBtn()
-            
-            editButtonConnection = [editButton.clicked, editFunction]
-            deleteButtonConnection = [deleteButton.clicked, deleteFunction]
-            
-            editButtonConnection[0].connect(editButtonConnection[1])
-            deleteButtonConnection[0].connect(deleteButtonConnection[1])
-            
-            self.sideBar.addEditSignal(editButtonConnection)
-            self.sideBar.addDeleteSignal(deleteButtonConnection)  
+    #New Set Created, route signal to sidebar file
+    def handleNewSet(self, title):
+        self.SideBar.addNode(title)
     
+    #Set was deleted, update the side bar
+    def handleSideBarUpdate(self):
+        self.SideBar.regenSideBar()
+
     #For receiving a message signal from any File
     def handleMessageSignal(self, contents):
         self.openMessageDialog(contents[0], contents[1])
     
     #For receiving a prompt for a text input from another file
-    def handleTextInputSignal(self, contents):
+    def handleSetTextInputSignal(self, contents):
         input = self.textInputDialog(contents[0], contents[1])
-        return input
+        self.Sets.changeSetName(input)
     
-    def handleBinarySignal(self, contents):
-        answer = self.yesOrNoDialog()
-        return answer
+    def handleSideBarBinarySignal(self, contents):
+        answer = self.yesOrNoDialog(contents[0], contents[1], contents[2])
+        self.SideBar.setAnswer(answer)
     
     #----------------------
     # Dialog Methods
     #----------------------
+        
     
     #Standard message dialog
     @log_start_and_stop
