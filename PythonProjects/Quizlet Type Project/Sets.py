@@ -128,7 +128,7 @@ class Sets(QObject):
     #Signals to Main File
     messageSignal = pyqtSignal(list)
     textInputSignal = pyqtSignal(list)
-    yesOrNoSignal = pyqtSignal(list)
+    binaryAnswerSignal = pyqtSignal(list)
     newSetSignal = pyqtSignal(str)
     
     #Constructor
@@ -442,18 +442,17 @@ class Sets(QObject):
     #--------------------------------------------
             
     #Edit a set
-    def editSet(self, index): 
+    def editSet(self, name): 
         #Clear Previous Set
         while len(self.current_pairs) > 0:
             self.removeSetPair(0, None)
             
         #Pull set information
-        setName = self.getSetTitle(index)
-        self.currentSetName = setName
+        self.currentSetName = name
         with open(self.config_path, 'r') as file:
             data = file.readlines()
             
-        startInd, stopInd = self.findSetIndexes(data, setName)
+        startInd, stopInd = self.findSetIndexes(data, name)
         if stopInd == 0:
             setData = data[startInd + 1:]
         else:
@@ -473,13 +472,15 @@ class Sets(QObject):
         self.changeSetNameContainer.setHidden(False)
         self.finishEditContainer.setHidden(False)
         self.setModeLabel.setText('Edit Set')
-        self.changeSetNameInput.setText(setName)
+        self.changeSetNameInput.setText(name)
 
     #Cancle Current Edits 
     def cancelEdit(self):
         if self.wasEditChanges():
-            confirmCancel = self.yesOrNoSignal.emit(['Confirm', 'Are you sure you want to cancel editing?\nAll changes made will be lost.', ['Confirm', 'Continue Editing']])
-            if confirmCancel:
+            self.binaryAnswer = None
+            self.binaryAnswerSignal.emit(['Confirm', 'Are you sure you want to cancel editing?\nAll changes made will be lost.', ['Confirm', 'Continue Editing']])
+            
+            if self.binaryAnswer:
                 self.revertToDefaultPageSet()
                 return
         else:
@@ -493,7 +494,12 @@ class Sets(QObject):
             return
 
         #Check if any data is incomplete
-        if self.set.isPairsEmpty() == 1:
+        newData = self.getCurrentData()
+        if newData == 0:
+            self.messageSignal.emit(['Error', 'The set must have at least one pair.'])
+            return
+        
+        elif newData == 1:
             self.messageSignal.emit(['Error', 'At least one (non-empty) pair is incomplete.\nEnsure all entries have both a term and defintion'])
             return
                 
@@ -509,8 +515,8 @@ class Sets(QObject):
 
         #Create segment to overwrite with
         newSegment = [newSetName + '\n']
-        for i in range(self.set.getLength()):
-            newSegment.append(self.set.getConfigData(i) + '\n')
+        for i in range(len(newData)):
+            newSegment.append(newData[i] + '\n')
 
         if so != 0:
             data = data[:st] + newSegment + data[so:]
@@ -538,11 +544,10 @@ class Sets(QObject):
             return True
         
         #Get Current Edited Data
-        allPairs = []
-        for i in range(self.set.getLength()):
-            data = self.set.getConfigData(i)
-            if data:
-                allPairs.append(data)
+        for i in range(len(self.current_pairs)):
+            data = self.getCurrentData()
+            if data == 0 or data == 1:
+                return True
 
         #Get File Data
         with open(self.config_path, 'r') as file:
@@ -557,16 +562,16 @@ class Sets(QObject):
             setSegment = fileData[startI:]
         
         #If lengths are different, return true
-        if len(allPairs) + 1 != len(setSegment):
-            LOGGER.info('{}, {}'.format(len(allPairs), len(setSegment)))
+        if len(data) + 1 != len(setSegment):
+            LOGGER.info('{}, {}'.format(len(data), len(setSegment)))
             return True
         
         #Compare Terms
         flag = False
-        for i in range(len(allPairs)):
-            if not setSegment[i + 1].rstrip() == allPairs[i]:
+        for i in range(len(data)):
+            if not setSegment[i + 1].rstrip() == data[i]:
                 LOGGER.info('Flag')
-                LOGGER.info("{}:{}".format(fileData[i + 1].rstrip(), allPairs[i]))
+                LOGGER.info("{}:{}".format(fileData[i + 1].rstrip(), data[i]))
                 flag = True
         
         return flag
@@ -574,8 +579,8 @@ class Sets(QObject):
     #Revert back to create set page
     def revertToDefaultPageSet(self):
         #Delete Previous Pairs
-        while not self.set.isEmpty():
-            self.set.removeNode(0)
+        while len(self.current_pairs) > 0:
+            self.removeSetPair(0, None)
 
         #Add 5 Empty Pairs
         for i in range(5):

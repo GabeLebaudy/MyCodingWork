@@ -298,8 +298,14 @@ class MainWindow(QMainWindow):
         #Signals
         self.Sets.messageSignal.connect(self.handleMessageSignal)
         self.Sets.textInputSignal.connect(self.handleSetTextInputSignal)
-        self.SideBar.yesOrNoSignal.connect(self.handleSideBarBinarySignal)
         self.Sets.newSetSignal.connect(self.handleNewSet)
+        self.Sets.binaryAnswerSignal.connect(self.handleSetBinarySignal)
+        
+        self.SideBar.deleteSetSignal.connect(self.handleDeleteSetSignal)
+        self.SideBar.editSetDialogSignal.connect(self.handleEditSetDialogSignal)
+        self.SideBar.getDataSignal.connect(self.handleGetSetData)
+        self.SideBar.editSetSignal.connect(self.handleEditSetSignal)
+        
         
         
     #----------------------
@@ -485,14 +491,37 @@ class MainWindow(QMainWindow):
         self.cancelMatchContainer.setHidden(True)
         self.startMatchContainer.setHidden(False)  
     
+    #Set was deleted, update the side bar
+    def handleSideBarUpdate(self):
+        self.SideBar.regenSideBar()
+    
+    #Signal sent from sidebar file, used to delete a set from the app
+    def handleDeleteSetSignal(self, contents):
+        answer = self.yesOrNoDialog(contents[0], contents[1], contents[2])
+        self.SideBar.setAnswer(answer)
+    
+    #Signal send from sidebar file, used to confirm with user that all current data will be lost
+    def handleEditSetDialogSignal(self, contents):
+        answer = self.yesOrNoDialog(contents[0], contents[1], contents[2])
+        self.SideBar.confirmEditDialog = answer
+    
+    #Signal sent from sidebar file, used to prompt an edit screen.
+    def handleEditSetSignal(self, title):
+        self.Sets.editSet(title)
+    
+    #Signal sent from sidebar file, used to get data from main window sets object
+    def handleSetDataSinal(self):
+        pass
+
     #New Set Created, route signal to sidebar file
     def handleNewSet(self, title):
         self.SideBar.addNode(title)
     
-    #Set was deleted, update the side bar
-    def handleSideBarUpdate(self):
-        self.SideBar.regenSideBar()
-
+    #Getting the current data from the Sets object
+    def handleGetSetData(self):
+        currentData = self.Sets.getCurrentData()
+        self.SideBar.setCurrentData(currentData)
+        
     #For receiving a message signal from any File
     def handleMessageSignal(self, contents):
         self.openMessageDialog(contents[0], contents[1])
@@ -501,10 +530,11 @@ class MainWindow(QMainWindow):
     def handleSetTextInputSignal(self, contents):
         input = self.textInputDialog(contents[0], contents[1])
         self.Sets.changeSetName(input)
-    
-    def handleSideBarBinarySignal(self, contents):
-        answer = self.yesOrNoDialog(contents[0], contents[1], contents[2])
-        self.SideBar.setAnswer(answer)
+        
+    #For giving a binary answer to the set file
+    def handleSetBinarySignal(self, contents):
+        ans = self.yesOrNoDialog(contents[0], contents[1], contents[2])
+        self.Sets.binaryAnswer = ans
     
     #----------------------
     # Dialog Methods

@@ -42,8 +42,12 @@ class Node:
 #Side Bar class
 class SideBar(QObject):
     
-    yesOrNoSignal = pyqtSignal(list)
+    deleteSetSignal = pyqtSignal(list)
+    editSetDialogSignal = pyqtSignal(list)
+    editSetSignal = pyqtSignal(str)
+    getDataSignal = pyqtSignal()
 
+    
     #Constructor
     def __init__(self):
         #Initialize Parent Class
@@ -156,21 +160,29 @@ class SideBar(QObject):
 
     #Prompt an edit from the Sets File
     def promptEdit(self, index, null):
-        code = self.setData.getCurrentData()
-        if code != 0:
-            confirmDialog = self.yesOrNoSignal(['Conflict', 'This action will clear all data in the Create Set tab.\n Are you sure you want to continue?', ['Yes', 'No']])
-            if not confirmDialog:
+        self.currentSetData = None
+        self.getDataSignal.emit()
+        
+        if self.currentSetData != 0:
+            self.confirmEditDialog = None
+            self.editSetDialogSignal.emit(['Conflict', 'This action will clear all data in the Create Set tab.\n Are you sure you want to continue?', ['Yes', 'No']])
+            
+            if not self.confirmEditDialog:
                 return
         
-        self.setData.editSet(index)
+        setTitle = self.setData.getSetTitle(index)
+        self.editSetSignal.emit(setTitle)
         
-
+    #Get the current data from the sets object
+    def setCurrentData(self, data):
+        self.currentSetData = data
+    
     #Prompt a removal of a set from the sets file
     def promptDelete(self, index, null):
         setName = self.setData.getSetTitle(index)
         self.binaryAnswer = None
         
-        self.yesOrNoSignal.emit(['Deletion Confirmation', 'Are you sure you want to delete the following set:\n{}?'.format(setName), ['Delete', 'Cancel']])
+        self.deleteSetSignal.emit(['Deletion Confirmation', 'Are you sure you want to delete the following set:\n{}?'.format(setName), ['Delete', 'Cancel']])
         if self.binaryAnswer:
             self.setData.deleteSet(setName)
             self.regenSideBar()
