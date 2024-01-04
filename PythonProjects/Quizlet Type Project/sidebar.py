@@ -113,7 +113,7 @@ class SideBar(QObject):
 
     #Update the signals of the edit button and the delete button for each set on the sidebar
     def updateSideBarSignals(self):
-        self.sideBar.resetSignals()
+        self.resetSignals()
         
         for i in range(len(self.items)):
             editFunction = lambda checked, x = i: self.promptEdit(x, checked)

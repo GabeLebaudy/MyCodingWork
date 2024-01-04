@@ -307,11 +307,31 @@ class Sets(QObject):
                         counter += 1
                 
                 if not line:
-                    break
+                    return False
     
     #Get the set content in list form given the title
     def getSetContent(self, set_title):
-        pass
+        #Start reading file
+        with open(self.config_path, 'r') as f:
+            found = False
+            startData = False
+            content = []
+            while not found:
+                line = f.readline().rstrip()
+                if not line:
+                    break
+                
+                if line == set_title:
+                    startData = True
+                    continue
+
+                if startData:
+                    if ':' not in line:
+                        found = True
+                    else:
+                        content.append(line)
+
+        return content
     
     #There are a few times when all titles are needed, so this function grabs all of them
     def getAllSetTitles(self):
