@@ -70,7 +70,7 @@ class Learn(QObject):
         self.setData = Sets()
 
     #Generate The Match Container Layout
-    def genMatchLayout(self):
+    def genLearnLayout(self):
         #Get Scales
         screen_resolution = QGuiApplication.primaryScreen().availableGeometry()
         width, height = screen_resolution.width(), screen_resolution.height()
@@ -268,7 +268,7 @@ class Learn(QObject):
     
     #Show/Hide the Layout
     def setHidden(self, status):
-        self.matchContainer.setHidden(True)
+        self.matchContainer.setHidden(status)
 
     #Populate the select set dropdown menu in the match tab
     def populateMatchDD(self):
@@ -276,6 +276,27 @@ class Learn(QObject):
 
         for name in titles:
             self.selectSetDD.addItem(name)
+    
+    #Construct the main storage of the match game
+    def addQuestion(self, question):
+        question_content = question.split(':')
+        term, definition = question_content[0], question_content[1]
+        q = Question()
+
+        #Given definition, enter term
+        if self.gamemode == 0:
+            q.setQuestion(definition)
+            q.setAnswer(term)
+        #Given term, enter definition
+        else:
+            q.setQuestion(term)
+            q.setAnswer(definition)
+
+        #If the user selected random, randomize which is question and which is answer
+        if self.gamemode == 2:
+            q.randomizeQandA()
+            
+        self.questions.append(q)
     
     #Start the match game
     @log_start_and_stop
@@ -324,9 +345,9 @@ class Learn(QObject):
         self.matchInfoLabel.setText('{}/{}'.format(self.correctCounter, self.lenFullSet))
 
         #Pull question text
-        question = self.getQuestion()
-        self.questionLabel.setText(question)
-
+        self.currentQuestion = self.questions[0]
+        self.questionLabel.setText(self.currentQuestion.getQuestion())
+    
     #Check user inputted answer
     def checkMatchAnswer(self):
         #Check is the user entered anything
@@ -336,12 +357,12 @@ class Learn(QObject):
         #Pull answer then wipe input
         userAnswer = self.answerInput.text()
         self.answerInput.setText('')
-        isCorrect, answer = self.match.isRight(userAnswer)
+        isCorrect = (userAnswer == self.currentQuestion.getAnswer())
 
         #Check answer
         if isCorrect:
             self.correctCounter += 1
-            self.match.answeredCorrect()
+            self.answeredCorrect()
 
             #Check if answer was the last question
             if self.correctCounter >= self.lenFullSet:
@@ -357,14 +378,14 @@ class Learn(QObject):
             self.incorrectAnswerContainer.setHidden(False)
 
             #Show correct answer
-            self.answerDisplayLabel.setText('The correct answer was: {}'.format(answer))
+            self.answerDisplayLabel.setText('The correct answer was: {}'.format(self.currentQuestion.getAnswer()))
             self.yourAnswerDisplayLabel.setText('Your answer was: {}'.format(userAnswer))
 
     #Override incorrect answer
     def overrideWrongAnswer(self):
         #Act as if answer was correct
         self.correctCounter += 1
-        self.match.answeredCorrect()
+        self.answeredCorrect()
 
         #Check if answer was the last question
         if self.correctCounter >= self.lenFullSet:
@@ -376,14 +397,14 @@ class Learn(QObject):
 
     #Continue with wrong answer
     def continueMatchWrong(self):
-        self.match.reshuffleQuestion()
+        self.reshuffleQuestion()
         self.startNextMatchPair()
 
     #Show finished match screen
     @log_start_and_stop
     def matchComlpeted(self):
         #Reset match object
-        self.match.resetGame()
+        self.resetGame()
 
         #Show the match complete screen
         self.answerCorrectContainer.setHidden(True)
@@ -404,7 +425,7 @@ class Learn(QObject):
 
     #Cancel match mid-game
     def cancelMatch(self):
-        self.match.resetGame()
+        self.resetGame()
         
         self.answerCorrectContainer.setHidden(True)
         self.incorrectAnswerContainer.setHidden(True)
@@ -430,26 +451,6 @@ class Learn(QObject):
     #Check the length of the match set
     def getLength(self):
         return len(self.questions)
-    
-    #Construct the main storage of the match game
-    def addQuestion(self, question):
-        question_content = question.split(':')
-        term, definition = question_content[0], question_content[1]
-        q = Question()
-
-        #Given definition, enter term
-        if self.gamemode == 0:
-            q.setQuestion(definition)
-            q.setAnswer(term)
-        #Given term, enter definition
-        else:
-            q.setQuestion(term)
-            q.setAnswer(definition)
-
-        #If the user selected random, randomize which is question and which is answer
-        if self.gamemode == 2:
-            q.randomizeQandA()
-        
             
     #Randomize the set
     @log_start_and_stop
@@ -461,35 +462,6 @@ class Learn(QObject):
             del self.questions[randomInd]
         
         self.questions = temp
-
-    #Get the next question from the set
-    def getQuestion(self):
-        #Given Definition, Match Term
-        if self.gamemode == 0:
-            return self.questions[0][1]
-        
-        #Given Term, Match Definition
-        elif self.gamemode == 1:
-            return self.questions[0][0]
-
-        #Mixed
-        else:
-            termOrDef = random.randint(0, 1)
-            self.mixedFlag = termOrDef
-            return self.questions[0][termOrDef]
-        
-    #Return if user was right, and the answer string
-    def isRight(self, userAnswer):
-        if self.gamemode == 0:
-            wasRight = self.questions[0][0].lower() == userAnswer.lower()
-            return wasRight, self.questions[0][0]
-        elif self.gamemode == 1:
-            wasRight = self.questions[0][1].lower() == userAnswer.lower()
-            return wasRight, self.questions[0][1]
-        else:
-            tupleIndex = 1 if self.mixedFlag == 0 else 0
-            wasRight = self.questions[0][tupleIndex].lower() == userAnswer.lower()
-            return wasRight, self.questions[0][tupleIndex]
         
     #Function for if user answered correctly
     @log_start_and_stop
@@ -503,6 +475,8 @@ class Learn(QObject):
         if len(self.questions) >= 1:
             newIndex = random.randint(1, len(self.questions))
             self.questions.insert(newIndex, item)
+        else:
+            self.questions.append(item)
 
     #Game is completed, reset the match obj
     def resetGame(self):

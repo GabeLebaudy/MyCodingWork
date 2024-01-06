@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
         self.flashCardsBtn.clicked.connect(self.navFlashCards)
 
         self.playLearnButton.setFixedSize(buttonSizes)
-        self.playLearnButton.clicked.connect(self.navMatch)
+        self.playLearnButton.clicked.connect(self.navLearn)
         
         self.titleBarLayout.addWidget(self.createSetButton)
         self.titleBarLayout.addWidget(self.flashCardsBtn)
@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         self.create_set_container = self.Sets.getSetContainer()
 
         self.LearnObj = Learn()
-        self.LearnObj.genMatchLayout()
+        self.LearnObj.genLearnLayout()
         self.learn_container = self.LearnObj.getLearnContainer()
 
         self.Flashcards = FlashCards()
@@ -129,20 +129,20 @@ class MainWindow(QMainWindow):
     #Switch to create set tab
     def navCreateSet(self):
         self.LearnObj.setHidden(True)
-        self.flashContainer.setHidden(True)
+        self.Flashcards.setHidden(True)
         self.Sets.setHidden(False)
 
     #Switch to match tab
-    def navMatch(self):
+    def navLearn(self):
         self.Sets.setHidden(True)
-        self.flashContainer.setHidden(True)
+        self.Flashcards.setHidden(True)
         self.LearnObj.setHidden(False)
         
     #Switch to FlashCards Tab
     def navFlashCards(self):
         self.Sets.setHidden(True)
         self.LearnObj.setHidden(True)
-        self.flashContainer.setHidden(False)
+        self.Flashcards.setHidden(False)
     
     #----------------------------------
     # Signal Handling Methods
@@ -192,7 +192,6 @@ class MainWindow(QMainWindow):
     #----------------------
     # Dialog Methods
     #----------------------
-        
     
     #Standard message dialog
     @log_start_and_stop
