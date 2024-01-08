@@ -62,68 +62,7 @@ class Node:
         if not self.termWid.toPlainText() or not self.defWid.toPlainText():
             return 1
         else: return 2
-
     
-#Set Class
-class Set:
-    #Constructor
-    def __init__(self):
-        self.items = []
-        
-    #Add a pair to the set
-    def addNode(self, term, definition, layout, removeBtn):
-        newNode = Node(term, definition, layout, removeBtn)
-        self.items.append(newNode)
-        
-    #Remove a node with a given index
-    def removeNode(self, index):
-        self.items[index].delWidgets()
-        del self.items[index]
-
-    #Get the length of the set
-    def getLength(self):
-        return len(self.items)
-    
-    #Get Term Value Pair in Config Form
-    def getConfigData(self, index):
-        td, dd = self.items[index].getVals()
-        if not td or not dd:
-            return False
-        
-        return '{}:{}'.format(td, dd)
-
-    #Check if the set is empty
-    def isEmpty(self):
-        return len(self.items) == 0
-    
-    #Check if set is ready to be created - 0:Completely empty, 1:At least one term is missing a definition pair 2: All good
-    @log_start_and_stop
-    def isPairsEmpty(self):
-        flag = False
-        ce = 0
-        for i in range(len(self.items)):
-            code = self.items[i].checkEmpty()
-            if code == 1:
-                flag = True
-            if code == 2:
-                ce = 2
-
-        if not flag:
-            return ce
-        else:
-            return 1
-        
-    #Return Dictionary of Set Pairs
-    @log_start_and_stop
-    def getPairData(self):
-        finalList = {}
-        for i in range(self.getLength()):
-            termText, defText = self.items[i].getVals()
-            if termText:
-                finalList[termText] = defText
-
-        return finalList
-
 class Sets(QObject):
     #Signals to Main File
     messageSignal = pyqtSignal(list)

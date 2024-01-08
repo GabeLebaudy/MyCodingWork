@@ -8,7 +8,8 @@ from Sets import Sets
 from PyQt6.QtWidgets import ( 
     QHBoxLayout, QVBoxLayout, QWidget,
     QPushButton, QLineEdit, QSpacerItem,
-    QLabel, QComboBox, QSizePolicy
+    QLabel, QComboBox, QSizePolicy,
+    QRadioButton
 )
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QFont
@@ -69,6 +70,10 @@ class Learn(QObject):
         #Access to Set data
         self.setData = Sets()
 
+    #-------------------------------------
+    # GUI Widget Methods
+    #-------------------------------------
+    
     #Generate The Match Container Layout
     def genLearnLayout(self):
         #Get Scales
@@ -107,7 +112,10 @@ class Learn(QObject):
         self.startMatchLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.startMatchContainer.setLayout(self.startMatchLayout)
         
-        #Actual Match layout
+        #Match Multiple Choice Layout
+        self.genMultipleChoiceLayout()
+
+        #Match Write Answer Layout
         self.mainMatchQLayout = QVBoxLayout()
         self.mainMatchQContainer = QWidget()
         
@@ -252,6 +260,7 @@ class Learn(QObject):
         self.matchMainLayout.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.matchMainLayout.addWidget(self.startMatchContainer)
         self.matchMainLayout.addWidget(self.mainMatchQContainer)
+        self.matchMainLayout.addWidget(self.mult_choice_main_container)
         self.matchMainLayout.addWidget(self.answerCorrectContainer)
         self.matchMainLayout.addWidget(self.incorrectAnswerContainer)
         self.matchMainLayout.addWidget(self.matchCompletedContainer)
@@ -261,6 +270,45 @@ class Learn(QObject):
         self.matchMainLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.matchContainer.setLayout(self.matchMainLayout)
         self.matchContainer.setHidden(True)
+
+    #Create the multiple choice layout
+    def genMultipleChoiceLayout(self):
+        self.mult_choice_main_container = QWidget()
+        mult_choice_main_layout = QVBoxLayout()
+
+        mult_choice_question_layout = QHBoxLayout()
+
+        self.mult_choice_question_label = QLabel('Sample Question')
+        mult_choice_question_font = QFont()
+        mult_choice_question_font.setPointSize(14)
+        mult_choice_question_font.setBold(True)
+        self.mult_choice_question_label.setFont(mult_choice_question_font)
+
+        mult_choice_question_layout.addWidget(self.mult_choice_question_label)
+        mult_choice_question_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        mult_choice_answers_layout = QVBoxLayout()
+        
+        self.mult_choice_answers = []
+        for i in range(4):
+            new_button = QRadioButton("Option {}".format(i + 1))
+            self.mult_choice_answers.append(new_button)
+            mult_choice_answers_layout.addWidget(new_button)
+
+        mult_choice_answers_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        mult_choice_check_layout = QHBoxLayout()
+        
+        mult_choice_check_button = QPushButton("Check Answer")
+
+        mult_choice_check_layout.addWidget(mult_choice_check_button)
+        mult_choice_check_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+        mult_choice_main_layout.addLayout(mult_choice_question_layout)
+        mult_choice_main_layout.addLayout(mult_choice_answers_layout)
+        mult_choice_main_layout.addLayout(mult_choice_check_layout)
+        self.mult_choice_main_container.setLayout(mult_choice_main_layout)
+        self.mult_choice_main_container.setHidden(True)
 
     #Get the layout container
     def getLearnContainer(self):
@@ -276,6 +324,10 @@ class Learn(QObject):
 
         for name in titles:
             self.selectSetDD.addItem(name)
+    
+    #-----------------------------------------
+    # Main Game Methods
+    #-----------------------------------------
     
     #Construct the main storage of the match game
     def addQuestion(self, question):
@@ -314,7 +366,7 @@ class Learn(QObject):
             return 
 
         #Set the match gamemode from input
-        self.setGamemode(gamemode)
+        self.gamemode = gamemode
         
         for item in learn_set_data:
             self.addQuestion(item)             
@@ -432,31 +484,12 @@ class Learn(QObject):
         self.mainMatchQContainer.setHidden(True)
         self.cancelMatchContainer.setHidden(True)
         self.startMatchContainer.setHidden(False)  
-    
-    #Getter methods
-    def getAllPairs(self):
-        return self.questions
-    
-    def getPair(self, index):
-        return self.questions[index]
-    
-    #Setter methods
-    def setGamemode(self, mode):
-        self.gamemode = mode
-    
-    #Check if set is empty
-    def isEmpty(self):
-        return len(self.questions) == 0
-    
-    #Check the length of the match set
-    def getLength(self):
-        return len(self.questions)
             
     #Randomize the set
     @log_start_and_stop
     def shuffle(self):
         temp = []
-        while not self.isEmpty():
+        while len(self.questions) > 0:
             randomInd = random.randint(0, len(self.questions) - 1)
             temp.append(self.questions[randomInd])
             del self.questions[randomInd]
@@ -466,6 +499,7 @@ class Learn(QObject):
     #Function for if user answered correctly
     @log_start_and_stop
     def answeredCorrect(self):
+        #TODO: This should be changed to handle stage changes. For first version, multiple choice, then write should be good enough
         self.questions.pop(0)
 
     #Function for if the user answered incorrectly

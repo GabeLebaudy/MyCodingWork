@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QGuiApplication, QFont
-from Sets import Set, Sets
+from Sets import Sets
 from sidebar import SideBar
 from learn import Learn
 from flashcards import FlashCards
