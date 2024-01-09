@@ -20,7 +20,37 @@ my $b = 2;
     print("The value of a - b: ", $a - $b, "\n");
     print("The value of a x b: ". $a * $b, "\n");
     print("The value of a / b: ", $a / $b, "\n");
+    print("a to the power of b: ", $a ** $b, "\n");
+    print("The value of a modulus b: ", $a % $b, "\n");
 }
+
+# Comparison Operators
+# == Equal to
+# != Not equal to
+# < less than
+# > greater than
+# <= less than or equal to
+# >= greater than or equal to
+# <=> spaceship: Returns 1 if the left variable is greater than the right, 0 if they are equal, and -1 if the left variable is less than the right.
+
+# String Comparison Operators
+# eq Equal to
+# ne Not equal to
+# lt Less than
+# gt Greater than
+# le Less than or equal to
+# ge Greater than or equal to
+# cmp Spaceship/comparison
+
+# String concatenation operations
+print("This is " . "The concatenation operator." . "\n");
+print("This is the repetition multiplier.\n" x 2);
+
+# Chomp Operator
+my $chomp_var = "Chomp gets rid of the last character in a string!\n";
+print($chomp_var);
+chomp($chomp_var);
+print("After chomp: $chomp_var\n"); # A little difficult to spot because a newline character is added after it is just chomped.
 
 # Numbers
 
@@ -78,6 +108,10 @@ print($sentence,"\n");
 # reverse (reverses the string)
 # sprintf (string formatter)
 
+# Logical Operators
+# && and operator
+# || or operator
+# !(var) logical not
 
 
 
