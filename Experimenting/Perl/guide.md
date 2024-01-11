@@ -30,5 +30,8 @@
 ## Regex File
 - Check for matches
 - Extract a match
+- Substitution
+
+
 
 

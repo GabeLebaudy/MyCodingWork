@@ -70,3 +70,28 @@ print("Letter Range Example\n") if ("g1" =~ /[a-z]1/);
 
 
 # Extracting Matches
+
+my $extract_string = "This String Will Have No Whitespace!\n";
+my $new_extract = $1 if ($extract_string =~ /(\S+)/);
+print($new_extract, "\n");
+
+# Alternation
+
+print("Matched Apple\n") if "apple and orange" =~ /apple|orange|mango/; #| Character used to separate sequences of characters
+print("Matched Orange\n") if "apple and orange" =~ /orange|apple|mango/; 
+
+# Grouping
+
+print("Matched Firefighter\n") if "Firefighter" =~ /Fire(fighter|man|woman)/;
+print("Matched Firewoman\n") if "Firewoman" =~ /Fire(fighter|man|woman)/;
+
+# Substitution and Translation
+
+my $substitution_string = "This string will be used for substitution\n";
+$substitution_string =~ s/string/sentence/;
+print($substitution_string);
+
+my $second_sub_string = "This Sentence Will Have No Whitespace\n";
+$second_sub_string =~ s/ //g; #You can combine 'g' and 'i' together to replace all occurances regardless of character case
+print($second_sub_string);
+
