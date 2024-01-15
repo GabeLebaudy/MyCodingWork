@@ -42,4 +42,33 @@ sub sum {
     return $total;
 }
 
-print sum(@array);
+print sum(@array, "\n");
+
+my $val1 = 1;
+my $val2 = 2;
+
+# Passing in parameters by reference (Modifies variables)
+sub sample_method {
+    $_[0] = 10;
+    $_[1] = 20;
+}
+
+&sample_method;
+
+print("The values after the method are $val1 $val2\n");
+
+# Passing in parameters by value
+
+my $val3 = 100;
+my $val4 = 200;
+
+sub sample_value {
+    my ($v1, $v2) = @_;
+    $v1 = 1;
+    $v2 = 2;
+}
+
+&sample_value;
+
+print("The values after the method are $val3 $val4\n");
+

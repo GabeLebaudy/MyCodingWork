@@ -32,6 +32,10 @@
 - Extract a match
 - Substitution
 
+## Ref and Sub
+- Memory Reference Pointers
+- Subroutines
+
 
 
 
