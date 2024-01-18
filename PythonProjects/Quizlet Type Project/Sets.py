@@ -8,7 +8,8 @@ from decorators import log_start_and_stop
 from PyQt6.QtWidgets import (
     QHBoxLayout, QVBoxLayout, QWidget,
     QLabel, QLineEdit, QSizePolicy,
-    QPushButton, QSpacerItem, QTextEdit
+    QPushButton, QSpacerItem, QTextEdit,
+    QScrollArea
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, QObject
 from PyQt6.QtGui import QFont, QGuiApplication
@@ -81,16 +82,18 @@ class Sets(QObject):
         #Store Current Pair Widget Data
         self.current_pairs = []
         self.removePairSignals = []
+        self.termSignals = []
+        self.defSignals = []
 
         #Generate layout as it will be difficult to interact from elsewhere without it
-        self.createSetLayout()
+        self.createSetsLayout()
     
     #----------------------------------------
     # General Sets Info
     #----------------------------------------
     
     #Create the container for creating and editing a set
-    def createSetLayout(self):
+    def createSetsLayout(self):
         #Get Scales
         screen_resolution = QGuiApplication.primaryScreen().availableGeometry()
         width, height = screen_resolution.width(), screen_resolution.height()
@@ -163,6 +166,17 @@ class Sets(QObject):
         self.createSetLayout.addWidget(self.changeSetNameContainer)
         self.createSetLayout.addLayout(self.setLabelLayout)
         
+        sets_scroll_area = QScrollArea()
+        sets_scroll_area.setWidgetResizable(True)
+
+        sets_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        sets_scroll_area.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+
+        sets_scroll_area.setFixedWidth(int(1250 * self.widthScale))
+
+        scroll_widget = QWidget()
+        sets_scroll_layout = QVBoxLayout()
+
         self.itemPairsLayout = QVBoxLayout()
         for i in range(5):
             self.addSetPair()
@@ -209,9 +223,14 @@ class Sets(QObject):
         self.finishEditContainer.setLayout(self.finishEditLayout)
         self.finishEditContainer.setHidden(True)
 
-        self.createSetLayout.addLayout(self.itemPairsLayout)
+        sets_scroll_layout.addLayout(self.itemPairsLayout)
         self.createSetLayout.addSpacerItem(QSpacerItem(0, int(20 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
-        self.createSetLayout.addLayout(self.addPairLayout)
+        sets_scroll_layout.addLayout(self.addPairLayout)
+
+        scroll_widget.setLayout(sets_scroll_layout)
+        sets_scroll_area.setWidget(scroll_widget)
+
+        self.createSetLayout.addWidget(sets_scroll_area)
         self.createSetLayout.addWidget(self.finishSetContainer)
         self.createSetLayout.addWidget(self.finishEditContainer)
         self.createSetLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
@@ -220,7 +239,7 @@ class Sets(QObject):
         containerLayout.addLayout(self.createSetLayout)
         containerLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.createSetContainer.setLayout(containerLayout)
-    
+
     #Get the container that contains the create set data
     def getSetContainer(self):
         return self.createSetContainer
@@ -321,6 +340,9 @@ class Sets(QObject):
         termInput.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         defInput.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
 
+        termInput.setTabChangesFocus(True)
+        defInput.setTabChangesFocus(True)
+
         pairLayout.addWidget(termInput)
         pairLayout.addWidget(defInput)
         pairLayout.addWidget(removeBtn)
@@ -342,6 +364,8 @@ class Sets(QObject):
 
         #Loop through remove queue item button array, create a new signal for that button based on index, connect signal to the removeQueueItem method, 
         for i in range(len(self.current_pairs)):
+            termFunc = None
+            defFunc = None
             removeFunc = lambda checked, x=i: self.removeSetPair(x, checked)
             button = self.current_pairs[i].getBtn()
             buttonConnection = [button.clicked, removeFunc]
@@ -403,6 +427,7 @@ class Sets(QObject):
     #Edit a set
     def editSet(self, name): 
         #Clear Previous Set
+        print("Debug 2")
         while len(self.current_pairs) > 0:
             self.removeSetPair(0, None)
             
@@ -416,7 +441,7 @@ class Sets(QObject):
             setData = data[startInd + 1:]
         else:
             setData = data[startInd + 1:stopInd]
-            
+        
         for pair in setData:
             #Create new widgets
             self.addSetPair()
@@ -425,7 +450,7 @@ class Sets(QObject):
             pairItems = pair.rstrip().split(':')
             self.current_pairs[-1].setTermVal(pairItems[0])
             self.current_pairs[-1].setDefVal(pairItems[1])
-            
+        
         #Hide the create button layout, and 
         self.finishSetContainer.setHidden(True)
         self.changeSetNameContainer.setHidden(False)

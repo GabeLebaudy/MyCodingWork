@@ -118,6 +118,7 @@ class MainWindow(QMainWindow):
         self.SideBar.editSetDialogSignal.connect(self.handleEditSetDialogSignal)
         self.SideBar.getDataSignal.connect(self.handleGetSetData)
         self.SideBar.editSetSignal.connect(self.handleEditSetSignal)
+        self.SideBar.navSignal.connect(self.navCreateSet)
 
         self.LearnObj.messageSignal.connect(self.handleMessageSignal)
         
@@ -164,6 +165,7 @@ class MainWindow(QMainWindow):
     
     #Signal sent from sidebar file, used to prompt an edit screen.
     def handleEditSetSignal(self, title):
+        print("Debug 1")
         self.Sets.editSet(title)
 
     #New Set Created, route signal to sidebar file

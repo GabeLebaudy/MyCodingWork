@@ -238,9 +238,17 @@ class Learn(QObject):
         #Match completed screen
         self.game_completed_container = QWidget()
         self.game_completed_layout = QVBoxLayout()
+        
+        game_label_layout = QHBoxLayout()
 
         game_completed_label = QLabel('Good Job!')
         game_completed_label.setFont(answered_correct_font)
+
+        game_label_layout.addWidget(game_completed_label)
+        game_label_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.game_score_label = QLabel("Your score was: ")
+        self.game_score_label.setFont(answered_correct_font)
 
         self.game_completed_btn_layout = QHBoxLayout()
 
@@ -253,7 +261,9 @@ class Learn(QObject):
         self.game_completed_btn_layout.addWidget(self.replay_match_btn)
         self.game_completed_btn_layout.addWidget(self.finish_match_btn)
 
-        self.game_completed_layout.addWidget(game_completed_label)
+        self.game_completed_layout.addLayout(game_label_layout)
+        self.game_completed_layout.addSpacing(int(20 * self.heightScale))
+        self.game_completed_layout.addWidget(self.game_score_label)
         self.game_completed_layout.addLayout(self.game_completed_btn_layout)
         self.game_completed_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.game_completed_container.setLayout(self.game_completed_layout)
@@ -276,8 +286,8 @@ class Learn(QObject):
         #Container for all match layouts
         self.main_learn_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.main_learn_layout.addWidget(learn_title_label)
+        self.main_learn_layout.addSpacing(int(50 * self.heightScale))
         self.main_learn_layout.addWidget(self.question_tracker_container)
-        self.main_learn_layout.addSpacerItem(QSpacerItem(0, int(50 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.main_learn_layout.addWidget(self.start_learn_container)
         self.main_learn_layout.addWidget(self.main_type_answer_container)
         self.main_learn_layout.addWidget(self.mult_choice_main_container)
@@ -386,7 +396,7 @@ class Learn(QObject):
         learn_set_name = self.selectSetDD.currentText()
         gamemode = self.select_gamemode_dd.currentIndex()
         question_type = self.select_question_type_dd.currentIndex()
-
+        
         #Get Set Data using set name
         learn_set_data = self.setData.getSetContent(learn_set_name)
 
@@ -403,8 +413,20 @@ class Learn(QObject):
             self.addQuestion(item)             
         
         if question_type < 2:
+            #First check if the set length allows multiple choice
+            if len(self.questions) < 4:
+                self.resetGame()
+                self.messageSignal.emit(['Error', 'Your set {} does not have enough pairs for multiple choice questions.\n(At least 4 are needed)'.format(learn_set_name)])
+                return
+            
+            #Store answers for multiple choice options
             for q in self.questions:
-                self.all_answers.append(q.getAnswer())            
+                self.all_answers.append(q.getAnswer())     
+
+            #Ensure all radio buttons are not checked
+            for btn in self.mult_choice_answers:
+                btn.setCheckable(False)
+                btn.setCheckable(True)      
         
         #Shuffle the pairs
         self.shuffle()
@@ -423,6 +445,7 @@ class Learn(QObject):
         #Initialize progress label info
         self.lenFullSet = len(self.questions)
         self.correctCounter = 0
+        self.incorrect_counter = 0
 
         #Start game
         self.startNextQuestion()
@@ -460,17 +483,14 @@ class Learn(QObject):
             self.mult_choice_question_label.setText(self.currentQuestion.getQuestion())
             
             #Get random incorrect answers
+            correct_answer_ind = self.all_answers.index(self.currentQuestion.getAnswer())
+
             answers = []
-            answer_indexes = random.sample(range(len(self.all_answers) + 1), 3)
-            for answer in answer_indexes: #Convert random numbers to indexes
-                answer -= 1
-                #In case answer selected at random to be the wrong answer is the correct answer
-                while self.all_answers[answer] == self.currentQuestion.getAnswer():
-                    new_answer = random.randint(0, len(self.all_answers) - 1)
-                    #Check for duplicate incorrect answers
-                    if new_answer not in answer_indexes:
-                        answer = new_answer
-                
+            answer_indexes = []
+            while not answer_indexes or correct_answer_ind in answer_indexes:
+                answer_indexes = random.sample(range(len(self.all_answers)), 3)
+            
+            for answer in answer_indexes:
                 answers.append(self.all_answers[answer])
             
             #Populate radio buttons text
@@ -498,6 +518,10 @@ class Learn(QObject):
                 if i == self.correct_index:
                     self.answeredCorrect()
                     
+                    if self.correctCounter >= self.lenFullSet:
+                        self.matchComlpeted()
+                        return
+
                     self.mult_choice_main_container.setHidden(True)
                     self.answered_correct_container.setHidden(False)
                 else:
@@ -513,7 +537,6 @@ class Learn(QObject):
             self.mult_choice_answers[i].setCheckable(False)
             self.mult_choice_answers[i].setCheckable(True)
                     
-
     #Check user inputted answer
     def checkTypeAnswer(self):
         #Check is the user entered anything
@@ -527,7 +550,6 @@ class Learn(QObject):
 
         #Check answer
         if isCorrect:
-            self.correctCounter += 1
             self.answeredCorrect()
 
             #Check if answer was the last question
@@ -551,7 +573,6 @@ class Learn(QObject):
     #Override incorrect answer
     def overrideWrongAnswer(self):
         #Act as if answer was correct
-        self.correctCounter += 1
         self.answeredCorrect()
 
         #Check if answer was the last question
@@ -564,18 +585,24 @@ class Learn(QObject):
 
     #Continue with wrong answer
     def continueWithWrongAnswer(self):
+        self.incorrect_counter += 1
         self.reshuffleQuestion()
         self.startNextQuestion()
 
     #Show finished match screen
     @log_start_and_stop
     def matchComlpeted(self):
+        #Calculate and update score
+        score = int((self.correctCounter / (self.correctCounter + self.incorrect_counter)) * 100)
+        self.game_score_label.setText("Your score was: {}%".format(score))
+
         #Reset match object
         self.resetGame()
 
         #Show the match complete screen
         self.answered_correct_container.setHidden(True)
         self.answered_incorrect_layout.setHidden(True)
+        self.mult_choice_main_container.setHidden(True)
         self.main_type_answer_container.setHidden(True)
         self.cancel_game_container.setHidden(True)
         self.question_tracker_container.setHidden(True)
@@ -599,6 +626,7 @@ class Learn(QObject):
         self.answered_incorrect_layout.setHidden(True)
         self.mult_choice_main_container.setHidden(True)
         self.main_type_answer_container.setHidden(True)
+        self.question_tracker_container.setHidden(True)
         self.cancel_game_container.setHidden(True)
         self.start_learn_container.setHidden(False)  
             
@@ -618,8 +646,11 @@ class Learn(QObject):
     def answeredCorrect(self):
         is_complete = self.questions[0].goNextStage()
         if is_complete: 
+            self.correctCounter += 1
             self.questions.pop(0)
         else:
+            if self.gamemode == 2:
+                self.questions[0].randomizeQandA()
             self.reshuffleQuestion()
         
     #Function for if the user answered incorrectly

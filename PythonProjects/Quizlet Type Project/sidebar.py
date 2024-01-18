@@ -3,10 +3,11 @@
 #Imports
 from decorators import log_start_and_stop
 from Sets import Sets
-
+ 
 from PyQt6.QtWidgets import (
     QHBoxLayout, QVBoxLayout, QLabel,
-    QPushButton
+    QPushButton, QWidget, QScrollArea,
+    QSizePolicy, QSpacerItem
 )
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
 from PyQt6.QtGui import QFont, QGuiApplication
@@ -46,6 +47,7 @@ class SideBar(QObject):
     editSetDialogSignal = pyqtSignal(list)
     editSetSignal = pyqtSignal(str)
     getDataSignal = pyqtSignal()
+    navSignal = pyqtSignal()
 
     
     #Constructor
@@ -82,6 +84,22 @@ class SideBar(QObject):
         self.sideBarLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         self.sideBarLayout.addWidget(sideBarLabel)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        scroll_area.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        sideBarWidget = QWidget()
+        self.node_layout = QVBoxLayout()
+        self.node_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        sideBarWidget.setLayout(self.node_layout)
+        scroll_area.setWidget(sideBarWidget)
+
+        self.sideBarLayout.addWidget(scroll_area)
+
         self.regenSideBar()
 
     #For access from main window
@@ -104,7 +122,7 @@ class SideBar(QObject):
         setLayout.addWidget(deleteBtn)
         setLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         
-        self.sideBarLayout.addLayout(setLayout)
+        self.node_layout.addLayout(setLayout)
         
         newNode = Node(titleLabel, editBtn, deleteBtn, setLayout)
         self.items.append(newNode)
@@ -169,9 +187,12 @@ class SideBar(QObject):
             
             if not self.confirmEditDialog:
                 return
-        
+            
         setTitle = self.setData.getSetTitle(index)
         self.editSetSignal.emit(setTitle)
+
+        #Ensure create tab is selected
+        self.navSignal.emit()
         
     #Get the current data from the sets object
     def setCurrentData(self, data):
