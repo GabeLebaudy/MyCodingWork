@@ -334,7 +334,7 @@ class Learn(QObject):
         mult_choice_check_layout = QHBoxLayout()
         
         mult_choice_check_button = QPushButton("Check Answer")
-        mult_choice_check_button.setFixedSize(int(100 * self.widthScale), int(50 * self.heightScale))
+        mult_choice_check_button.setFixedSize(int(125 * self.widthScale), int(50 * self.heightScale))
         mult_choice_check_button.clicked.connect(self.checkMultChoiceAnswer)
 
         mult_choice_check_layout.addWidget(mult_choice_check_button)

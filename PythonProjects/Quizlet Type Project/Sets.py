@@ -233,6 +233,7 @@ class Sets(QObject):
         self.createSetLayout.addWidget(sets_scroll_area)
         self.createSetLayout.addWidget(self.finishSetContainer)
         self.createSetLayout.addWidget(self.finishEditContainer)
+        self.createSetLayout.addSpacing(int(50 * self.heightScale))
         self.createSetLayout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
         containerLayout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
