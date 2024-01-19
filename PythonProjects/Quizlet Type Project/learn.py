@@ -100,6 +100,7 @@ class Learn(QObject):
         learn_title_label = QLabel("Learn!")
         learn_title_font = QFont()
         learn_title_font.setPointSize(24)
+        learn_title_font.setBold(True)
         learn_title_label.setFont(learn_title_font)
         learn_title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 

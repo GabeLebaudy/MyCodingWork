@@ -6,16 +6,15 @@ import os
 from PyQt6.QtWidgets import (
     QMainWindow, QApplication, QLineEdit,
     QLabel, QPushButton, QDialog,
-    QHBoxLayout, QVBoxLayout, QTabWidget,
-    QGridLayout, QSizePolicy, QWidget,
-    QSpacerItem, QTextEdit, QComboBox,
-    QDialogButtonBox
+    QHBoxLayout, QVBoxLayout, QSizePolicy, 
+    QWidget, QSpacerItem, QDialogButtonBox
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QGuiApplication, QFont
 from Sets import Sets
 from sidebar import SideBar
 from learn import Learn
+from quiz import Quiz
 from flashcards import FlashCards
 from decorators import log_start_and_stop
 
@@ -35,6 +34,7 @@ class MainWindow(QMainWindow):
         self.createSetButton = QPushButton("Create Set")
         self.flashCardsBtn = QPushButton("Flash Cards")
         self.playLearnButton = QPushButton("Learn")
+        self.playQuizButton = QPushButton("Quiz")
 
         buttonSizes = QSize(int(150 * self.widthScale), int(75 * self.heightScale))
         
@@ -46,10 +46,14 @@ class MainWindow(QMainWindow):
 
         self.playLearnButton.setFixedSize(buttonSizes)
         self.playLearnButton.clicked.connect(self.navLearn)
+
+        self.playQuizButton.setFixedSize(buttonSizes)
+        self.playQuizButton.clicked.connect(self.navQuiz)
         
         self.titleBarLayout.addWidget(self.createSetButton)
         self.titleBarLayout.addWidget(self.flashCardsBtn)
         self.titleBarLayout.addWidget(self.playLearnButton)
+        self.titleBarLayout.addWidget(self.playQuizButton)
         self.titleBarLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
     #Main Window Construction
@@ -81,12 +85,15 @@ class MainWindow(QMainWindow):
         self.Sets = Sets()
         self.create_set_container = self.Sets.getSetContainer()
 
+        self.Flashcards = FlashCards()
+        self.flashContainer = self.Flashcards.getContainer()
+
         self.LearnObj = Learn()
         self.LearnObj.genLearnLayout()
         self.learn_container = self.LearnObj.getLearnContainer()
 
-        self.Flashcards = FlashCards()
-        self.flashContainer = self.Flashcards.getContainer()
+        self.QuizObj = Quiz()
+        self.quiz_container = self.QuizObj.genMainContainer()
 
         self.completeLayout = QHBoxLayout()
         self.mainAreaLayout = QVBoxLayout()
@@ -96,6 +103,7 @@ class MainWindow(QMainWindow):
         self.mainAreaLayout.addWidget(self.create_set_container)
         self.mainAreaLayout.addWidget(self.learn_container)
         self.mainAreaLayout.addWidget(self.flashContainer)
+        self.mainAreaLayout.addWidget(self.quiz_container)
         self.mainAreaLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
         self.completeLayout.addSpacerItem(QSpacerItem(int(25 * self.widthScale), 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))
@@ -131,19 +139,30 @@ class MainWindow(QMainWindow):
     def navCreateSet(self):
         self.LearnObj.setHidden(True)
         self.Flashcards.setHidden(True)
+        self.QuizObj.setHidden(True)
         self.Sets.setHidden(False)
 
     #Switch to match tab
     def navLearn(self):
         self.Sets.setHidden(True)
         self.Flashcards.setHidden(True)
+        self.QuizObj.setHidden(True)
         self.LearnObj.setHidden(False)
         
     #Switch to FlashCards Tab
     def navFlashCards(self):
         self.Sets.setHidden(True)
         self.LearnObj.setHidden(True)
+        self.QuizObj.setHidden(True)
         self.Flashcards.setHidden(False)
+
+    #Switch to Quiz Tab
+    def navQuiz(self):
+        self.Sets.setHidden(True)
+        self.LearnObj.setHidden(True)
+        self.Flashcards.setHidden(True)
+        self.QuizObj.setHidden(False)
+        
     
     #----------------------------------
     # Signal Handling Methods
