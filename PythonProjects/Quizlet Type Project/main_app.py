@@ -184,7 +184,6 @@ class MainWindow(QMainWindow):
     
     #Signal sent from sidebar file, used to prompt an edit screen.
     def handleEditSetSignal(self, title):
-        print("Debug 1")
         self.Sets.editSet(title)
 
     #New Set Created, route signal to sidebar file

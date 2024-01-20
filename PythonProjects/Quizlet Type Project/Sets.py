@@ -428,7 +428,6 @@ class Sets(QObject):
     #Edit a set
     def editSet(self, name): 
         #Clear Previous Set
-        print("Debug 2")
         while len(self.current_pairs) > 0:
             self.removeSetPair(0, None)
             
