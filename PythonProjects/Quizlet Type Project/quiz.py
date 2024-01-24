@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QSpacerItem, QSizePolicy, QPushButton,
     QRadioButton, QLineEdit, QScrollArea
 )
-from PyQt6.QtCore import Qt, QObject
+from PyQt6.QtCore import Qt, QObject, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QFont
 from Sets import Sets
 import random
@@ -101,7 +101,16 @@ class MultipleChoiceQuestion(QuizQuestion):
                 ind = incorrect_answers.pop(0)
                 self.button_list[i].setText(all_answers[ind])
 
-        
+    #Check if an answer was selected
+    def isAnswered(self):
+        for btn in self.button_list:
+            if btn.isChecked():
+                return True
+        return False
+    
+    #Check if answer selected was correct or not
+    def checkAnswer(self):
+        pass
 
     #Delete the question (On restart and game end)
     def deleteQuestion(self):
@@ -119,12 +128,16 @@ class MultipleChoiceQuestion(QuizQuestion):
 #Class for storing data about a matching question
 class MatchingQuestion(QuizQuestion):
     #Constructor
-    def __init__(self, main_layout, input_field, input_label, answer_label):
+    def __init__(self, container, main_layout, input_field, input_label, answer_label):
         super().__init__()
+        self.container = container
         self.main_layout = main_layout
         self.input_field = input_field
         self.input_label = input_label
         self.answer_label = answer_label
+
+        self.ans_letter = 'a'
+        self.corresponding_answer_ind = 0
 
     #Set question and answer in parent layout and question label
     def setQuestionAndAnswer(self, q, a, gamemode):
@@ -151,15 +164,46 @@ class MatchingQuestion(QuizQuestion):
         return super().getAnswer()
     
     #Set the corresponding answer, and store index for checking the answer
-    def setAnswerLabel(self, loop_index):
-        pass
+    def setAnswerLabel(self, loop_index, matching_answers):
+        #Generate a letter for the current line
+        self.ans_letter = self.genLetter(loop_index)
 
+        #Generate answer to add to label
+        ans_ind = random.randint(0, len(matching_answers) - 1)
+        self.corresponding_answer = matching_answers[ans_ind]
+
+        #Set the answer label
+        self.answer_label.setText("{}: {}".format(self.ans_letter, self.corresponding_answer))
+        return ans_ind #To remove to ensure that it won't be used twice
+    
+    #Generate the subsequent lettering scheme
+    def genLetter(self, ind):
+        doMultipleLetters = (math.floor(ind / 26) > 0)
+        if not doMultipleLetters: #Single Letter
+            letter = chr(97 + ind)
+            return letter
+        else: #Two letters
+            first_ind = math.floor(ind / 26)
+            second_ind = ind % 26
+
+            first_letter = chr(96 + first_ind)
+            second_letter = chr(97 + second_ind)
+            return first_letter + second_letter
+
+    #Check if question is answered
+    def isAnswered(self):
+        answer = self.input_field.text()
+        if not answer:
+            return False
+        return True
+    
     #Delete the question
     def deleteQuestion(self):
         self.answer_label.deleteLater()
         self.input_label.deleteLater()
         self.input_field.deleteLater()
         self.main_layout.deleteLater()
+        self.container.deleteLater()
 
 #Class for storing data about a true or false question
 class TrueFalseQuestion(QuizQuestion):
@@ -185,7 +229,7 @@ class TrueFalseQuestion(QuizQuestion):
 
         #If user selected mixed, randomize question and answer
         if gamemode == 0:
-            super().randomize()
+            self.didSwitch = super().randomize()
 
     #Get current answer
     def getAnswer(self):
@@ -198,14 +242,73 @@ class TrueFalseQuestion(QuizQuestion):
 
         #Set the text of the label based on the gamemode
         if gamemode == 0:
-            if self.true_false_answer: #True
-                pass
+            if self.true_false_answer: #Answer is true
+                if self.didSwitch == 0: #Term is the question
+                    self.question_label.setText("The definition of {} is {}.".format(super().getQuestion(), super().getAnswer()))
+                else: #Definition is the question
+                    self.question_label.setText("{} is defined as {}.".format(super().getQuestion(), super().getAnswer()))
+
+            else: #Answer is false
+                #Find random false answer
+                correct_answer_ind = all_answers.index(super().getAnswer())
+
+                wrong_ind = -1
+                while wrong_ind < 0 or wrong_ind == correct_answer_ind:
+                    wrong_ind = random.randint(0, len(all_answers))
+                
+                wrong_answer = all_answers[wrong_ind]
+                if self.didSwitch == 0: #Term is question
+                    self.question_label.setText("The definition of {} is {}.".format(super().getQuestion(), wrong_answer))
+                else: #Definition is question
+                    self.question_label.setText("{} is defined as {}.".format(super().getQuestion(), wrong_answer))
 
         if gamemode == 1: #Definition is the question
-            pass
+            if self.true_false_answer:
+                self.question_label.setText("The definition of {} is {}.".format(super().getQuestion(), super().getAnswer()))
+            else:
+                #Find random false answer
+                correct_answer_ind = all_answers.index(super().getAnswer())
+
+                wrong_ind = -1
+                while wrong_ind < 0 or wrong_ind == correct_answer_ind:
+                    wrong_ind = random.randint(0, len(all_answers))
+                
+                wrong_answer = all_answers[wrong_ind]
+
+                self.question_label.setText("The definition of {} is {}.".format(super().getQuestion(), wrong_answer))
 
         if gamemode == 2: #Term is the question
-            pass
+            if self.true_false_answer:
+                self.question_label.setText("{} is defined as {}.".format(super().getQuestion(), super().getAnswer()))
+            else:
+                #Find random false answer
+                correct_answer_ind = all_answers.index(super().getAnswer())
+
+                wrong_ind = -1
+                while wrong_ind < 0 or wrong_ind == correct_answer_ind:
+                    wrong_ind = random.randint(0, len(all_answers))
+                
+                wrong_answer = all_answers[wrong_ind]
+
+                self.question_label.setText("{} is defined as {}.".format(super().getQuestion(), wrong_answer))
+
+    #Check if question is answered
+    def isAnswered(self):
+        if not self.true_button.isChecked() and not self.false_button.isChecked():
+            return False
+        return True
+    
+    #Delete the question
+    def deleteQuestion(self):
+        self.false_button.deleteLater()
+        self.true_button.deleteLater()
+        self.answer_layout.deleteLater()
+        self.answer_space_layout.deleteLater()
+        self.answer_container.deleteLater()
+        self.question_label.deleteLater()
+        self.question_layout.deleteLater()
+        self.main_layout.deleteLater()
+
 #Class for storing data about a type answer question
 class TypeAnswerQuestion(QuizQuestion):
     #Constructor
@@ -241,10 +344,28 @@ class TypeAnswerQuestion(QuizQuestion):
     #Get current answer
     def getAnswer(self):
         return super().getAnswer()
+    
+    #Check if question is answered
+    def isAnswered(self):
+        answer = self.answer_input.text()
+        if not answer:
+            return False
+        return True
 
-
+    #Delete the question
+    def deleteQuestion(self):
+        self.answer_input.deleteLater()
+        self.input_layout.deleteLater()
+        self.question_label.deleteLater()
+        self.label_layout.deleteLater()
+        self.main_layout.deleteLater()
+    
 #Quiz Class
 class Quiz(QObject):
+
+    #Prompt a message from main window
+    message_signal = pyqtSignal(list)
+
     #Constructor
     def __init__(self):
         #Parent constructor (for signals)
@@ -259,6 +380,7 @@ class Quiz(QObject):
         self.question_types = []
         self.gamemode = 0
         self.all_answers = []
+        self.matching_answers = []
 
         #For getting set data
         self.set_data = Sets()
@@ -512,6 +634,7 @@ class Quiz(QObject):
         
         submit_answers_button = QPushButton("Submit")
         submit_answers_button.setFixedSize(int(100 * self.widthScale), int(50 * self.heightScale))
+        submit_answers_button.clicked.connect(self.checkAnswers)
 
         submit_answers_layout.addWidget(submit_answers_button)
         submit_answers_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -563,10 +686,10 @@ class Quiz(QObject):
 
         main_mc_layout.addLayout(question_layout)
         main_mc_layout.addWidget(radio_button_container)
+        main_mc_layout.addSpacing(int(25 * self.heightScale))
         main_mc_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         self.multiple_choice_questions_layout.addLayout(main_mc_layout)
-        self.multiple_choice_questions_layout.addSpacing(int(25 * self.heightScale))
         
         #Create Object for storage
         mc_question = MultipleChoiceQuestion(main_mc_layout, question_layout, question_label, radio_button_container, radio_button_space_layout, radio_button_layout, radio_buttons)
@@ -574,6 +697,7 @@ class Quiz(QObject):
 
     #Add a matching question
     def addMatchingQuestion(self):
+        matching_container = QVBoxLayout()
         main_matching_layout = QHBoxLayout()
 
         matching_input = QLineEdit()
@@ -592,16 +716,18 @@ class Quiz(QObject):
         main_matching_layout.addSpacing(int(200 * self.widthScale))
         main_matching_layout.addWidget(matching_input)
         main_matching_layout.addWidget(matching_input_label)
-        main_matching_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed))
+        main_matching_layout.addStretch(1)
         main_matching_layout.addWidget(matching_answer_label)
         main_matching_layout.addSpacing(int(200 * self.widthScale))
         main_matching_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        matching_container.addLayout(main_matching_layout)
+        matching_container.addSpacing(int(25 * self.heightScale))
         
-        self.matching_questions_layout.addLayout(main_matching_layout)
-        self.matching_questions_layout.addSpacing(int(25 * self.heightScale))
+        self.matching_questions_layout.addLayout(matching_container)
 
         #Create and store object
-        matching_obj = MatchingQuestion(main_matching_layout, matching_input, matching_input_label, matching_answer_label)
+        matching_obj = MatchingQuestion(matching_container, main_matching_layout, matching_input, matching_input_label, matching_answer_label)
         self.matching_questions.append(matching_obj)
 
     #Add a true or false question
@@ -638,10 +764,10 @@ class Quiz(QObject):
 
         main_true_false_layout.addLayout(true_false_question_layout)
         main_true_false_layout.addWidget(true_false_options_container)
+        main_true_false_layout.addSpacing(int(25 * self.heightScale))
         main_true_false_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         self.true_false_questions_layout.addLayout(main_true_false_layout)
-        self.true_false_questions_layout.addSpacing(int(25 * self.heightScale))
 
         #Create and store object
         tf_object = TrueFalseQuestion(main_true_false_layout, true_false_question_layout, true_false_question_label, true_false_options_container, true_false_space_layout, true_false_options_layout, true_button, false_button)
@@ -673,10 +799,10 @@ class Quiz(QObject):
 
         main_type_answer_layout.addLayout(main_type_answer_label_layout)
         main_type_answer_layout.addLayout(main_type_answer_input_layout)
+        main_type_answer_layout.addSpacing(int(25 * self.heightScale))
         main_type_answer_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         self.type_answer_questions_layout.addLayout(main_type_answer_layout)
-        self.type_answer_questions_layout.addSpacing(int(25 * self.heightScale))
 
         #Create and store object
         type_obj = TypeAnswerQuestion(main_type_answer_layout, main_type_answer_label_layout, main_type_answer_label, main_type_answer_input_layout, main_type_answer_input)
@@ -706,6 +832,8 @@ class Quiz(QObject):
         #Get Set Data
         set_title = self.set_data.getSetTitle(self.set_index)
         set_content = self.set_data.getSetContent(set_title)
+
+        set_content = self.shuffle(set_content)
         
         #Figure out how many of each question type should be generated
         divisor = self.question_types.count(True)
@@ -722,6 +850,7 @@ class Quiz(QObject):
 
         for ma in self.matching_questions:
             self.all_answers.append(ma.getAnswer())
+            self.matching_answers.append(ma.getAnswer())
 
         for tf in self.true_false_questions:
             self.all_answers.append(tf.getAnswer())
@@ -831,8 +960,14 @@ class Quiz(QObject):
             mc.setAnswerOptions(self.all_answers)
 
         #Matching
-        for ma in self.matching_questions:
-            pass
+        self.matching_answers = self.shuffle(self.matching_answers)
+        temp_list = []
+        for val in self.matching_answers:
+            temp_list.append(val)
+        
+        for ma in range(len(self.matching_questions)):
+            del_ind = self.matching_questions[ma].setAnswerLabel(ma, temp_list)
+            del temp_list[del_ind]
 
         #True False
         for tf in self.true_false_questions:
@@ -856,12 +991,48 @@ class Quiz(QObject):
         else:
             self.start_game_button.setEnabled(True)
             self.error_label.setHidden(True)
+    
+    #Check the answers (Slot function for submit button)
+    def checkAnswers(self):
+        #Intialize trackers for storing the amount correct and incorrect answers
+        correct_counter = 0
+        incorrect_counter = 0
+
+        #Ensure all questions are answered
+        for mc in self.multiple_choice_questions:
+            was_answered = mc.isAnswered()
+            if not was_answered:
+                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
+                return
+            
+        for ma in self.matching_questions:
+            was_answered = ma.isAnswered()
+            if not was_answered:
+                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
+                return
+            
+        for tf in self.true_false_questions:
+            was_answered = tf.isAnswered()
+            if not was_answered:
+                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
+                return
+            
+        for ta in self.type_answer_questions:
+            was_answered = ta.isAnswered()
+            if not was_answered:
+                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
+                return
+
+        #All answers are checked, 
 
     #Cancel Game
     def cancelGame(self):
+        self.resetGame()
+
         self.main_game_scroll_area.setHidden(True)
         self.exit_game_button.setHidden(True)
         self.start_up_container.setHidden(False)
+
         
     #Reset Game
     def resetGame(self):
@@ -872,11 +1043,34 @@ class Quiz(QObject):
         self.true_false_questions = []
         self.type_answer_questions = []
     
+        self.question_types = []
         self.gamemode = 0
         self.all_answers = []
+        self.matching_answers = []
+        
 
     #Clear all questions from the scroll area
     def clearQuestions(self):
-        pass
+        for mc in self.multiple_choice_questions:
+            mc.deleteQuestion() 
+
+        for ma in self.matching_questions:
+            ma.deleteQuestion()
+
+        for tf in self.true_false_questions:
+            tf.deleteQuestion()
+
+        for ta in self.type_answer_questions:
+            ta.deleteQuestion()
+
+    #Shuffle a list
+    def shuffle(self, arr):
+        temp = []
+        while len(arr) > 0:
+            randomInd = random.randint(0, len(arr) - 1)
+            temp.append(arr[randomInd])
+            del arr[randomInd]
+        
+        return temp
         
         

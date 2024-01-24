@@ -129,6 +129,8 @@ class MainWindow(QMainWindow):
         self.SideBar.navSignal.connect(self.navCreateSet)
 
         self.LearnObj.messageSignal.connect(self.handleMessageSignal)
+
+        self.QuizObj.message_signal.connect(self.handleMessageSignal)
         
         
     #----------------------
