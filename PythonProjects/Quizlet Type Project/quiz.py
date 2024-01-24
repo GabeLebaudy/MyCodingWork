@@ -110,7 +110,23 @@ class MultipleChoiceQuestion(QuizQuestion):
     
     #Check if answer selected was correct or not
     def checkAnswer(self):
-        pass
+        isCorrect = False
+        for i in range(len(self.button_list)):
+            if self.button_list[i].isChecked():
+                if i == self.correct_answer_index:
+                    current_text = self.button_list[i].text()
+                    self.button_list[i].setText("{} (Correct)".format(current_text))
+                    isCorrect = True
+                else:
+                    current_text = self.button_list[i].text()
+                    self.button_list[i].setText("{} (Incorrect)".format(current_text))
+                    current_text = self.button_list[self.correct_answer_index].text()
+                    self.button_list[self.correct_answer_index].setText("{} (Correct)".format(current_text))
+                    
+            self.button_list[i].setEnabled(False)
+            
+        return isCorrect
+        
 
     #Delete the question (On restart and game end)
     def deleteQuestion(self):
@@ -250,13 +266,8 @@ class TrueFalseQuestion(QuizQuestion):
 
             else: #Answer is false
                 #Find random false answer
-                correct_answer_ind = all_answers.index(super().getAnswer())
-
-                wrong_ind = -1
-                while wrong_ind < 0 or wrong_ind == correct_answer_ind:
-                    wrong_ind = random.randint(0, len(all_answers))
+                wrong_answer = self.getWrongAnswer(all_answers)
                 
-                wrong_answer = all_answers[wrong_ind]
                 if self.didSwitch == 0: #Term is question
                     self.question_label.setText("The definition of {} is {}.".format(super().getQuestion(), wrong_answer))
                 else: #Definition is question
@@ -267,13 +278,7 @@ class TrueFalseQuestion(QuizQuestion):
                 self.question_label.setText("The definition of {} is {}.".format(super().getQuestion(), super().getAnswer()))
             else:
                 #Find random false answer
-                correct_answer_ind = all_answers.index(super().getAnswer())
-
-                wrong_ind = -1
-                while wrong_ind < 0 or wrong_ind == correct_answer_ind:
-                    wrong_ind = random.randint(0, len(all_answers))
-                
-                wrong_answer = all_answers[wrong_ind]
+                wrong_answer = self.getWrongAnswer(all_answers)
 
                 self.question_label.setText("The definition of {} is {}.".format(super().getQuestion(), wrong_answer))
 
@@ -282,21 +287,48 @@ class TrueFalseQuestion(QuizQuestion):
                 self.question_label.setText("{} is defined as {}.".format(super().getQuestion(), super().getAnswer()))
             else:
                 #Find random false answer
-                correct_answer_ind = all_answers.index(super().getAnswer())
-
-                wrong_ind = -1
-                while wrong_ind < 0 or wrong_ind == correct_answer_ind:
-                    wrong_ind = random.randint(0, len(all_answers))
-                
-                wrong_answer = all_answers[wrong_ind]
+                wrong_answer = self.getWrongAnswer(all_answers)
 
                 self.question_label.setText("{} is defined as {}.".format(super().getQuestion(), wrong_answer))
+                
+    #Get a random wrong answer
+    def getWrongAnswer(self, answers):
+        correct_answer_ind = answers.index(super().getAnswer())
 
+        wrong_ind = -1
+        while wrong_ind < 0 or wrong_ind == correct_answer_ind:
+            wrong_ind = random.randint(0, len(answers))
+        
+        return answers[wrong_ind]
+    
     #Check if question is answered
     def isAnswered(self):
         if not self.true_button.isChecked() and not self.false_button.isChecked():
             return False
         return True
+    
+    #Check answer
+    def checkAnswer(self):
+        isCorrect = False
+        if self.true_false_answer:
+            if self.true_button.isChecked():
+                isCorrect = True
+                self.true_button.setText("True (Correct)")
+            else:
+                self.true_button.setText("True (Incorrect)")
+                self.false_button.setText("False (Correct)")
+        else:
+            if self.false_button.isChecked():
+                isCorrect = True
+                self.false_button.setText("False (Correct)")
+            else:
+                self.true_button.setText("True (Incorrect)")
+                self.false_button.setText("False (Correct)")
+                
+        self.true_button.setEnabled(False)
+        self.false_button.setEnabled(False)
+        return isCorrect
+
     
     #Delete the question
     def deleteQuestion(self):
@@ -351,6 +383,21 @@ class TypeAnswerQuestion(QuizQuestion):
         if not answer:
             return False
         return True
+    
+    #Check if answer is correct
+    def checkAnswer(self):
+        isCorrect = False
+        user_answer = self.answer_input.text()
+        if user_answer.lower() == super().getAnswer().lower():
+            isCorrect = True
+            #TODO: Update info-label here
+        
+        else:
+            #TODO: Show correct answer
+            pass
+        
+        self.answer_input.setReadOnly(True)
+        return isCorrect
 
     #Delete the question
     def deleteQuestion(self):
@@ -998,32 +1045,63 @@ class Quiz(QObject):
         correct_counter = 0
         incorrect_counter = 0
 
+        #All answers have an input. Now check answers
+        allAnswered = self.questionsAnswered()
+        if not allAnswered:
+            self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
+            return
+        
+        #Check the correctness
+        for mc in self.multiple_choice_questions:
+            isCorrect = mc.checkAnswer()
+            if isCorrect:
+                correct_counter += 1
+            else:
+                incorrect_counter += 1
+                
+        for ma in self.matching_questions:
+            pass
+        
+        for tf in self.true_false_questions:
+            isCorrect = tf.checkAnswer()
+            if isCorrect:
+                correct_counter += 1
+            else:
+                incorrect_counter += 1
+        
+        for ta in self.type_answer_questions:
+            isCorrect = ta.checkAnswer()
+            if isCorrect:
+                correct_counter += 1
+            else:
+                incorrect_counter += 1
+        
+        print(correct_counter, incorrect_counter)
+        
+    #Check if any questions are missing an answer
+    def questionsAnswered(self):
         #Ensure all questions are answered
         for mc in self.multiple_choice_questions:
             was_answered = mc.isAnswered()
             if not was_answered:
-                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
-                return
+                return False
             
         for ma in self.matching_questions:
             was_answered = ma.isAnswered()
             if not was_answered:
-                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
-                return
+                return False
             
         for tf in self.true_false_questions:
             was_answered = tf.isAnswered()
             if not was_answered:
-                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
-                return
+                return False
             
         for ta in self.type_answer_questions:
             was_answered = ta.isAnswered()
             if not was_answered:
-                self.message_signal.emit(['Error', 'At least 1 question is unanswered.\nMake sure all questions are answered before submitting.'])
-                return
-
-        #All answers are checked, 
+                return False
+            
+        return True
 
     #Cancel Game
     def cancelGame(self):
@@ -1033,7 +1111,6 @@ class Quiz(QObject):
         self.exit_game_button.setHidden(True)
         self.start_up_container.setHidden(False)
 
-        
     #Reset Game
     def resetGame(self):
         self.clearQuestions()
