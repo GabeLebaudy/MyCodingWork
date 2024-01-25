@@ -121,12 +121,15 @@ class MainWindow(QMainWindow):
         self.Sets.textInputSignal.connect(self.handleSetTextInputSignal)
         self.Sets.newSetSignal.connect(self.handleNewSet)
         self.Sets.binaryAnswerSignal.connect(self.handleSetBinarySignal)
+        self.Sets.editDoneSignal.connect(self.handleEditCompleteSignal)
+        self.Sets.setsChangedSignal.connect(self.handleSetListUpdate)
         
         self.SideBar.deleteSetSignal.connect(self.handleDeleteSetSignal)
         self.SideBar.editSetDialogSignal.connect(self.handleEditSetDialogSignal)
         self.SideBar.getDataSignal.connect(self.handleGetSetData)
         self.SideBar.editSetSignal.connect(self.handleEditSetSignal)
         self.SideBar.navSignal.connect(self.navCreateSet)
+        self.SideBar.setsChangedSignal.connect(self.handleSetListUpdate)
 
         self.LearnObj.messageSignal.connect(self.handleMessageSignal)
 
@@ -187,6 +190,16 @@ class MainWindow(QMainWindow):
     #Signal sent from sidebar file, used to prompt an edit screen.
     def handleEditSetSignal(self, title):
         self.Sets.editSet(title)
+
+    #Edit Done
+    def handleEditCompleteSignal(self):
+        self.SideBar.enableDelete(True)
+
+    #Set list is updated
+    def handleSetListUpdate(self):
+        self.Flashcards.populateSetDD()
+        self.LearnObj.populateSetDD()
+        self.QuizObj.populateSetDD()
 
     #New Set Created, route signal to sidebar file
     def handleNewSet(self, title):
@@ -254,7 +267,7 @@ class MainWindow(QMainWindow):
         titleButtonBox = QDialogButtonBox()
         
         titleButtonBox.addButton(saveBtn)
-        titleButtonBox.addButton(cancelBtn)
+        titleButtonBox.addButton(cancelBtn) 
         
         titleButtonBox.accepted.connect(titleDialog.accept)
         titleButtonBox.rejected.connect(titleDialog.reject)

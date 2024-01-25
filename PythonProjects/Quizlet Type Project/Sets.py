@@ -3,6 +3,7 @@
 #Imports
 import logging
 import os
+import re
 from decorators import log_start_and_stop
 
 from PyQt6.QtWidgets import (
@@ -70,6 +71,8 @@ class Sets(QObject):
     textInputSignal = pyqtSignal(list)
     binaryAnswerSignal = pyqtSignal(list)
     newSetSignal = pyqtSignal(str)
+    editDoneSignal = pyqtSignal()
+    setsChangedSignal = pyqtSignal()
     
     #Constructor
     def __init__(self):
@@ -308,15 +311,34 @@ class Sets(QObject):
     #Get the current data in the set menu. If completely empty, it returns 0, if at least one pair is missing it's opposite, returns 1. Otherwise it returns the data
     def getCurrentData(self):
         complete_data = []
+        terms = []
+        defs = []
         for node in self.current_pairs:
             term, definition = node.getVals()
+            #Make sure pairs are not empty or missing values
             if not term and not definition:
                 continue
             if not term or not definition:
                 return 1
-            else:
-                dataStr = term + ':' + definition
-                complete_data.append(dataStr)
+            
+            #Make sure there are no duplicates
+            if term in terms:
+                return 2
+            
+            if definition in defs:
+                return 3
+            
+            if re.search(r"[:\n]+", term):
+                return 4
+            
+            if re.search(r"[:\n]+", definition):
+                return 5
+            
+            terms.append(term)
+            defs.append(definition)
+
+            dataStr = term + ':' + definition
+            complete_data.append(dataStr)
         
         if len(complete_data) > 0:
             return complete_data
@@ -384,18 +406,18 @@ class Sets(QObject):
     def finalizeSet(self, *args, **kwargs):
         self.setName = None
         finalSetData = self.getCurrentData()
-
-        if finalSetData == 0:
-            self.messageSignal.emit(['Error', 'At least one term is needed'])
-            return
-        elif finalSetData == 1:
-            self.messageSignal.emit(['Error', 'At least one pair is incomplete'])
+        
+        #Check for any errors
+        isErrors = self.checkErrors(finalSetData)
+        if not isErrors:
             return
         
         #Prompt user for name for the set
-        self.textInputSignal.emit(['Dialog Title', 'Enter a name for this set:'])
-        if not self.setName:
-            return
+        while not self.setName:
+            self.textInputSignal.emit(['Dialog Title', 'Enter a name for this set:'])
+            if re.search(r"[:\n]+", self.setName):
+                self.messageSignal.emit(['Error', 'Set name cannot contain ":" character or a line break'])
+                self.setName = None
 
         with open(self.config_path, 'a') as file:
             title = '{}\n'.format(self.setName)
@@ -417,10 +439,42 @@ class Sets(QObject):
         for i in range(5):
             self.addSetPair()
 
+        #Update dropdowns in other sections
+        self.setsChangedSignal.emit()
+
     #For getting user input from a dialog message. Controlled from main window
     def changeSetName(self, name):
         self.setName = name
-    
+        
+    #Check for errors in current pairs
+    def checkErrors(self, data):
+        if data == 0: #Empty set
+            self.messageSignal.emit(['Error', 'At least one pair is needed'])
+            return False
+        
+        elif data == 1: #One pair is missing a term or definition
+            self.messageSignal.emit(['Error', 'At least one pair is incomplete'])
+            return False
+        
+        elif data == 2: #Duplicate Terms
+            self.messageSignal.emit(['Error', 'One of the pairs contains a duplicate term.'])
+            return False
+        
+        elif data == 3: #Duplicate definitions
+            self.messageSignal.emit(['Error', 'One of the pairs contains a duplicate definition'])
+            return False
+        
+        elif data == 4: #Term contains illegal character
+            self.messageSignal.emit(['Error', r'At least one term contains a ":" or line break which is not allowed.'])
+            return False
+        
+        elif data == 5: #Definition Contains Illegal Character
+            self.messageSignal.emit(['Error', r'At least one definition contains a ":" or line break which is not allowed.'])
+            return False
+        
+        else:
+            return True
+        
     #--------------------------------------------
     # Functions for editing or deleting a set
     #--------------------------------------------
@@ -466,25 +520,26 @@ class Sets(QObject):
             
             if self.binaryAnswer:
                 self.revertToDefaultPageSet()
+                self.editDoneSignal.emit()
                 return
         else:
             self.revertToDefaultPageSet()
+            self.editDoneSignal.emit()
         
     #Finish Edit
     def finishEdit(self):
         #Check if the user made any changes
         if not self.wasEditChanges():
             self.revertToDefaultPageSet()
+            self.editDoneSignal.emit()
             return
 
         #Check if any data is incomplete
         newData = self.getCurrentData()
-        if newData == 0:
-            self.messageSignal.emit(['Error', 'The set must have at least one pair.'])
-            return
         
-        elif newData == 1:
-            self.messageSignal.emit(['Error', 'At least one (non-empty) pair is incomplete.\nEnsure all entries have both a term and defintion'])
+        #Check for errors
+        isErrors = self.checkErrors(newData)
+        if not isErrors:
             return
                 
         #Pull File Data
@@ -496,6 +551,9 @@ class Sets(QObject):
 
         #Pull data from current inputs
         newSetName = self.changeSetNameInput.text()
+        if re.search(r"[:\n]+", newSetName):
+            self.messageSignal.emit(['Error', 'Set name cannot contain ":" or a line break.'])
+            return
 
         #Create segment to overwrite with
         newSegment = [newSetName + '\n']
@@ -515,6 +573,7 @@ class Sets(QObject):
         #Confirm To User that set was completed
         self.messageSignal.emit(['Sucess!', 'Your new changes are successful'])
         self.revertToDefaultPageSet()
+        self.editDoneSignal.emit()
 
     #Checks if user had made any changes a set
     @log_start_and_stop
@@ -530,8 +589,11 @@ class Sets(QObject):
         #Get Current Edited Data
         for i in range(len(self.current_pairs)):
             data = self.getCurrentData()
-            if data == 0 or data == 1:
+            try:
+                data = int(data)
                 return True
+            except:
+                pass
 
         #Get File Data
         with open(self.config_path, 'r') as file:
@@ -602,6 +664,7 @@ class Sets(QObject):
         with open(self.config_path, 'w') as file:
             for line in removedSetData:
                 file.write(line)
+
     
     #Get the indexes of the set in the config file
     def findSetIndexes(self, setsData, setName):

@@ -358,6 +358,10 @@ class Learn(QObject):
 
     #Populate the select set dropdown menu in the match tab
     def populateSetDD(self):
+        #Remove all old sets in case of update
+        while self.selectSetDD.count() > 0:
+            self.selectSetDD.removeItem(0)
+        
         titles = self.setData.getAllSetTitles()
 
         for name in titles:

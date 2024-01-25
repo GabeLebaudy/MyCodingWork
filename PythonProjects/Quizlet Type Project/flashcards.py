@@ -157,6 +157,9 @@ class FlashCards:
     #Add set names to dropdown menu
     @log_start_and_stop
     def populateSetDD(self):
+        while self.selectSetDD.count() > 0:
+            self.selectSetDD.removeItem(0)
+
         with open(SETS_CONFIG_PATH, 'r') as file:
             lines = file.readlines()
 

@@ -36,11 +36,3 @@ Quiz Test Set
 1p:1q
 1r:1s
 1t:1u
-Delete Later
-1:2
-3:4
-5:6
-7:8
-7:8
-7:8
-7:8

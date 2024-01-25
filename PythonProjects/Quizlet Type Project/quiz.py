@@ -1200,6 +1200,9 @@ class Quiz(QObject):
 
     #Populate Set Dropdown
     def populateSetDD(self):
+        while self.select_set_dd.count() > 0:
+            self.select_set_dd.removeItem(0)
+        
         set_titles = self.set_data.getAllSetTitles()
         self.select_set_dd.addItems(set_titles)
 

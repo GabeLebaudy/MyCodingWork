@@ -33,6 +33,10 @@ class Node:
     def getSetLayout(self):
         return self.setLayout
     
+    #Change whether a set is able to be deleted (Disabled when editing a set)
+    def setDeleteButtonStatus(self, s):
+        self.delBtn.setEnabled(s)
+
     #Delete the node
     def deleteWidgets(self):
         self.titleLabel.deleteLater()
@@ -48,6 +52,7 @@ class SideBar(QObject):
     editSetSignal = pyqtSignal(str)
     getDataSignal = pyqtSignal()
     navSignal = pyqtSignal()
+    setsChangedSignal = pyqtSignal()
 
     
     #Constructor
@@ -187,7 +192,10 @@ class SideBar(QObject):
             
             if not self.confirmEditDialog:
                 return
-            
+
+        #Disable ability to delete a set while currently editing
+        self.enableDelete(False)
+
         setTitle = self.setData.getSetTitle(index)
         self.editSetSignal.emit(setTitle)
 
@@ -207,7 +215,15 @@ class SideBar(QObject):
         if self.binaryAnswer:
             self.setData.deleteSet(setName)
             self.regenSideBar()
+
+            #Update set dropdowns in game menus
+            self.setsChangedSignal.emit()
         
     #Change answer
     def setAnswer(self, answer):
         self.binaryAnswer = answer
+
+    #Change ability to delete a set
+    def enableDelete(self, status):
+        for node in self.items:
+            node.setDeleteButtonStatus(status)
