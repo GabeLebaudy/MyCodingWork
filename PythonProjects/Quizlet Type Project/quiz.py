@@ -667,7 +667,7 @@ class Quiz(QObject):
         num_questions_label.setFont(check_box_font)
 
         self.num_questions_input = QSpinBox()
-        self.num_questions_input.setFixedSize(int(75 * self.widthScale), int(25 * self.widthScale))
+        self.num_questions_input.setFixedSize(int(75 * self.widthScale), int(28 * self.widthScale))
         self.num_questions_input.setReadOnly(True)
         self.num_questions_input.setFont(check_box_font)
         self.num_questions_input.setAlignment(Qt.AlignmentFlag.AlignRight)
