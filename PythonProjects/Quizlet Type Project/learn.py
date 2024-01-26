@@ -250,16 +250,17 @@ class Learn(QObject):
         self.answered_correct_layout = QVBoxLayout()
         self.answered_correct_container = QWidget()
         
-        answered_correct_layout = QLabel('Correct!')
+        answered_correct_label = QLabel('Correct!')
         answered_correct_font = QFont()
         answered_correct_font.setPointSize(24)
-        answered_correct_layout.setFont(answered_correct_font)
+        answered_correct_label.setFont(answered_correct_font)
+        answered_correct_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.next_question_btn = QPushButton('Next')
         self.next_question_btn.setFixedSize(int(100 * self.widthScale), int(40 * self.heightScale))
         self.next_question_btn.clicked.connect(self.startNextQuestion)
 
-        self.answered_correct_layout.addWidget(answered_correct_layout)
+        self.answered_correct_layout.addWidget(answered_correct_label)
         self.answered_correct_layout.addSpacerItem(QSpacerItem(0, int(25 * self.heightScale), QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
         self.answered_correct_layout.addWidget(self.next_question_btn)
         self.answered_correct_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)

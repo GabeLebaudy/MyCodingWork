@@ -948,7 +948,7 @@ class Quiz(QObject):
         true_false_question_font.setPointSize(14)
         true_false_question_label.setFont(true_false_question_font)
         true_false_question_label.setWordWrap(True)
-        true_false_question_label.setFixedWidth(int(300 * self.heightScale))
+        true_false_question_label.setFixedWidth(int(600 * self.heightScale))
         true_false_question_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         true_false_question_layout.addWidget(true_false_question_label)
@@ -994,7 +994,7 @@ class Quiz(QObject):
         main_type_answer_font.setPointSize(14)
         main_type_answer_label.setFont(main_type_answer_font)
         main_type_answer_label.setWordWrap(True)
-        main_type_answer_label.setFixedWidth(int(300 * self.heightScale))
+        main_type_answer_label.setFixedWidth(int(600 * self.heightScale))
         main_type_answer_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         main_type_answer_label_layout.addWidget(main_type_answer_label)
