@@ -387,10 +387,24 @@ class Learn(QObject):
         mult_choice_answers_layout = QVBoxLayout()
         
         self.mult_choice_answers = []
+        self.mult_choice_labels = []
         for i in range(4):
-            new_button = QRadioButton("Option {}".format(i + 1))
+            answer_layout = QHBoxLayout()
+
+            answer_label = QLabel()
+            answer_label.setWordWrap(True)
+
+            new_button = QRadioButton()
+
+            answer_layout.addWidget(new_button)
+            answer_layout.addWidget(answer_label)
+            answer_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            mult_choice_answers_layout.addLayout(answer_layout)
+
             self.mult_choice_answers.append(new_button)
-            mult_choice_answers_layout.addWidget(new_button)
+            self.mult_choice_labels.append(answer_label)
+            
 
         mult_choice_answers_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
@@ -573,11 +587,14 @@ class Learn(QObject):
             #Populate radio buttons text
             for i in range(len(self.mult_choice_answers)):
                 if i == self.correct_index:
-                    self.mult_choice_answers[i].setText(self.currentQuestion.getAnswer())
+                    self.mult_choice_labels[i].setText(self.currentQuestion.getAnswer())
                 else:
-                    self.mult_choice_answers[i].setText(answers[0])
+                    self.mult_choice_labels[i].setText(answers[0])
                     answers.pop(0)
-            
+
+                self.mult_choice_labels[i].setFixedHeight(int(30 * self.heightScale)) #Reset Height if larger before
+                self.mult_choice_labels[i].setFixedHeight(self.mult_choice_labels[i].sizeHint().height())
+
     #Check the selected multiple choice answer
     def checkMultChoiceAnswer(self):
         #First check if the user selected anything before going further

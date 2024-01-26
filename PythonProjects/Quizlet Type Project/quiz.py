@@ -47,13 +47,12 @@ class QuizQuestion:
 #Class for storing data about a multiple choice question
 class MultipleChoiceQuestion(QuizQuestion):
     #Constructor
-    def __init__(self, main_layout, q_layout, q_label, btn_container, btn_space, btn_layout, btn_list, button_labels, button_layouts):
+    def __init__(self, main_layout, q_layout, q_label, btn_container, btn_layout, btn_list, button_labels, button_layouts):
         super().__init__()
         self.main_layout = main_layout
         self.question_layout = q_layout
         self.question_label = q_label
         self.button_container = btn_container
-        self.button_space_layout = btn_space
         self.button_layout = btn_layout
         self.button_list = btn_list
         self.button_text_layouts = button_layouts
@@ -103,11 +102,11 @@ class MultipleChoiceQuestion(QuizQuestion):
         for i in range(4):
             if i == self.correct_answer_index: #Correct radio button answer
                 self.button_labels[i].setText(super().getAnswer())
-                self.button_labels[i].setFixedHeight(self.button_labels[i].sizeHint().height())
+                #self.button_labels[i].setFixedHeight(self.button_labels[i].sizeHint().height())
             else:
                 ind = incorrect_answers.pop(0)
                 self.button_labels[i].setText(all_answers[ind])
-                self.button_labels[i].setFixedHeight(self.button_labels[i].sizeHint().height())
+                #self.button_labels[i].setFixedHeight(self.button_labels[i].sizeHint().height())
 
     #Check if an answer was selected
     def isAnswered(self):
@@ -140,16 +139,15 @@ class MultipleChoiceQuestion(QuizQuestion):
     def deleteQuestion(self):
         #Start from bottom of the layouts, and remove upward
         for label in self.button_labels:
-            btn.deleteLater()
-        
-        for layout in self.button_text_layouts:
-            layout.deleteLater()
+            label.deleteLater()
 
         for btn in self.button_list:
             btn.deleteLater()
 
+        for layout in self.button_text_layouts:
+            layout.deleteLater()
+
         self.button_layout.deleteLater()
-        self.button_space_layout.deleteLater()
         self.button_container.deleteLater()
         self.question_label.deleteLater()
         self.question_layout.deleteLater()
@@ -353,6 +351,8 @@ class TrueFalseQuestion(QuizQuestion):
                 wrong_answer = self.getWrongAnswer(all_defs)
 
                 self.question_label.setText("{} defines the term {}.".format(super().getQuestion(), wrong_answer))
+
+        self.question_label.setFixedHeight(self.question_label.sizeHint().height())
                 
     #Get a random wrong answer
     def getWrongAnswer(self, answers):
@@ -360,7 +360,7 @@ class TrueFalseQuestion(QuizQuestion):
 
         wrong_ind = -1
         while wrong_ind < 0 or wrong_ind == correct_answer_ind:
-            wrong_ind = random.randint(0, len(answers))
+            wrong_ind = random.randint(0, len(answers) - 1)
         
         return answers[wrong_ind]
     
@@ -438,6 +438,8 @@ class TypeAnswerQuestion(QuizQuestion):
         if gamemode == 2: #Term is question
             self.question_label.setText("What term is defined by {}?".format(q))
 
+        self.question_label.setFixedHeight(self.question_label.sizeHint().height())
+        
     #Get current answer
     def getAnswer(self):
         return super().getAnswer()
@@ -843,31 +845,32 @@ class Quiz(QObject):
         question_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         radio_button_container = QWidget()
-        radio_button_space_layout = QHBoxLayout()
         radio_button_layout = QVBoxLayout()
         radio_buttons = []
         button_labels = []
         button_layouts = []
         for i in range(4):
             button_text_layout = QHBoxLayout()
-            button_text_label = QLabel("Test")
+
+            button_text_label = QLabel()
             button_text_label.setWordWrap(True)
+            button_text_label.setFixedWidth(int(500 * self.widthScale))
+
+            new_button = QRadioButton()
+            new_button.setParent(radio_button_container)
+
+            button_text_layout.addSpacing(int(300 * self.widthScale))
+            button_text_layout.addWidget(new_button)
             button_text_layout.addWidget(button_text_label)
             button_text_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            
+            radio_button_layout.addLayout(button_text_layout)
 
             button_layouts.append(button_text_layout)
             button_labels.append(button_text_label)
-
-            new_button = QRadioButton()
-            new_button.setLayout(button_text_layout)
-            radio_button_layout.addWidget(new_button)
-            new_button.setParent(radio_button_container)
             radio_buttons.append(new_button)
 
-        radio_button_space_layout.addSpacing(int(400 * self.widthScale))
-        radio_button_space_layout.addLayout(radio_button_layout)
-        radio_button_space_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        radio_button_container.setLayout(radio_button_space_layout)
+        radio_button_container.setLayout(radio_button_layout)
 
         main_mc_layout.addLayout(question_layout)
         main_mc_layout.addWidget(radio_button_container)
@@ -877,7 +880,7 @@ class Quiz(QObject):
         self.multiple_choice_questions_layout.addLayout(main_mc_layout)
         
         #Create Object for storage
-        mc_question = MultipleChoiceQuestion(main_mc_layout, question_layout, question_label, radio_button_container, radio_button_space_layout, radio_button_layout, radio_buttons, button_labels, button_layouts)
+        mc_question = MultipleChoiceQuestion(main_mc_layout, question_layout, question_label, radio_button_container, radio_button_layout, radio_buttons, button_labels, button_layouts)
         self.multiple_choice_questions.append(mc_question)
 
     #Add a matching question
@@ -888,14 +891,21 @@ class Quiz(QObject):
         matching_input = QLineEdit()
         matching_input.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         matching_input.setFixedSize(int(50 * self.widthScale), int(25 * self.heightScale))
+        matching_input.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         question_font = QFont()
         question_font.setPointSize(14)
 
-        matching_input_label = QLabel("Sample Question")
+        matching_input_label = QLabel()
+        matching_input_label.setWordWrap(True)
+        matching_input_label.setFixedWidth(int(250 * self.widthScale))
+        matching_input_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         matching_input_label.setFont(question_font)
 
-        matching_answer_label = QLabel("A: Sample Answer")
+        matching_answer_label = QLabel()
+        matching_answer_label.setWordWrap(True)
+        matching_answer_label.setFixedWidth(int(250 * self.widthScale))
+        matching_answer_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         matching_answer_label.setFont(question_font)
 
         reveal_answer_layout = QHBoxLayout()
@@ -904,17 +914,17 @@ class Quiz(QObject):
         reveal_answer_label.setFont(question_font)
         reveal_answer_label.setHidden(True)
 
-        reveal_answer_layout.addSpacing(int(200 * self.widthScale))
+        reveal_answer_layout.addSpacing(int(100 * self.widthScale))
         reveal_answer_layout.addWidget(reveal_answer_label)
         reveal_answer_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        main_matching_layout.addSpacing(int(200 * self.widthScale))
+        main_matching_layout.addSpacing(int(100 * self.widthScale))
         main_matching_layout.addWidget(matching_input)
         main_matching_layout.addWidget(matching_input_label)
         main_matching_layout.addStretch(1)
         main_matching_layout.addWidget(matching_answer_label)
-        main_matching_layout.addSpacing(int(200 * self.widthScale))
-        main_matching_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        main_matching_layout.addSpacing(int(100 * self.widthScale))
+        main_matching_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         matching_container.addLayout(main_matching_layout)
         matching_container.addLayout(reveal_answer_layout)
@@ -933,10 +943,13 @@ class Quiz(QObject):
 
         true_false_question_layout = QHBoxLayout()
 
-        true_false_question_label = QLabel("Sample True or False")
+        true_false_question_label = QLabel()
         true_false_question_font = QFont()
         true_false_question_font.setPointSize(14)
         true_false_question_label.setFont(true_false_question_font)
+        true_false_question_label.setWordWrap(True)
+        true_false_question_label.setFixedWidth(int(300 * self.heightScale))
+        true_false_question_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         true_false_question_layout.addWidget(true_false_question_label)
         true_false_question_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -976,10 +989,13 @@ class Quiz(QObject):
 
         main_type_answer_label_layout = QHBoxLayout()
 
-        main_type_answer_label = QLabel("Sample Type Answer Question")
+        main_type_answer_label = QLabel()
         main_type_answer_font = QFont()
         main_type_answer_font.setPointSize(14)
         main_type_answer_label.setFont(main_type_answer_font)
+        main_type_answer_label.setWordWrap(True)
+        main_type_answer_label.setFixedWidth(int(300 * self.heightScale))
+        main_type_answer_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         main_type_answer_label_layout.addWidget(main_type_answer_label)
         main_type_answer_label_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
