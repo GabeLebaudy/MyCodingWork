@@ -850,12 +850,12 @@ class Quiz(QObject):
         button_layouts = []
         for i in range(4):
             button_text_layout = QHBoxLayout()
-            button_text_label = QLabel()
+            button_text_label = QLabel("Test")
             button_text_label.setWordWrap(True)
             button_text_layout.addWidget(button_text_label)
             button_text_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-            button_layouts.append(button_layouts)
+            button_layouts.append(button_text_layout)
             button_labels.append(button_text_label)
 
             new_button = QRadioButton()
