@@ -104,28 +104,89 @@ class Learn(QObject):
         learn_title_label.setFont(learn_title_font)
         learn_title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.start_learn_layout = QHBoxLayout()
+        self.start_learn_layout = QVBoxLayout()
         self.start_learn_container = QWidget()
 
         #Create the options for selecting a set to study
+        options_title_layout = QHBoxLayout()
+
+        options_title_label = QLabel("Game Options")
+        options_title_font = QFont()
+        options_title_font.setPointSize(18)
+        options_title_font.setBold(True)
+        options_title_label.setFont(options_title_font)
+
+        options_title_layout.addWidget(options_title_label)
+        options_title_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        #Select Set
+        select_set_layout = QHBoxLayout()
+
+        select_set_label = QLabel("Select Set:")
+        game_options_font = QFont()
+        game_options_font.setPointSize(14)
+        select_set_label.setFont(game_options_font)
+
         self.selectSetDD = QComboBox()
+        self.selectSetDD.setFixedSize(int(200 * self.widthScale), int(30 * self.heightScale))
         self.populateSetDD()
 
+        select_set_layout.addWidget(select_set_label)
+        select_set_layout.addSpacing(int(10 * self.widthScale))
+        select_set_layout.addWidget(self.selectSetDD)
+        select_set_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        #Game Order
+        game_order_layout = QHBoxLayout()
+
+        game_order_label = QLabel("Order:")
+        game_order_label.setFont(game_options_font)
+
         self.select_gamemode_dd = QComboBox()
+        self.select_gamemode_dd.setFixedHeight(int(30 * self.heightScale))
         gamemode_options = ['Given Definition, Enter Term', 'Given Term, Enter Definition', 'Mixed']
         self.select_gamemode_dd.addItems(gamemode_options)
 
+        game_order_layout.addWidget(game_order_label)
+        game_order_layout.addSpacing(int(10 * self.widthScale))
+        game_order_layout.addWidget(self.select_gamemode_dd)
+        game_order_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        #Question Types
+        question_type_layout = QHBoxLayout()
+
+        question_type_label = QLabel("Question Types:")
+        question_type_label.setFont(game_options_font)
+
         self.select_question_type_dd = QComboBox()
+        self.select_question_type_dd.setFixedHeight(int(30 * self.heightScale))
         question_type_options = ['All question types', 'Multiple choice only', 'Type answers only']
         self.select_question_type_dd.addItems(question_type_options)
 
+        question_type_layout.addWidget(question_type_label)
+        question_type_layout.addSpacing(int(10 * self.widthScale))
+        question_type_layout.addWidget(self.select_question_type_dd)
+        question_type_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        
+        #Start Game
+        start_game_layout = QHBoxLayout()
+
         self.start_game_button = QPushButton('Start')
+        self.start_game_button.setFixedSize(int(100 * self.widthScale), int(50 * self.heightScale))
         self.start_game_button.clicked.connect(self.startGame)
         
-        self.start_learn_layout.addWidget(self.selectSetDD)
-        self.start_learn_layout.addWidget(self.select_gamemode_dd)
-        self.start_learn_layout.addWidget(self.select_question_type_dd)
-        self.start_learn_layout.addWidget(self.start_game_button)
+        start_game_layout.addWidget(self.start_game_button)
+        start_game_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.start_learn_layout.addLayout(options_title_layout)
+        self.start_learn_layout.addSpacing(int(25 * self.heightScale))
+        self.start_learn_layout.addLayout(select_set_layout)
+        self.start_learn_layout.addSpacing(int(10 * self.heightScale))
+        self.start_learn_layout.addLayout(game_order_layout)
+        self.start_learn_layout.addSpacing(int(10 * self.heightScale))
+        self.start_learn_layout.addLayout(question_type_layout)
+        self.start_learn_layout.addSpacing(int(40 * self.heightScale))
+        self.start_learn_layout.addLayout(start_game_layout)
         self.start_learn_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.start_learn_container.setLayout(self.start_learn_layout)
         
@@ -152,6 +213,7 @@ class Learn(QObject):
         
         self.type_answer_question_layout = QHBoxLayout()
         self.type_answer_question_label = QLabel('Sample Question')
+        self.type_answer_question_label.setWordWrap(True)
         self.type_answer_question_label.setFont(question_text_font)
         
         self.type_answer_question_layout.addWidget(self.type_answer_question_label)
@@ -314,9 +376,12 @@ class Learn(QObject):
         mult_choice_question_font.setPointSize(14)
         mult_choice_question_font.setBold(True)
         self.mult_choice_question_label.setFont(mult_choice_question_font)
+        self.mult_choice_question_label.setWordWrap(True)
+        self.mult_choice_question_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.mult_choice_question_label.setFixedWidth(int(500 * self.widthScale))
 
         mult_choice_question_layout.addWidget(self.mult_choice_question_label)
-        mult_choice_question_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        mult_choice_question_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         mult_choice_answers_wrapper = QHBoxLayout()
         mult_choice_answers_layout = QVBoxLayout()
@@ -343,6 +408,7 @@ class Learn(QObject):
         mult_choice_check_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         mult_choice_main_layout.addLayout(mult_choice_question_layout)
+        mult_choice_main_layout.addSpacing(int(15 * self.widthScale))
         mult_choice_main_layout.addLayout(mult_choice_answers_wrapper)
         mult_choice_main_layout.addLayout(mult_choice_check_layout)
         self.mult_choice_main_container.setLayout(mult_choice_main_layout)
@@ -473,7 +539,11 @@ class Learn(QObject):
 
         #Pull question text
         self.currentQuestion = self.questions[0]
-         
+        
+        #Reset Question Height
+        self.mult_choice_question_label.setFixedHeight(int(30 * self.heightScale))
+        self.type_answer_question_label.setFixedHeight(int(30 * self.heightScale))
+
         self.populateQuestionScreen()
     
     #Populate the question screen. Should be used for both typed answers and multiple choice
@@ -481,11 +551,13 @@ class Learn(QObject):
         #Question type is already determined in the prior method, so we only have to check the status of the layout containers
         if self.mult_choice_main_container.isHidden(): #Type answer
             self.type_answer_question_label.setText(self.currentQuestion.getQuestion())
+            self.type_answer_question_label.setFixedHeight(self.type_answer_question_label.sizeHint().height())
         else: # Multiple Choice
             self.correct_index = random.randint(0, 3) #Index of which radio button will contain the correct answer
 
             #Set question label to the current questions text
             self.mult_choice_question_label.setText(self.currentQuestion.getQuestion())
+            self.mult_choice_question_label.setFixedHeight(self.mult_choice_question_label.sizeHint().height())
             
             #Get random incorrect answers
             correct_answer_ind = self.all_answers.index(self.currentQuestion.getAnswer())

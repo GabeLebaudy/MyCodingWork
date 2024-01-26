@@ -3,8 +3,8 @@
 #Imports 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QSpacerItem,
-    QSizePolicy, QComboBox
+    QLabel, QPushButton, QSizePolicy, 
+    QComboBox
 )
 from PyQt6.QtGui import QFont, QGuiApplication
 from PyQt6.QtCore import Qt, QSize
@@ -47,19 +47,67 @@ class FlashCards:
         
         #Start Flash cards layout
         self.fcOptionsContainer = QWidget()
-        self.fcOptionsLayout = QHBoxLayout()
+        self.fcOptionsLayout = QVBoxLayout()
         
+        #Game Options Label
+        game_options_label_layout = QHBoxLayout()
+
+        game_options_label = QLabel("Game Options")
+        game_title_font = QFont()
+        game_title_font.setPointSize(18)
+        game_title_font.setBold(True)
+        game_options_label.setFont(game_title_font)
+
+        game_options_label_layout.addWidget(game_options_label)
+        game_options_label_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        #Select a set
+        select_set_layout = QHBoxLayout()
+
+        select_set_label = QLabel("Select Set:")
+        game_options_font = QFont()
+        game_options_font.setPointSize(14)
+        select_set_label.setFont(game_options_font)
+
         self.selectSetDD = QComboBox()
-        self.directionDD = QComboBox()
-        self.startGameBtn = QPushButton('Start')
-        
+        self.selectSetDD.setFixedSize(int(200 * self.widthScale), int(30 * self.heightScale))
         self.populateSetDD()
+
+        select_set_layout.addWidget(select_set_label)
+        select_set_layout.addSpacing(int(10 * self.widthScale))
+        select_set_layout.addWidget(self.selectSetDD)
+        select_set_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        #Questions Types
+        game_direction_layout = QHBoxLayout()
+
+        game_direction_label = QLabel("Type:")
+        game_direction_label.setFont(game_options_font)
+
+        self.directionDD = QComboBox()
+        self.directionDD.setFixedHeight(int(30 * self.heightScale))
         self.directionDD.addItems(['Given Definition', 'Given Term', 'Mixed'])
-        self.startGameBtn.clicked.connect(self.startGame)
         
-        self.fcOptionsLayout.addWidget(self.selectSetDD)
-        self.fcOptionsLayout.addWidget(self.directionDD)
-        self.fcOptionsLayout.addWidget(self.startGameBtn)
+        game_direction_layout.addWidget(game_direction_label)
+        game_direction_layout.addSpacing(int(10 * self.widthScale))
+        game_direction_layout.addWidget(self.directionDD)
+        game_direction_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        start_game_layout = QHBoxLayout()
+        self.startGameBtn = QPushButton('Start')
+        self.startGameBtn.setFixedSize(int(100 * self.widthScale), int(50 * self.heightScale))
+        self.startGameBtn.clicked.connect(self.startGame)
+
+        start_game_layout.addWidget(self.startGameBtn)
+        start_game_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+        self.fcOptionsLayout.addLayout(game_options_label_layout)
+        self.fcOptionsLayout.addSpacing(int(25 * self.heightScale))
+        self.fcOptionsLayout.addLayout(select_set_layout)
+        self.fcOptionsLayout.addSpacing(int(10 * self.heightScale))
+        self.fcOptionsLayout.addLayout(game_direction_layout)
+        self.fcOptionsLayout.addSpacing(int(50 * self.heightScale))
+        self.fcOptionsLayout.addLayout(start_game_layout)
         self.fcOptionsLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.fcOptionsContainer.setLayout(self.fcOptionsLayout)
         
@@ -71,14 +119,25 @@ class FlashCards:
         
         mainCardFont = QFont()
         mainCardFont.setPointSize(16)
+
         self.flashCardMainBtn = QPushButton()
         self.flashCardMainBtn.setFixedSize(int(750 * self.widthScale), int(500 * self.heightScale))
-        self.flashCardMainBtn.setFont(mainCardFont)
         self.flashCardMainBtn.clicked.connect(self.flipCard)
+
+        self.flash_cards_label = QLabel('Sample Text', self.flashCardMainBtn)
+        self.flash_cards_label.setWordWrap(True)
+        self.flash_cards_label.setFont(mainCardFont)
+        self.flash_cards_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        temp_layout = QHBoxLayout()
+        temp_layout.addWidget(self.flash_cards_label)
+        temp_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.flashCardMainBtn.setLayout(temp_layout)
         
         self.flashCardLayout.addWidget(self.flashCardMainBtn)
         self.flashCardLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        
+
         self.previousBtn = QPushButton('Prev')
         self.nextBtn = QPushButton('Next')
         
@@ -94,9 +153,20 @@ class FlashCards:
         self.flashCardControlsLayout.addStretch(1)
         self.flashCardControlsLayout.addWidget(self.nextBtn)
         self.flashCardControlsLayout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        cancel_game_layout = QHBoxLayout()
+
+        cancel_game_btn = QPushButton("Cancel Game")
+        cancel_game_btn.setFixedSize(int(125 * self.widthScale), int(50 * self.heightScale))
+        cancel_game_btn.clicked.connect(self.doneWithCards)
+
+        cancel_game_layout.addWidget(cancel_game_btn)
+        cancel_game_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         
         self.mainGameLayout.addLayout(self.flashCardLayout)
         self.mainGameLayout.addLayout(self.flashCardControlsLayout)
+        self.mainGameLayout.addSpacing(int(75 * self.heightScale))
+        self.mainGameLayout.addLayout(cancel_game_layout)
         self.mainGameLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.mainGameContainer.setLayout(self.mainGameLayout)
         self.mainGameContainer.setHidden(True)
@@ -216,7 +286,7 @@ class FlashCards:
         frontText, backText = self.getCurrentCardData()
         self.cardData = [frontText, backText]
         
-        self.flashCardMainBtn.setText(frontText)
+        self.flash_cards_label.setText(frontText)
         
     def getCurrentCardData(self):
         pair = self.setData[self.cardIndex]
@@ -236,10 +306,10 @@ class FlashCards:
             
     #Flip the card over
     def flipCard(self):
-        if self.cardData[0] == self.flashCardMainBtn.text():
-            self.flashCardMainBtn.setText(self.cardData[1])
+        if self.cardData[0] == self.flash_cards_label.text():
+            self.flash_cards_label.setText(self.cardData[1])
         else:
-            self.flashCardMainBtn.setText(self.cardData[0])
+            self.flash_cards_label.setText(self.cardData[0])
             
     #Load Previous Card
     def previousCard(self):

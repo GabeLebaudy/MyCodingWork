@@ -47,7 +47,7 @@ class QuizQuestion:
 #Class for storing data about a multiple choice question
 class MultipleChoiceQuestion(QuizQuestion):
     #Constructor
-    def __init__(self, main_layout, q_layout, q_label, btn_container, btn_space, btn_layout, btn_list):
+    def __init__(self, main_layout, q_layout, q_label, btn_container, btn_space, btn_layout, btn_list, button_labels, button_layouts):
         super().__init__()
         self.main_layout = main_layout
         self.question_layout = q_layout
@@ -56,6 +56,8 @@ class MultipleChoiceQuestion(QuizQuestion):
         self.button_space_layout = btn_space
         self.button_layout = btn_layout
         self.button_list = btn_list
+        self.button_text_layouts = button_layouts
+        self.button_labels = button_labels
 
         self.correct_answer_index = 0
     
@@ -79,6 +81,8 @@ class MultipleChoiceQuestion(QuizQuestion):
         if gamemode == 2: #Term is question
             self.question_label.setText("What term is defined by {}?".format(q))
 
+        self.question_label.setFixedHeight(self.question_label.sizeHint().height())
+
     #Get current answer
     def getAnswer(self):
         return super().getAnswer()
@@ -98,10 +102,12 @@ class MultipleChoiceQuestion(QuizQuestion):
         #Set the text of each radio button
         for i in range(4):
             if i == self.correct_answer_index: #Correct radio button answer
-                self.button_list[i].setText(super().getAnswer())
+                self.button_labels[i].setText(super().getAnswer())
+                self.button_labels[i].setFixedHeight(self.button_labels[i].sizeHint().height())
             else:
                 ind = incorrect_answers.pop(0)
-                self.button_list[i].setText(all_answers[ind])
+                self.button_labels[i].setText(all_answers[ind])
+                self.button_labels[i].setFixedHeight(self.button_labels[i].sizeHint().height())
 
     #Check if an answer was selected
     def isAnswered(self):
@@ -133,6 +139,12 @@ class MultipleChoiceQuestion(QuizQuestion):
     #Delete the question (On restart and game end)
     def deleteQuestion(self):
         #Start from bottom of the layouts, and remove upward
+        for label in self.button_labels:
+            btn.deleteLater()
+        
+        for layout in self.button_text_layouts:
+            layout.deleteLater()
+
         for btn in self.button_list:
             btn.deleteLater()
 
@@ -577,6 +589,7 @@ class Quiz(QObject):
         select_set_label = QLabel("Set: ")
         select_set_label.setFont(drop_down_font)
         self.select_set_dd = QComboBox()
+        self.select_set_dd.setFixedSize(int(200 * self.widthScale), int(30 * self.heightScale))
         self.populateSetDD()
         self.select_set_dd.currentIndexChanged.connect(self.checkGameSettings)
 
@@ -606,59 +619,34 @@ class Quiz(QObject):
 
         question_type_layouts = QVBoxLayout()
 
-        multiple_choice_layout = QHBoxLayout()
-        matching_layout = QHBoxLayout()
-        true_false_layout = QHBoxLayout()
-        type_answers_layout = QHBoxLayout()
-
         check_box_font = QFont()
         check_box_font.setPointSize(14)
 
-        self.multiple_choice_cb = QCheckBox()
+        self.multiple_choice_cb = QCheckBox("Multiple Choice")
         self.multiple_choice_cb.setChecked(True)
+        self.multiple_choice_cb.setFont(check_box_font)
         self.multiple_choice_cb.clicked.connect(self.checkGameSettings)
-        multiple_choice_label = QLabel("Multiple Choice")
-        multiple_choice_label.setFont(check_box_font)
 
-        self.matching_cb = QCheckBox()
+        self.matching_cb = QCheckBox("Matching")
         self.matching_cb.setChecked(True)
+        self.matching_cb.setFont(check_box_font)
         self.matching_cb.clicked.connect(self.checkGameSettings)
-        matching_label = QLabel("Matching")
-        matching_label.setFont(check_box_font)
 
-        self.true_false_cb = QCheckBox()
+        self.true_false_cb = QCheckBox("True/False")
         self.true_false_cb.setChecked(True)
+        self.true_false_cb.setFont(check_box_font)
         self.true_false_cb.clicked.connect(self.checkGameSettings)
-        true_false_label = QLabel("True/False")
-        true_false_label.setFont(check_box_font)
 
-        self.type_answers_cb = QCheckBox()
+        self.type_answers_cb = QCheckBox("Type out answers")
         self.type_answers_cb.setChecked(True)
+        self.type_answers_cb.setFont(check_box_font)
         self.type_answers_cb.clicked.connect(self.checkGameSettings)
-        type_answers_label = QLabel("Type out answers")
-        type_answers_label.setFont(check_box_font)
 
-        multiple_choice_layout.addWidget(self.multiple_choice_cb)
-        multiple_choice_layout.addWidget(multiple_choice_label)
-        multiple_choice_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        
-        matching_layout.addWidget(self.matching_cb)
-        matching_layout.addWidget(matching_label)
-        matching_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        true_false_layout.addWidget(self.true_false_cb)
-        true_false_layout.addWidget(true_false_label)
-        true_false_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        type_answers_layout.addWidget(self.type_answers_cb)
-        type_answers_layout.addWidget(type_answers_label)
-        type_answers_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        question_type_layouts.addLayout(multiple_choice_layout)
-        question_type_layouts.addLayout(matching_layout)
-        question_type_layouts.addLayout(true_false_layout)
-        question_type_layouts.addLayout(type_answers_layout)
-        question_type_layouts.setAlignment(Qt.AlignmentFlag.AlignTop)
+        question_type_layouts.addWidget(self.multiple_choice_cb)
+        question_type_layouts.addWidget(self.matching_cb)
+        question_type_layouts.addWidget(self.true_false_cb)
+        question_type_layouts.addWidget(self.type_answers_cb)
+        question_type_layouts.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         #Number of Questions
         num_questions_layout = QHBoxLayout()
@@ -848,6 +836,8 @@ class Quiz(QObject):
         question_font = QFont()
         question_font.setPointSize(14)
         question_label.setFont(question_font)
+        question_label.setWordWrap(True)
+        question_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         question_layout.addWidget(question_label)
         question_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -856,8 +846,20 @@ class Quiz(QObject):
         radio_button_space_layout = QHBoxLayout()
         radio_button_layout = QVBoxLayout()
         radio_buttons = []
+        button_labels = []
+        button_layouts = []
         for i in range(4):
-            new_button = QRadioButton("Sample {}".format(i + 1))
+            button_text_layout = QHBoxLayout()
+            button_text_label = QLabel()
+            button_text_label.setWordWrap(True)
+            button_text_layout.addWidget(button_text_label)
+            button_text_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            button_layouts.append(button_layouts)
+            button_labels.append(button_text_label)
+
+            new_button = QRadioButton()
+            new_button.setLayout(button_text_layout)
             radio_button_layout.addWidget(new_button)
             new_button.setParent(radio_button_container)
             radio_buttons.append(new_button)
@@ -875,7 +877,7 @@ class Quiz(QObject):
         self.multiple_choice_questions_layout.addLayout(main_mc_layout)
         
         #Create Object for storage
-        mc_question = MultipleChoiceQuestion(main_mc_layout, question_layout, question_label, radio_button_container, radio_button_space_layout, radio_button_layout, radio_buttons)
+        mc_question = MultipleChoiceQuestion(main_mc_layout, question_layout, question_label, radio_button_container, radio_button_space_layout, radio_button_layout, radio_buttons, button_labels, button_layouts)
         self.multiple_choice_questions.append(mc_question)
 
     #Add a matching question

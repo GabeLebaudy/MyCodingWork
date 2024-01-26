@@ -121,7 +121,8 @@ class SideBar(QObject):
         #TODO: Fix this word wrap issue
         titleLabel.setFixedWidth(int(125 * self.widthScale))
         titleLabel.setWordWrap(True)
-                
+        titleLabel.setFixedHeight(titleLabel.sizeHint().height())
+  
         setLayout.addWidget(titleLabel)
         setLayout.addWidget(editBtn)
         setLayout.addWidget(deleteBtn)

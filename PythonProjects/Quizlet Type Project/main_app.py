@@ -194,6 +194,7 @@ class MainWindow(QMainWindow):
     #Edit Done
     def handleEditCompleteSignal(self):
         self.SideBar.enableDelete(True)
+        self.SideBar.regenSideBar()
 
     #Set list is updated
     def handleSetListUpdate(self):
