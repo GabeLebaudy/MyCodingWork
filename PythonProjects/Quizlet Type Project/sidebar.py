@@ -95,8 +95,7 @@ class SideBar(QObject):
 
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        scroll_area.setFixedWidth(int(325 * self.widthScale))
-        scroll_area.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        scroll_area.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         sideBarWidget = QWidget()
         self.node_layout = QVBoxLayout()
@@ -173,7 +172,7 @@ class SideBar(QObject):
             self.addNode(title)
     
     #Reset the signals
-    def resetSignals(self):
+    def resetSignals(self):        
         for edit_connection in self.editSignals:
             edit_connection[0].disconnect()
         

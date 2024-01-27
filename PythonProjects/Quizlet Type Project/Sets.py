@@ -378,7 +378,7 @@ class Sets(QObject):
     
     #Update the remove pair button signals
     def updatePairSignals(self):
-        #Clear Prior Signals
+        #Clear Prior Signals        
         for connection in self.removePairSignals:
             connection[0].disconnect()
 
@@ -387,8 +387,6 @@ class Sets(QObject):
 
         #Loop through remove queue item button array, create a new signal for that button based on index, connect signal to the removeQueueItem method, 
         for i in range(len(self.current_pairs)):
-            termFunc = None
-            defFunc = None
             removeFunc = lambda checked, x=i: self.removeSetPair(x, checked)
             button = self.current_pairs[i].getBtn()
             buttonConnection = [button.clicked, removeFunc]
