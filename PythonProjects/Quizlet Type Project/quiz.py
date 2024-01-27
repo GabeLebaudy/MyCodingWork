@@ -1222,6 +1222,8 @@ class Quiz(QObject):
             self.select_set_dd.removeItem(0)
         
         set_titles = self.set_data.getAllSetTitles()
+
+        del set_titles[0] #Remove placeholder set
         self.select_set_dd.addItems(set_titles)
 
     #Verify that the question type settings are valid

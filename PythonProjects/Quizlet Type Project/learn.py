@@ -445,8 +445,9 @@ class Learn(QObject):
         
         titles = self.setData.getAllSetTitles()
 
-        for name in titles:
-            self.selectSetDD.addItem(name)
+        for i in range(len(titles)):
+            if i > 0: #Ensure hidden set is not added
+                self.selectSetDD.addItem(titles[i])
     
     #-----------------------------------------
     # Main Game Methods

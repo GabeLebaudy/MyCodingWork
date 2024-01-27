@@ -234,10 +234,13 @@ class FlashCards:
         with open(SETS_CONFIG_PATH, 'r') as file:
             lines = file.readlines()
 
+        counter = 0 #For making sur the first set is not included
         for line in lines:
             line = line.rstrip()
-            if ':' not in line:
+            if ':' not in line and counter > 0:
                 self.selectSetDD.addItem(line.rstrip())
+                
+            counter += 1
     
     #Start Flash Cards Game
     def startGame(self):
