@@ -411,10 +411,15 @@ class Sets(QObject):
             return
         
         #Prompt user for name for the set
+        all_titles = self.getAllSetTitles()
         while not self.setName:
             self.textInputSignal.emit(['Dialog Title', 'Enter a name for this set:'])
             if re.search(r"[:\n]+", self.setName):
                 self.messageSignal.emit(['Error', 'Set name cannot contain ":" character or a line break'])
+                self.setName = None
+            
+            if self.setName in all_titles:
+                self.messageSignal.emit(['Error', 'Set name already exists.'])
                 self.setName = None
 
         with open(self.config_path, 'a') as file:

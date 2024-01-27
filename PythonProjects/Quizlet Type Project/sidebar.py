@@ -37,6 +37,12 @@ class Node:
     def setDeleteButtonStatus(self, s):
         self.delBtn.setEnabled(s)
 
+    #Hide all the widgets(Implemented for that unfixable error)
+    def setHidden(self):
+        self.titleLabel.setHidden(True)
+        self.editBtn.setHidden(True)
+        self.delBtn.setHidden(True)
+
     #Delete the node
     def deleteWidgets(self):
         self.titleLabel.deleteLater()
@@ -90,20 +96,20 @@ class SideBar(QObject):
         
         self.sideBarLayout.addWidget(sideBarLabel)
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
 
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        scroll_area.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.scroll_area.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         sideBarWidget = QWidget()
         self.node_layout = QVBoxLayout()
         self.node_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         sideBarWidget.setLayout(self.node_layout)
-        scroll_area.setWidget(sideBarWidget)
+        self.scroll_area.setWidget(sideBarWidget)
 
-        self.sideBarLayout.addWidget(scroll_area)
+        self.sideBarLayout.addWidget(self.scroll_area)
 
         self.regenSideBar()
 
@@ -131,6 +137,9 @@ class SideBar(QObject):
         
         newNode = Node(titleLabel, editBtn, deleteBtn, setLayout)
         self.items.append(newNode)
+        
+        #Update Side bar Length
+        self.scroll_area.setMinimumWidth(self.scroll_area.sizeHint().width())
 
         self.updateSideBarSignals()
 
@@ -170,6 +179,10 @@ class SideBar(QObject):
         titles = self.setData.getAllSetTitles()
         for title in titles:
             self.addNode(title)
+
+        #Hide the first one to prevent errors
+        if self.items:
+            self.items[0].setHidden()
     
     #Reset the signals
     def resetSignals(self):        
