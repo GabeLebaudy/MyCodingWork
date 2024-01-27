@@ -127,6 +127,7 @@ class FlashCards:
         self.flash_cards_label = QLabel('Sample Text', self.flashCardMainBtn)
         self.flash_cards_label.setWordWrap(True)
         self.flash_cards_label.setFont(mainCardFont)
+        self.flash_cards_label.setFixedHeight(int(250 * self.heightScale))
         self.flash_cards_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         temp_layout = QHBoxLayout()

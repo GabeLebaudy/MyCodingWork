@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Main Logger: INFO - Starting __init__... - on 01/26/2024 at 20:13 PM
 Main Logger: INFO - Starting createTitleBar... - on 01/26/2024 at 20:13 PM
 Main Logger: INFO - Finished createTitleBar. - on 01/26/2024 at 20:13 PM
@@ -17,3 +18,15 @@ Main Logger: INFO - Finished populateSetDD. - on 01/26/2024 at 20:14 PM
 Main Logger: INFO - Starting finalizeSet... - on 01/26/2024 at 20:14 PM
 Main Logger: INFO - Starting textInputDialog... - on 01/26/2024 at 20:14 PM
 Main Logger: INFO - Finished textInputDialog. - on 01/26/2024 at 20:14 PM
+=======
+Main Logger: INFO - Starting __init__... - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Starting createTitleBar... - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Finished createTitleBar. - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Starting generateSideBar... - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Starting regenSideBar... - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Finished regenSideBar. - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Finished generateSideBar. - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Starting populateSetDD... - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Finished populateSetDD. - on 01/26/2024 at 18:27 PM
+Main Logger: INFO - Finished __init__. - on 01/26/2024 at 18:27 PM
+>>>>>>> ed2b976f5935d1aa35f6822181643f8eb75ffdb6
