@@ -296,7 +296,6 @@ class MainWindow(QMainWindow):
             return False
     
     #Prompt user for a yes or no answer
-    @log_start_and_stop
     def yesOrNoDialog(self, title, prompt, buttonText):
         confirmDialog = QDialog(self)
         confirmDialog.setWindowTitle(title)

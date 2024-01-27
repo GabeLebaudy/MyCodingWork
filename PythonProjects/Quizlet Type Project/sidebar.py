@@ -95,7 +95,8 @@ class SideBar(QObject):
 
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        scroll_area.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        scroll_area.setFixedWidth(int(325 * self.widthScale))
+        scroll_area.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
 
         sideBarWidget = QWidget()
         self.node_layout = QVBoxLayout()
@@ -118,7 +119,6 @@ class SideBar(QObject):
         editBtn = QPushButton('Edit')
         deleteBtn = QPushButton('Delete')
 
-        #TODO: Fix this word wrap issue
         titleLabel.setFixedWidth(int(125 * self.widthScale))
         titleLabel.setWordWrap(True)
         titleLabel.setFixedHeight(titleLabel.sizeHint().height())
@@ -136,7 +136,7 @@ class SideBar(QObject):
         self.updateSideBarSignals()
 
     #Update the signals of the edit button and the delete button for each set on the sidebar
-    def updateSideBarSignals(self):
+    def updateSideBarSignals(self):    
         self.resetSignals()
         
         for i in range(len(self.items)):
@@ -174,12 +174,12 @@ class SideBar(QObject):
     
     #Reset the signals
     def resetSignals(self):
-        for connection in self.editSignals:
-            connection[0].disconnect()
-            
-        for connection in self.deleteSignals:
-            connection[0].disconnect()
-            
+        for edit_connection in self.editSignals:
+            edit_connection[0].disconnect()
+        
+        for delete_connection in self.deleteSignals:
+            delete_connection[0].disconnect()
+
         self.editSignals, self.deleteSignals = [], []
 
     #Prompt an edit from the Sets File
