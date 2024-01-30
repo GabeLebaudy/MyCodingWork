@@ -24,12 +24,12 @@ def TimeWrapper(f):
 #TEST_PATH = os.path.join(os.path.dirname(__file__), 'mnist_test.csv')
 
 #PC Path
-TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
-TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
+#TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
+#TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
 
 #Laptop
-#TRAIN_PATH = 
-#TEST_PATH = 
+TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
+TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
 
 #Helper Methods
 def train_model(layer_dims, learning_rate, num_iterations = 1):
@@ -59,7 +59,8 @@ def train_model(layer_dims, learning_rate, num_iterations = 1):
         grads = backward_propogation(caches, parameters, y_true, x_inputs)
         
         #Update Parameters
-
+        parameters = update_parameters(parameters, grads, learning_rate)
+        
 #Shapes Confirmed Correct
 @TimeWrapper
 def initiate_parameters(layer_dims, X):
@@ -99,7 +100,6 @@ def forward_propagation(x_inputs, parameters, layer_dims):
 def calculate_cost(activations, Y, last_layer_num):
     m = Y.shape[0]
     cost = -1 / m * np.sum(Y * np.log(activations['A' + str(last_layer_num)]))
-    print(cost)
     return cost
 
 @TimeWrapper
@@ -107,27 +107,35 @@ def backward_propogation(activations, parameters, Y, X):
     grads = {}
     
     last_layer_num = len(activations) // 2
-    print(last_layer_num)
     m = X.shape[1]
 
+    #Last layer
     grads['dZ' + str(last_layer_num)] = activations['A' + str(last_layer_num)] - Y
-
-    print(grads['dZ' + str(last_layer_num)].T.shape, activations['A' + str(last_layer_num)].shape)
-    #grads['dW' + str(last_layer_num)] = 1 / m * np.dot(grads['dZ' + str(last_layer_num)].T, activations['A' + str(last_layer_num)])
-    grads['dW' + str(last_layer_num)] = np.dot(grads['dZ' + str(last_layer_num)].T, activations['A' + str(last_layer_num)])
+    grads['dW' + str(last_layer_num)] = 1 / m * np.dot(grads['dZ' + str(last_layer_num)], activations['A' + str(last_layer_num)].T)
+    grads['db' + str(last_layer_num)] = 1 / m * np.sum(grads['dZ' + str(last_layer_num)], keepdims=True, axis=1)
     
-    #grads['db' + str(last_layer_num)] = 1 / m * np.sum(grads['dZ' + str(last_layer_num)], keepdims=True, axis=1)
-    print("Last Layer")
-    '''
+    #Middle Layers
     for layer in range(last_layer_num - 1, 1, -1):
-        print("Layer:", layer)
-        grads['dZ' + str(layer)] = np.dot(parameters['W' + str(layer + 1)], grads['dZ' + str(layer + 1)]) * np.where(activations['Z' + str(layer)] <= 0, 0, 1)
-        grads['dW' + str(layer)] = 1 / m * np.dot(grads['dZ' + str(layer)], activations['A' + str(layer - 1)])
+        grads['dZ' + str(layer)] = np.dot(parameters['W' + str(layer + 1)].T, grads['dZ' + str(layer + 1)]) * np.where(activations['Z' + str(layer)] <= 0, 0, 1)
+        grads['dW' + str(layer)] = 1 / m * np.dot(grads['dZ' + str(layer)], activations['A' + str(layer - 1)].T)
         grads['db' + str(layer)] = 1 / m * np.sum(grads['dZ' + str(layer)], keepdims=True, axis=1)
-    '''
+        
+    #First Layer
+    grads['dZ1'] = np.dot(parameters['W2'].T, grads['dZ2']) * np.where(activations['Z1'] <= 0, 0, 1)
+    grads['dW1'] = 1 / m * np.dot(grads['dZ1'], X.T)
+    grads['db1'] = 1 / m * np.sum(grads['dZ1'], keepdims=True, axis=1)
+    
+    return grads
+    
+@TimeWrapper
+def update_parameters(parameters, grads, learning_rate):
+    layers = len(parameters) // 2
+    
+    for layer in range(layers):
+        parameters['W' + str(layer + 1)] = parameters['W' + str(layer + 1)] - (learning_rate * grads['dW' + str(layer + 1)])
+        parameters['b' + str(layer + 1)] = parameters['b' + str(layer + 1)] - (learning_rate * grads['db' + str(layer + 1)])
 
-def update_parameters():
-    pass
+    return parameters
 
 def test_model():
     pass
