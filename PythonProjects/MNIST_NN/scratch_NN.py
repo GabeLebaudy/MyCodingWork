@@ -24,12 +24,12 @@ def TimeWrapper(f):
 #TEST_PATH = os.path.join(os.path.dirname(__file__), 'mnist_test.csv')
 
 #PC Path
-TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
-TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
+#TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
+#TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
 
 #Laptop
-#TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
-#TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
+TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
+TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
 
 #Helper Methods
 def train_model(layer_dims, learning_rate, num_iterations = 10_000):
