@@ -24,15 +24,15 @@ def TimeWrapper(f):
 #TEST_PATH = os.path.join(os.path.dirname(__file__), 'mnist_test.csv')
 
 #PC Path
-#TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
-#TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
+TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
+TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
 
 #Laptop
-TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
-TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
+#TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
+#TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
 
 #Helper Methods
-def train_model(layer_dims, learning_rate, num_iterations = 1):
+def train_model(layer_dims, learning_rate, num_iterations = 10_000):
     data = pd.read_csv(TRAIN_PATH, header = None)
     x_inputs = np.array(data.iloc[:1000, 1:])
     y_values = np.array(data.iloc[:1000, 0])
@@ -54,6 +54,8 @@ def train_model(layer_dims, learning_rate, num_iterations = 1):
         
         #Calculating Cost
         cost = calculate_cost(caches, y_true, len(layer_dims))
+        if i % 1000 == 0:
+            print("Cost after epoch:", i, '-', cost)
         
         #Backward Propogation
         grads = backward_propogation(caches, parameters, y_true, x_inputs)
@@ -62,7 +64,6 @@ def train_model(layer_dims, learning_rate, num_iterations = 1):
         parameters = update_parameters(parameters, grads, learning_rate)
         
 #Shapes Confirmed Correct
-@TimeWrapper
 def initiate_parameters(layer_dims, X):
     parameters = {}
     
@@ -77,7 +78,6 @@ def initiate_parameters(layer_dims, X):
     
     return parameters
 
-@TimeWrapper
 def forward_propagation(x_inputs, parameters, layer_dims):
     caches = {}
     
@@ -92,26 +92,25 @@ def forward_propagation(x_inputs, parameters, layer_dims):
     caches['Z' + str(len(layer_dims))] = np.dot(parameters['W' + str(len(layer_dims))], caches['A' + str(len(layer_dims) - 1)]) + parameters['b' + str(len(layer_dims))]
     t = np.exp(caches['Z' + str(len(layer_dims))])
     divFactor = np.sum(t)
+
     caches['A' + str(len(layer_dims))] = t / divFactor
     
     return caches
 
-@TimeWrapper
 def calculate_cost(activations, Y, last_layer_num):
     m = Y.shape[0]
     cost = -1 / m * np.sum(Y * np.log(activations['A' + str(last_layer_num)]))
     return cost
 
-@TimeWrapper
 def backward_propogation(activations, parameters, Y, X):
     grads = {}
     
     last_layer_num = len(activations) // 2
     m = X.shape[1]
-
+    
     #Last layer
     grads['dZ' + str(last_layer_num)] = activations['A' + str(last_layer_num)] - Y
-    grads['dW' + str(last_layer_num)] = 1 / m * np.dot(grads['dZ' + str(last_layer_num)], activations['A' + str(last_layer_num)].T)
+    grads['dW' + str(last_layer_num)] = 1 / m * np.dot(grads['dZ' + str(last_layer_num)], activations['A' + str(last_layer_num - 1)].T)
     grads['db' + str(last_layer_num)] = 1 / m * np.sum(grads['dZ' + str(last_layer_num)], keepdims=True, axis=1)
     
     #Middle Layers
@@ -127,13 +126,12 @@ def backward_propogation(activations, parameters, Y, X):
     
     return grads
     
-@TimeWrapper
 def update_parameters(parameters, grads, learning_rate):
     layers = len(parameters) // 2
     
     for layer in range(layers):
-        parameters['W' + str(layer + 1)] = parameters['W' + str(layer + 1)] - (learning_rate * grads['dW' + str(layer + 1)])
-        parameters['b' + str(layer + 1)] = parameters['b' + str(layer + 1)] - (learning_rate * grads['db' + str(layer + 1)])
+        parameters['W' + str(layer + 1)] = parameters['W' + str(layer + 1)] - learning_rate * grads['dW' + str(layer + 1)]
+        parameters['b' + str(layer + 1)] = parameters['b' + str(layer + 1)] - learning_rate * grads['db' + str(layer + 1)]
 
     return parameters
 
@@ -142,4 +140,4 @@ def test_model():
 
 #Main Method
 if __name__ == "__main__":
-    train_model(layer_dims=[100, 50, 25, 10], learning_rate=0.005)
+    train_model(layer_dims=[100, 50, 25, 10], learning_rate=0.01)
