@@ -25,15 +25,15 @@ def TimeWrapper(f):
 #TEST_PATH = os.path.join(os.path.dirname(__file__), 'mnist_test.csv')
 
 #PC Path
-TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
-TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
+#TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
+#TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
 
 #Laptop
-#TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
-#TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
+TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
+TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
 
 #Helper Methods
-def train_model(layer_dims, learning_rate, num_iterations = 7_500, doTrain = False):
+def train_model(layer_dims, learning_rate, num_iterations = 10_000, doTrain = False):
     if not doTrain:
         return
     
@@ -76,7 +76,7 @@ def train_model(layer_dims, learning_rate, num_iterations = 7_500, doTrain = Fal
         file_path = os.path.join(os.path.dirname(__file__), file_name)
         np.savetxt(file_path, parameters[parameter], delimiter = ',')
     
-    plotCost(costs)
+    plotCost(costs, num_iterations)
     
         
 #Shapes Confirmed Correct
@@ -170,7 +170,7 @@ def test_model():
 
     #Get parameters from file data
     parameters = {}
-    for i in range(3):
+    for i in range(2):
         parameters['W' + str(i + 1)] = np.loadtxt(os.path.join(os.path.dirname(__file__), 'W{}.csv'.format(i + 1)), delimiter = ',')
         parameters['b' + str(i + 1)] = np.loadtxt(os.path.join(os.path.dirname(__file__), 'b{}.csv'.format(i + 1)), delimiter = ',')
         parameters['b' + str(i + 1)] = parameters['b' + str(i + 1)].reshape(parameters['b' + str(i + 1)].shape[0], 1)
@@ -195,8 +195,8 @@ def test_model():
 
     print("AI Accuracy: %.2f%%" % accuracy)
 
-def plotCost(costs):
-    x_values = np.arange(1, 7501)
+def plotCost(costs, num_examples):
+    x_values = np.arange(1, num_examples + 1)
     plt.plot(x_values, costs)
     plt.xlabel('Iteration')
     plt.ylabel('Cost')
@@ -206,6 +206,6 @@ def plotCost(costs):
 
 #Main Method
 if __name__ == "__main__":
-    doTrain = True
-    final_parameters = train_model(layer_dims = [250, 50, 10], learning_rate=0.01, doTrain=doTrain)
+    doTrain = False
+    final_parameters = train_model(layer_dims = [200, 10], learning_rate=0.01, doTrain=doTrain)
     test_model()
