@@ -25,12 +25,12 @@ def TimeWrapper(f):
 #TEST_PATH = os.path.join(os.path.dirname(__file__), 'mnist_test.csv')
 
 #PC Path
-#TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
-#TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
+TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
+TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
 
 #Laptop
-TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
-TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
+#TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
+#TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
 
 #Helper Methods
 def train_model(layer_dims, learning_rate, num_iterations = 10_000, doTrain = False):
@@ -39,8 +39,8 @@ def train_model(layer_dims, learning_rate, num_iterations = 10_000, doTrain = Fa
     
     #Read training data
     data = pd.read_csv(TRAIN_PATH, header = None)
-    x_inputs = np.array(data.iloc[:2000, 1:])
-    y_values = np.array(data.iloc[:2000, 0])
+    x_inputs = np.array(data.iloc[:10000, 1:])
+    y_values = np.array(data.iloc[:10000, 0])
     y_values = y_values.reshape(y_values.shape[0], 1)
     y_true = np.zeros((y_values.shape[0], 10))
     y_true[np.arange(y_values.shape[0]), y_values.flatten()] = 1
@@ -70,10 +70,16 @@ def train_model(layer_dims, learning_rate, num_iterations = 10_000, doTrain = Fa
         #Update Parameters
         parameters = update_parameters(parameters, grads, learning_rate)
     
+    #Remove Old Files
+    parameters_path = os.path.join(os.path.dirname(__file__), "Parameters")
+
+    for file in os.listdir(parameters_path):
+        file_path = os.path.join(parameters_path, file)
+        os.remove(file_path)
+
     #Save parameters
     for parameter in parameters:
-        file_name = "{}.csv".format(parameter)
-        file_path = os.path.join(os.path.dirname(__file__), file_name)
+        file_path = os.path.join(parameters_path, "{}.csv".format(parameter))
         np.savetxt(file_path, parameters[parameter], delimiter = ',')
     
     plotCost(costs, num_iterations)
@@ -117,7 +123,6 @@ def forward_propagation(x_inputs, parameters):
 def calculate_cost(activations, Y, last_layer_num):
     m = Y.shape[0]
     cost = -1 / m * np.sum(Y * np.log(activations['A' + str(last_layer_num)]))
-    #cost = -1 / m * np.sum(np.multiply(np.log(activations['A' + str(last_layer_num)]), Y) + np.multiply(np.log(1 - activations['A' + str(last_layer_num)]), (1 - Y)))
     return cost
 
 def backward_propogation(activations, parameters, Y, X):
@@ -156,8 +161,8 @@ def update_parameters(parameters, grads, learning_rate):
 def test_model():
     #Read test file data
     data = pd.read_csv(TEST_PATH, header = None)
-    x_inputs = np.array(data.iloc[:500, 1:])
-    y_values = np.array(data.iloc[:500, 0])
+    x_inputs = np.array(data.iloc[:1000, 1:])
+    y_values = np.array(data.iloc[:1000, 0])
     y_values = y_values.reshape(y_values.shape[0], 1)
     y_true = np.zeros((y_values.shape[0], 10))
     y_true[np.arange(y_values.shape[0]), y_values.flatten()] = 1
@@ -170,9 +175,12 @@ def test_model():
 
     #Get parameters from file data
     parameters = {}
-    for i in range(2):
-        parameters['W' + str(i + 1)] = np.loadtxt(os.path.join(os.path.dirname(__file__), 'W{}.csv'.format(i + 1)), delimiter = ',')
-        parameters['b' + str(i + 1)] = np.loadtxt(os.path.join(os.path.dirname(__file__), 'b{}.csv'.format(i + 1)), delimiter = ',')
+    folder_path = os.path.join(os.path.dirname(__file__), 'Parameters')
+    num_layers = len([name for name in os.listdir(folder_path)]) // 2
+
+    for i in range(num_layers):
+        parameters['W' + str(i + 1)] = np.loadtxt(os.path.join(folder_path, 'W{}.csv'.format(i + 1)), delimiter = ',')
+        parameters['b' + str(i + 1)] = np.loadtxt(os.path.join(folder_path, 'b{}.csv'.format(i + 1)), delimiter = ',')
         parameters['b' + str(i + 1)] = parameters['b' + str(i + 1)].reshape(parameters['b' + str(i + 1)].shape[0], 1)
     
     #Determine AI Outputs for test data
@@ -206,6 +214,6 @@ def plotCost(costs, num_examples):
 
 #Main Method
 if __name__ == "__main__":
-    doTrain = False
-    final_parameters = train_model(layer_dims = [200, 10], learning_rate=0.01, doTrain=doTrain)
+    doTrain = True
+    final_parameters = train_model(layer_dims = [200, 100, 50, 10], learning_rate = 0.03, doTrain=doTrain)
     test_model()
