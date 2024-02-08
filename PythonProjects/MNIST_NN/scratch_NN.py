@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import time
 import matplotlib.pyplot as plt
+import random
 
 #Time decorator
 def TimeWrapper(f):
@@ -25,22 +26,22 @@ def TimeWrapper(f):
 #TEST_PATH = os.path.join(os.path.dirname(__file__), 'mnist_test.csv')
 
 #PC Path
-TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
-TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
+#TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
+#TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
 
 #Laptop
-#TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
-#TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
+TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
+TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
 
 #Helper Methods
-def train_model(layer_dims, learning_rate, num_iterations = 10_000, doTrain = False):
+def train_model(layer_dims, learning_rate, beta, num_iterations = 8_000, doTrain = False):
     if not doTrain:
         return
     
     #Read training data
     data = pd.read_csv(TRAIN_PATH, header = None)
-    x_inputs = np.array(data.iloc[:10000, 1:])
-    y_values = np.array(data.iloc[:10000, 0])
+    x_inputs = np.array(data.iloc[:30000, 1:])
+    y_values = np.array(data.iloc[:30000, 0])
     y_values = y_values.reshape(y_values.shape[0], 1)
     y_true = np.zeros((y_values.shape[0], 10))
     y_true[np.arange(y_values.shape[0]), y_values.flatten()] = 1
@@ -53,6 +54,10 @@ def train_model(layer_dims, learning_rate, num_iterations = 10_000, doTrain = Fa
     
     #Initialize Parameters
     parameters = initiate_parameters(layer_dims, x_inputs)
+    
+    #For Momentum
+    velocity = initate_dissent_parameters(parameters)
+    
     costs = []
     for i in range(num_iterations):
         #Forward Propogation
@@ -61,14 +66,19 @@ def train_model(layer_dims, learning_rate, num_iterations = 10_000, doTrain = Fa
         #Calculating Cost
         cost = calculate_cost(caches, y_true, len(layer_dims))
         costs.append(cost)
-        if i % 100 == 0:
+        
+        if i % 1000 == 0:
             print("Cost after epoch:", i, '-', cost)
+        
         
         #Backward Propogation
         grads = backward_propogation(caches, parameters, y_true, x_inputs)
         
+        #Calculate Velocity of gradient descent
+        velocity = backprop_with_momentum(grads, velocity, beta)
+        
         #Update Parameters
-        parameters = update_parameters(parameters, grads, learning_rate)
+        parameters = update_parameters(parameters, velocity, learning_rate)
     
     #Remove Old Files
     parameters_path = os.path.join(os.path.dirname(__file__), "Parameters")
@@ -99,6 +109,16 @@ def initiate_parameters(layer_dims, X):
         parameters['b' + str(layer + 1)] = np.zeros((layer_dims[layer], 1))
     
     return parameters
+
+#For Gradient Dissent With Momentum
+def initate_dissent_parameters(parameters):
+    caches = {}
+    num_layers = len(parameters) // 2
+    for i in range(num_layers):
+        caches['dW' + str(i + 1)] = np.zeros((parameters['W' + str(i + 1)].shape[0], parameters['W' + str(i + 1)].shape[1]))
+        caches['db' + str(i + 1)] = np.zeros((parameters['b' + str(i + 1)].shape[0], parameters['b' + str(i + 1)].shape[1]))
+        
+    return caches
 
 def forward_propagation(x_inputs, parameters):
     num_layers = len(parameters) // 2
@@ -148,7 +168,16 @@ def backward_propogation(activations, parameters, Y, X):
     grads['db1'] = 1 / m * np.sum(grads['dZ1'], keepdims=True, axis=1)
     
     return grads
+
+def backprop_with_momentum(grads, velocity, beta):
+    num_layers = len(grads) // 3
     
+    for i in range(num_layers):
+        velocity['dW' + str(i + 1)] = beta * velocity['dW' + str(i + 1)] + (1 - beta) * grads['dW' + str(i + 1)]
+        velocity['db' + str(i + 1)] = beta * velocity['db' + str(i + 1)] + (1 - beta) * grads['db' + str(i + 1)]
+    
+    return velocity
+ 
 def update_parameters(parameters, grads, learning_rate):
     layers = len(parameters) // 2
     
@@ -201,7 +230,9 @@ def test_model():
     
     accuracy = (num_identical_columns / y_true.shape[1]) * 100
 
-    print("AI Accuracy: %.2f%%" % accuracy)
+    #print("AI Accuracy: %.2f%%" % accuracy)
+    
+    return accuracy
 
 def plotCost(costs, num_examples):
     x_values = np.arange(1, num_examples + 1)
@@ -214,6 +245,49 @@ def plotCost(costs, num_examples):
 
 #Main Method
 if __name__ == "__main__":
-    doTrain = True
-    final_parameters = train_model(layer_dims = [200, 100, 50, 10], learning_rate = 0.03, doTrain=doTrain)
-    test_model()
+    output_file = os.path.join(os.path.dirname(__file__), 'parameter_values.csv')
+    #Prep the file
+    with open(output_file, 'w') as f:
+        f.write("{},{},{},{},{}\n".format("Learning Rate", "Momentum Constant", "Train Iterations", "Layer Dimemsions", "Accuracy"))
+    
+    for i in range(1):
+        alpha_base = random.randint(2, 4)
+        alpha_variance = random.randint(1, 9)
+        alpha = (10 ** -(alpha_base)) * alpha_variance 
+        
+        if alpha_base == 2:
+            train_iterations = 10_000
+        if alpha_base == 3:
+            train_iterations = 50_000
+        if alpha_base == 4:
+            train_iterations = 1_000_000
+        
+        beta_base = random.randint(0, 1)
+        beta = random.random()
+        beta = (beta * 0.25) + 0.75
+        
+        num_hidden_layers = random.randint(1, 4)
+        start_point, stop_point = 128, 256
+        
+        layers = []
+        for j in range(num_hidden_layers):
+            layers.append(random.randint(start_point, stop_point))
+            start_point = int(start_point * 0.5)
+            stop_point = int(stop_point * 0.5)
+            
+        layers.append(10)
+        
+        print('Test {}. Alpha:{}, Beta:{}, Training Iterations:{}, Layers:{}'.format(i + 1, alpha, beta, train_iterations, layers))
+        final_parameters = train_model(layer_dims = [175, 64, 10], learning_rate = 0.005, beta = 0.9, num_iterations = 500_000, doTrain = True)
+        accuracy = test_model()
+        print('Test {} accuracy: {}'.format(i + 1, accuracy))
+        
+        with open(output_file, 'a') as f:
+            layers_string = ""
+            for i in range(len(layers)):
+                if i < len(layers) - 1:
+                    layers_string += "{} ".format(layers[i])
+                else:
+                    layers_string += "{}".format(layers[i])
+            f.write("{},{},{},{},{}\n".format(alpha, beta, train_iterations, layers_string, accuracy))
+            
