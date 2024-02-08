@@ -1,0 +1,3 @@
+# Treasury Bill Tracking Software (Incomplete)
+
+I wanted to invest in treasury bills a while back as opposed to my money losing value in a savings account. The data was pulled from the official website, but I stopped working on this project when my account was frozen for adding "incorrect personal information", and required physical paperwork to be signed by a public official, to start a process estimated to take over 3 months to autheticate my account. 

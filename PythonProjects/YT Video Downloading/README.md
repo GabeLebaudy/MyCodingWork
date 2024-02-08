@@ -1,11 +1,9 @@
 # Youtube Video Download App
 
-## Warning: If you do not have FFmpeg installed on your PC, this application cannot download videos in 1080p.
+After YouTube implemented a new feature to prevent users from using adblockers on their site, I remembered a video a while back about a library capable of downloading YouTube videos.
 
-This project was designed to be able to take in a youtube video URL, and download the video to a specified folder.
+I created an app that is able to download an mp4 file of the video given it's URL, however a problem I ran into is that for videos in 1080p, the only way to download in that resolution is to download the video and audio streams separately, and then use FFmpeg to combine them.
 
-This application will show all videos in the current folder heirarchy selected, show the video information including publish date, title, description, and a picture of the thumbnail while downloading.
+This requires FFmpeg to be downloaded and added to the system path. For some videos there are some resolutions that you are able to download with a single stream, which allows you to do it without this extension, but many of the videos I've tried in testing required separate streams.
 
-A handy feature this application has is the download queue, which allows the user to que many videos and then leave the application running as it downloads each one in turn. It also allows more videos to be added during this process.
-
-Since this type of app goes into the downloading process on youtube, and the file manipulation, there are many more things that can be added to this, that I would like to add, but it is just not in my timeframe. I may come back to this later, but for now this is a beta phase for this app. It works for all videos that are not age restricted or private.
+This app may have many bugs, as I have been planning on using it to automate downloading from specific channels, and haven't gotten around to it yet.

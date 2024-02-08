@@ -1,1 +1,2 @@
 Learning Rate,Momentum Constant,Train Iterations,Layer Dimemsions,Accuracy
+0.04,0.9390659575031062,10000,138 110 57 16 10,95.5

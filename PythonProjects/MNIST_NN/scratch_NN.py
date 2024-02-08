@@ -26,12 +26,12 @@ def TimeWrapper(f):
 #TEST_PATH = os.path.join(os.path.dirname(__file__), 'mnist_test.csv')
 
 #PC Path
-#TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
-#TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
+TRAIN_PATH = r"E:\Work\MNIST\mnist_train.csv"
+TEST_PATH = r"E:\Work\MNIST\mnist_test.csv"
 
 #Laptop
-TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
-TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
+#TRAIN_PATH = r"C:\Users\Gabe\Documents\MNIST\mnist_train.csv"
+#TEST_PATH =  r"C:\Users\Gabe\Documents\MNIST\mnist_test.csv"
 
 #Helper Methods
 def train_model(layer_dims, learning_rate, beta, num_iterations = 8_000, doTrain = False):
@@ -278,7 +278,7 @@ if __name__ == "__main__":
         layers.append(10)
         
         print('Test {}. Alpha:{}, Beta:{}, Training Iterations:{}, Layers:{}'.format(i + 1, alpha, beta, train_iterations, layers))
-        final_parameters = train_model(layer_dims = [175, 64, 10], learning_rate = 0.005, beta = 0.9, num_iterations = 500_000, doTrain = True)
+        #final_parameters = train_model(layer_dims = [175, 64, 10], learning_rate = 0.005, beta = 0.9, num_iterations = 500_000, doTrain = True)
         accuracy = test_model()
         print('Test {} accuracy: {}'.format(i + 1, accuracy))
         

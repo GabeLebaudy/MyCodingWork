@@ -1,5 +1,5 @@
-# Handwritten digits and letters NN classification
+# Handwritten digits NN classifier built from scratch
 
-This project will be for me to test my knowledge of building a nueral network. I'd like to build the model first from scratch, and attempt to implement optimization methods to try to improve the accuracy. 
+This project is an introduction for me in developing my own nueral networks. I've the Deep Learning course on coursera by Andrew Ng, and wanted to test out what I learned with the MNIST dataset, which seems to be very basic. 
 
-Then I would like to use the same dataset to create a nueral network using TensorFlow, as I will be moving toward using that framework on the data moving forward.
+My Goal is to get the model working around 98-99% accuracy, the code is a bit messy right now, as I've just tried to write some code to randomly test different hyperparameters, but if the test_model function is run, it uses the most up to date parameters which is around 95.5% accurate.
