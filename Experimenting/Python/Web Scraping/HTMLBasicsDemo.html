@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- Adding CSS Link for Basic CSS reference-->
+        <title>My Testing Page</title>
+        <link rel = "icon" type = "image/x-icon" href = "Mars.jfif">
+        <!--Meta Tag Examples-->
+        <meta charset="UTF-8">
+        <meta name="keywords" content="HTML, CSS, JavaScript">
+        <meta name="description" content="HTML reference sheet for basic elements">
+        <meta name="author" content="Gabe Lebaudy">
+        <!--Changes website to look better if opened with a different device-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!--If you want to refresh the page on a set interval <meta http-equiv="refresh" content="30"> 30 = seconds-->
+        <base href="HTTPS://GabrielLebaudyMyCodingWork.com/" target="_blank">
+    </head>
+    <body>
+        <!-- These are all the headings. (Don't use headings to make text bigger, only use for page divisions, as you can just increase font-size in CSS)-->
+        <h1>This is the biggest heading you can have</h1>
+        <h2>This is the second biggest</h2>
+        <h3>This is the third biggest(Sike CSS)</h3>
+        <h4>This is the third smallest</h4>
+        <h5>This is the second smallest</h5>
+        <h6>This is the smallest heading you are able to have.</h6>
+        <a href="#bookmark">This is an example of a bookmark within a page</a>
+        <br>
+        <hr>
+        <!-- Basic <p> Tage example-->
+        <p>This text is part of a paragraph in the 'p' tag. Any text within these parameters are put into a paragraph.</p>
+        <p>Below are examples of ordered, unordered lists, and description lists</p>
+        <!--See W3 Schools to see how to style a list horizontally-->
+        <ul>
+            <li>Eagles</li>
+            <li>Phillies</li>
+            <li>76ers</li>
+            <li>Flyers</li>
+            <li> Style: Disc-Bullet point Circle-Circle Square-Square, none-nothing (Style=list-style-type:xxx)</li>
+        </ul>
+        <!--Types: 1, A, a, I, i (type = x)
+            Start attribute tells the list to start at a certain number
+        -->
+        <ol>
+            <li class="First Class">Philidelphia Sports</li>
+            <li class="First Class">Everyone Else</li>
+            <li class="Second Class">Literal Feces</li>
+            <li class="Second Class">Boston Sports</li>
+        </ol>
+        <dl>
+            <dt>Philidelphia Sports</dt>
+            <dd>The best sports in the world</dd>
+            <dt>Everybody Else</dt>
+            <dd>Mid</dd>
+        </dl>
+        <br>
+        <!-- <a> tag is for creating a link-->
+        <!--Links do not need to be text, they can also other HTML elements but usually some form of text or image-->
+        <!--CSS has been implemented to show how to make the link appear like a button-->
+        <a href = "https://www.w3schools.com/html/html_basic.asp">This Links you to the W3SCHOOLS html learn page and will display in the current tab</a>
+        <br>
+        <a href = "https://www.w3schools.com/html/html_basic.asp" target = "_blank">This Links you to the W3SCHOOLS html learn page in a new window</a>
+        <br>
+        <a href = "https://www.w3schools.com/html/html_basic.asp" target = "_top">This Links you to the W3SCHOOLS html learn page using the top target</a>
+        <br>
+        <a href = "https://www.w3schools.com/html/html_basic.asp" target = "_parent">This Links you to the W3SCHOOLS html learn page using the parent target attribute</a>
+        <br>
+        <hr>
+        <!-- This is an example of an img tag. the SRC attribute determines the link for the image the alt tag will appear should the website not be able to render the image. Width and Height attributes control size of the image-->
+        <!-- title attribute brings up a tooltip for more info on the link-->
+        <a href = "https://www.youtube.com/@BarryOnHere" target = "_blank" title = "Link to the greatest Philidelphia Eagles Fan Channel">
+        <img src = "https://static.clubs.nfl.com/image/private/t_editorial_landscape_mobile/f_auto/v1628455300/eagles/zuftq3b6azlzvkoznb2v.jpg">
+        </a>
+        <br>
+        <hr>
+
+        <p title="This is a tooltip" id="Example">
+            HTML attributes:<br>Width: Specifies the width of a media source<br>Height: Specifies the height of a media source<br>Alt: Displays text in place of media source if the website cannot load the media
+            Style: Changes the style of an element I.e. font, color, text size, etc...<br>Lang: goes in html tag, specifies language of the website for search engines, but doesn't actually affect display (en = English)
+            <br>Title: The title attribute will be displayed as a tooltip when the mouse hovers over the element
+        </p>
+        <pre>
+            This is an example of a pre tag
+
+            It maintains the spaces and line breaks from the original code.
+
+            I did not add any line breaks here.
+
+            It also keeps the font from visual basic code as well.
+        </pre>
+        <p id="bookmark">This is an example of how to use a bookmark</p>
+    </body>
+</html>
