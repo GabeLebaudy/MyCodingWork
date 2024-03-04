@@ -41,6 +41,7 @@ def getInternetData(url):
         mouse_cords.append(current_cord)
     
     mouse_cords[1:] = findRightMovements(mouse_cords)
+    mouse_cords.pop(-1)
     
     time.sleep(1)
         
