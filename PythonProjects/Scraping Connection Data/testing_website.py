@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
 import time
+import os
 
 #Helper Methods
 def prepWebsite(url):
@@ -44,6 +45,11 @@ def testToggleButton(url):
 
     # time.sleep(2)
 
+    picture_storage = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'test_picture.png')
+    if os.path.exists(picture_storage):
+        os.remove(picture_storage)
+    
+    driver.save_screenshot(picture_storage)
     
     driver.quit()
 

@@ -11,6 +11,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 import time
 import sys
+import os
 
 #Get the website driver object, and the object for controlling the mouse positioning
 def prepWebsite(url):

@@ -1,2 +1,0 @@
-Lower Bound X: -25 Y: -7
-Upper Bound X: 25 Y: 7
