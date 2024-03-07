@@ -5,9 +5,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
 import time
+import sys
 
 #Get the website driver object, and the object for controlling the mouse positioning
 def prepWebsite(url):
@@ -16,7 +19,8 @@ def prepWebsite(url):
 
     driver = webdriver.Chrome(options=options)
     driver.get(url)
-    
+    driver.maximize_window()
+
     #Create Action Chains object for moving the mouse to specific spots on the screen
     mouse_controller = ActionChains(driver)
     
@@ -36,32 +40,105 @@ def getInternetData(url):
     mouse_cords.pop(-1)
     
     time.sleep(1)
-        
-    #Pull elements for getting streaming data
-    graph_element = driver.find_element(By.TAG_NAME, 'svg') #Element to move mouse to hover over
-    data_storage_element = driver.find_element(By.XPATH, "//div[@id ='chart']/div[1]/div[3]") #Div that contains the tooltip which contains the HD% Value
 
     #Find the compare providers button, and click on it
     compare_providers_button = driver.find_element(By.CLASS_NAME, 'tab-label')
     mouse.move_to_element(compare_providers_button)
-    mouse.perform()
     mouse.click()
+    mouse.perform()
     
-    #Find all High Definition Buttons
-    getHighDefinitionStreams(mouse, graph_element, data_storage_element, mouse_cords)
+    time.sleep(2)
+
+    #Find the show more button if available for each row
+    try:
+        show_all_providers_elements = WebDriverWait(driver, 3).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, 'more-toggle'))
+        )
+
+        for toggle_btn in show_all_providers_elements:
+            #Make sure button exists on the page before clicking on it
+            if toggle_btn.text:
+                mouse.move_to_element_with_offset(toggle_btn, 0, 0)
+                mouse.click()
+                mouse.perform()
+                time.sleep(1)
+            
+    except:
+        print("All providers are shown. No need to expand lists.")
+
+
+    #Pull all buttons from HD, SD, and LD rows
+    stream_definition_text = ['HD', 'SD', 'LD']
+    provider_buttons = getProviderButtons(driver)
+
+    #Loop through all providers, Pulling all data
+    for i in range(len(provider_buttons)):
+        for element in provider_buttons[i]:
+            #Make sure not to use hidden buttons in case of failure to press expand more
+            if not element.text:
+                continue
+
+            print("{} - Definition: {}".format(element.text, stream_definition_text[i]))
+            mouse.move_to_element(element)
+            mouse.click()
+            mouse.perform()
+            time.sleep(1)
+
+            #Get percentage of streams that are HD
+            getHighDefinitionStreams(driver, mouse, mouse_cords)
     
     time.sleep(1)
     
     driver.quit()
 
+#Get all of the button elements that give provider information
+def getProviderButtons(driver):
+    main_storage = [
+        [],
+        [],
+        []
+    ]
 
+    is_more_buttons = True
+    xpath_filler = ['hd row', 'sd row', 'ld row no-bottom']
+    button_num, row_id = 1, 0
+    while is_more_buttons:
+        try:
+            xpath_string = "//div[@class='{}']/div[3]/div[1]/div[{}]".format(xpath_filler[row_id], button_num)
+            element = WebDriverWait(driver, 3).until(
+                EC.presence_of_element_located((By.XPATH, xpath_string))
+            )
+            
+            button_num += 1
+            main_storage[row_id].append(element)
+        except:
+            button_num = 1
+            row_id += 1
+            if row_id > 2:
+                is_more_buttons = False
+
+    return main_storage
+            
+    
 #Get the % of streams that are HD for each hour
-def getHighDefinitionStreams(mouse, graph, data_div, mouse_cords):
-    #Find the width of the svg element
-    distance_to_move = (int(graph.get_attribute('width')) // 2) - 5
+def getHighDefinitionStreams(driver, mouse, mouse_cords):
+    #Pull elements for getting streaming data
+    try:
+        graph_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.TAG_NAME, 'svg'))
+        )
+        data_storage_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@id ='chart']/div[1]/div[3]"))
+        )
+    except:
+        print("Error getting data elements. Aborting current provider.")
+        return False
 
-    #Move the mouse to the left side of the graph element
-    mouse.move_to_element_with_offset(graph, distance_to_move * -1, 0)
+    #Find the width of the svg element
+    distance_to_move = (int(graph_element.get_attribute('width')) // 2) - 5
+
+    #Move the mouse to the left side of the graph_element element
+    mouse.move_to_element_with_offset(graph_element, distance_to_move * -1, 0)
     mouse.perform()
     
     time.sleep(1)
@@ -73,7 +150,7 @@ def getHighDefinitionStreams(mouse, graph, data_div, mouse_cords):
         mouse.move_by_offset(movement, 0)
         mouse.perform()
         time.sleep(1)
-        gotData = processToolTipText(data_div.text)
+        gotData = processToolTipText(data_storage_element.text)
         num_trys = 1
         while not gotData:
             if num_trys >= 3:
@@ -83,7 +160,7 @@ def getHighDefinitionStreams(mouse, graph, data_div, mouse_cords):
             mouse.perform()
             upOrDown *= -1 
             time.sleep(0.1)
-            gotData = processToolTipText(data_div.text)
+            gotData = processToolTipText(data_storage_element.text)
             num_trys += 1
 
 #Process Individual Time Text
