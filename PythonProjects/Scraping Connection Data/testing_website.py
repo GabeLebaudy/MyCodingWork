@@ -7,7 +7,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
+from PIL import Image
 import time
+import sys
 import os
 
 #Helper Methods
@@ -45,14 +47,54 @@ def testToggleButton(url):
 
     # time.sleep(2)
 
-    picture_storage = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'test_picture.png')
-    if os.path.exists(picture_storage):
-        os.remove(picture_storage)
+    try:
+        vol_chart_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[1]"))
+        )
+        per_chart_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[2]"))
+        )
+    except:
+        print("Toggle buttons unavailable. Pictures unable to be captured.")
+        sys.exit()
+       
+    vol_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'Volume_Chart.png')
+    per_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'Percentage_Chart.png')
     
-    driver.save_screenshot(picture_storage)
+    if os.path.exists(vol_chart):
+        os.remove(vol_chart)
     
+    if os.path.exists(per_chart):
+        os.remove(vol_chart)
+
+    driver.save_screenshot(vol_chart)
+
+    mouse.move_to_element(per_chart_button)
+    mouse.click()
+    mouse.perform()
+
+    time.sleep(0.5)
+
+    driver.save_screenshot(per_chart)
+
+    mouse.move_to_element(vol_chart_button)
+    mouse.click()
+    mouse.perform()
+
+    time.sleep(0.25)
+
     driver.quit()
+
+#Test the image crop with pillow
+def testCropImage():
+    image_path = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'AccessMedia3(HD)_Percentage_Chart.png')
+    test_image = Image.open(image_path)
+    
+    test_image = test_image.crop((816, 342, 816 + 465, 342 + 185))
+    test_image.show()
+    test_image.save(image_path)
 
 #Main Method
 if __name__ == "__main__":
-    testToggleButton("https://www.google.com/get/videoqualityreport/")
+    #testToggleButton("https://www.google.com/get/videoqualityreport/")
+    testCropImage()

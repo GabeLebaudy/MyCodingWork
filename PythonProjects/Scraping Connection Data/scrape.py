@@ -9,6 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
+from PIL import Image
 import time
 import sys
 import os
@@ -67,11 +68,27 @@ def getInternetData(url):
     except:
         print("All providers are shown. No need to expand lists.")
 
-
+    #Get buttons to switch charts
+    try:
+        vol_chart_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[1]"))
+        )
+        per_chart_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[2]"))
+        )
+    except:
+        print("Toggle buttons unavailable. Pictures unable to be captured.")
+        return
+    
     #Pull all buttons from HD, SD, and LD rows
     stream_definition_text = ['HD', 'SD', 'LD']
     provider_buttons = getProviderButtons(driver)
 
+    #Prep Data File
+    data_output_path = os.path.join(os.path.dirname(__file__), 'DataOutput.csv')
+    with open(data_output_path, 'w') as f:
+        f.write("Provider,6 AM,7 AM,8 AM,9 AM,10 AM,11 AM,12 PM,1 PM,2 PM,3 PM,4 PM,5 PM,6 PM,7 PM,8 PM,9 PM,10 PM,11 PM,12 AM,1 AM,2 AM,3 AM,4 AM,5 AM\n")
+    
     #Loop through all providers, Pulling all data
     for i in range(len(provider_buttons)):
         for element in provider_buttons[i]:
@@ -79,15 +96,25 @@ def getInternetData(url):
             if not element.text:
                 continue
 
-            print("{} - Definition: {}".format(element.text, stream_definition_text[i]))
             mouse.move_to_element(element)
             mouse.click()
             mouse.perform()
             time.sleep(1)
 
+            filename_string = "{}({})".format(element.text, stream_definition_text[i])
             #Get percentage of streams that are HD
-            getHighDefinitionStreams(driver, mouse, mouse_cords)
-    
+            graph_location, graph_size, full_data = getHighDefinitionStreams(driver, mouse, mouse_cords)
+            
+            with open(data_output_path, 'a') as f:
+                f.write("{},".format(filename_string))
+                for j in range(len(full_data) - 1):
+                    f.write("{},".format(full_data[j][0]))
+                
+                f.write("{}\n".format(full_data[-1][0]))
+            
+            #Get a picture of both graphs for each provider
+            getGraphImages(mouse, driver, vol_chart_button, per_chart_button, filename_string, graph_location, graph_size)
+        
     time.sleep(1)
     
     driver.quit()
@@ -120,7 +147,6 @@ def getProviderButtons(driver):
 
     return main_storage
             
-    
 #Get the % of streams that are HD for each hour
 def getHighDefinitionStreams(driver, mouse, mouse_cords):
     #Pull elements for getting streaming data
@@ -135,6 +161,7 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
         print("Error getting data elements. Aborting current provider.")
         return False
 
+    
     #Find the width of the svg element
     distance_to_move = (int(graph_element.get_attribute('width')) // 2) - 5
 
@@ -142,15 +169,16 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
     mouse.move_to_element_with_offset(graph_element, distance_to_move * -1, 0)
     mouse.perform()
     
-    time.sleep(1)
+    time.sleep(0.5)
     
     #Get the data
     gotData = True
     upOrDown = 1
+    all_entries = []
     for movement in mouse_cords:
         mouse.move_by_offset(movement, 0)
         mouse.perform()
-        time.sleep(1)
+        time.sleep(0.5)
         gotData = processToolTipText(data_storage_element.text)
         num_trys = 1
         while not gotData:
@@ -164,6 +192,10 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
             gotData = processToolTipText(data_storage_element.text)
             num_trys += 1
 
+        all_entries.append(gotData)
+    
+    return graph_element.location, graph_element.size, all_entries
+
 #Process Individual Time Text
 def processToolTipText(text):
     if not text:
@@ -175,9 +207,7 @@ def processToolTipText(text):
     time_splits = content[1].split(' ')
     time_frame = "{} {}".format(time_splits[0], time_splits[1])
     
-    print(hd_percentage, time_frame) 
-    
-    return True
+    return (hd_percentage, time_frame)
 
 #Process which rectangles are the correct ones for mining the data
 def processRects(rects):
@@ -207,7 +237,49 @@ def findRightMovements(coords):
         temp.append(coords[i] - coords[i - 1])
         
     return temp
+
+#Get the pictures of both graphs to later process for additional data
+def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc, graph_size):
+    #Generate filepaths
+    vol_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), "{}_Volume_Chart.png".format(fileprefix))
+    per_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), "{}_Percentage_Chart.png".format(fileprefix))
     
+    #Remove if existing(Temporary)
+    if os.path.exists(vol_chart):
+        os.remove(vol_chart)
+    
+    if os.path.exists(per_chart):
+        os.remove(per_chart)
+
+    #Switch to percentage chart and save photo
+    mouse.move_to_element(per_button)
+    mouse.click()
+    mouse.perform()
+
+    time.sleep(0.5)
+
+    driver.save_screenshot(per_chart)
+
+    #Reset to volume chart
+    mouse.move_to_element(vol_button)
+    mouse.click()
+    mouse.perform()
+
+    #Get picture of the volume chart
+    driver.save_screenshot(vol_chart)
+
+    #Crop Images
+    left, top = graph_loc['x'], graph_loc['y']
+    right, bottom = left + graph_size['width'], top + graph_size['height']
+
+    vol_image = Image.open(vol_chart)
+    vol_image = vol_image.crop((left, top, right, bottom))
+    vol_image.save(vol_chart)
+
+    per_image = Image.open(per_chart)
+    per_image = per_image.crop((left, top, right, bottom))
+    per_image.save(per_chart)
+
 #Main Method
 if __name__ == "__main__":
     getInternetData("https://www.google.com/get/videoqualityreport/")
