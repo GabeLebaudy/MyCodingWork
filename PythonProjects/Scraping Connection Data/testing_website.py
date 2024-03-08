@@ -3,6 +3,7 @@
 #Imports
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
@@ -47,42 +48,56 @@ def testToggleButton(url):
 
     # time.sleep(2)
 
-    try:
-        vol_chart_button = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[1]"))
-        )
-        per_chart_button = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[2]"))
-        )
-    except:
-        print("Toggle buttons unavailable. Pictures unable to be captured.")
-        sys.exit()
+    # try:
+    #     vol_chart_button = WebDriverWait(driver, 5).until(
+    #         EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[1]"))
+    #     )
+    #     per_chart_button = WebDriverWait(driver, 5).until(
+    #         EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[2]"))
+    #     )
+    # except:
+    #     print("Toggle buttons unavailable. Pictures unable to be captured.")
+    #     sys.exit()
        
-    vol_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'Volume_Chart.png')
-    per_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'Percentage_Chart.png')
+    # vol_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'Volume_Chart.png')
+    # per_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), 'Percentage_Chart.png')
     
-    if os.path.exists(vol_chart):
-        os.remove(vol_chart)
+    # if os.path.exists(vol_chart):
+    #     os.remove(vol_chart)
     
-    if os.path.exists(per_chart):
-        os.remove(vol_chart)
+    # if os.path.exists(per_chart):
+    #     os.remove(vol_chart)
 
-    driver.save_screenshot(vol_chart)
+    # driver.save_screenshot(vol_chart)
 
-    mouse.move_to_element(per_chart_button)
+    # mouse.move_to_element(per_chart_button)
+    # mouse.click()
+    # mouse.perform()
+
+    # time.sleep(0.5)
+
+    # driver.save_screenshot(per_chart)
+
+    # mouse.move_to_element(vol_chart_button)
+    # mouse.click()
+    # mouse.perform()
+
+    # time.sleep(0.25)
+    
+    try:
+        change_location_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='section_title']/span[1]"))
+        )
+        print(change_location_element.text)
+    except:
+        print("Element Not Found.")
+    
+    mouse.move_to_element(change_location_element)
     mouse.click()
     mouse.perform()
-
-    time.sleep(0.5)
-
-    driver.save_screenshot(per_chart)
-
-    mouse.move_to_element(vol_chart_button)
-    mouse.click()
-    mouse.perform()
-
-    time.sleep(0.25)
-
+    
+    time.sleep(1)
+    
     driver.quit()
 
 #Test the image crop with pillow
@@ -96,5 +111,5 @@ def testCropImage():
 
 #Main Method
 if __name__ == "__main__":
-    #testToggleButton("https://www.google.com/get/videoqualityreport/")
-    testCropImage()
+    testToggleButton("https://www.google.com/get/videoqualityreport/")
+    #testCropImage()
