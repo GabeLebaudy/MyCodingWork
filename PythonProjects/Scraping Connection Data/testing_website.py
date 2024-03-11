@@ -88,15 +88,52 @@ def testToggleButton(url):
         change_location_element = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//div[@class='section_title']/span[1]"))
         )
-        print(change_location_element.text)
     except:
         print("Element Not Found.")
+        driver.quit()
+        sys.exit()
     
     mouse.move_to_element(change_location_element)
     mouse.click()
     mouse.perform()
     
     time.sleep(1)
+
+    try:
+        location_input_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='modal-dialog-content']/div[1]/input[1]"))
+        )
+
+        ok_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='modal-dialog-buttons']/button[1]"))
+        )
+    except Exception as e:
+        print(e)
+        print("Input element not found")
+        driver.quit()
+        sys.exit()
+
+    location_input_element.send_keys("19106")
+    
+    time.sleep(2)
+
+    mouse.move_to_element(ok_button)
+    mouse.double_click()
+    mouse.perform()
+
+    time.sleep(2)
+
+    try:
+        compare_providers_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'tab-label'))
+        )
+    except:
+        print("Unable to locate compare provider button. Abandoning execution.")
+        driver.quit()
+    
+    mouse.move_to_element(compare_providers_button)
+    mouse.click()
+    mouse.perform()
     
     driver.quit()
 

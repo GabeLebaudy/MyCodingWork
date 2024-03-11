@@ -15,12 +15,12 @@ import sys
 import os
 
 #Get the website driver object, and the object for controlling the mouse positioning
-def prepWebsite(url):
+def prepWebsite():
     options = webdriver.ChromeOptions()
     options.add_experimental_option("detach", True)
 
     driver = webdriver.Chrome(options=options)
-    driver.get(url)
+    driver.get("https://www.google.com/get/videoqualityreport/")
     driver.maximize_window()
 
     #Create Action Chains object for moving the mouse to specific spots on the screen
@@ -29,11 +29,14 @@ def prepWebsite(url):
     return driver, mouse_controller
 
 #Method for pulling data given the URL
-def getInternetData(url):
-    driver, mouse = prepWebsite(url)
+def getInternetData(zip = None):
+    driver, mouse = prepWebsite()
 
     time.sleep(1)
     
+    if zip:
+        selectLocation(driver, mouse, zip)
+
     #Get the distance between rectangle elements that when hovered over display the information about HD streams
     all_rects = driver.find_elements(By.TAG_NAME, 'rect')
     mouse_cords = processRects(all_rects)
@@ -44,12 +47,13 @@ def getInternetData(url):
     time.sleep(1)
 
     #Find the compare providers button, and click on it
-    compare_providers_button = driver.find_element(By.CLASS_NAME, 'tab-label')
-    mouse.move_to_element(compare_providers_button)
-    mouse.click()
-    mouse.perform()
+    if not zip:
+        compare_providers_button = driver.find_element(By.CLASS_NAME, 'tab-label')
+        mouse.move_to_element(compare_providers_button)
+        mouse.click()
+        mouse.perform()
     
-    time.sleep(2)
+    time.sleep(1)
 
     #Find the show more button if available for each row
     try:
@@ -119,6 +123,47 @@ def getInternetData(url):
     
     driver.quit()
 
+#Select location by zip code or city
+def selectLocation(driver, mouse, zip):
+    try:
+        change_location_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='section_title']/span[1]"))
+        )
+    except:
+        print("Element Not Found.")
+        driver.quit()
+        sys.exit()
+    
+    mouse.move_to_element(change_location_element)
+    mouse.click()
+    mouse.perform()
+    
+    time.sleep(1)
+
+    try:
+        location_input_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='modal-dialog-content']/div[1]/input[1]"))
+        )
+
+        ok_button = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='modal-dialog-buttons']/button[1]"))
+        )
+    except Exception as e:
+        print(e)
+        print("Input element not found")
+        driver.quit()
+        sys.exit()
+
+    location_input_element.send_keys(zip)
+    
+    time.sleep(2)
+
+    mouse.move_to_element(ok_button)
+    mouse.double_click()
+    mouse.perform()
+
+    time.sleep(1)
+
 #Get all of the button elements that give provider information
 def getProviderButtons(driver):
     main_storage = [
@@ -185,7 +230,7 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
             if num_trys >= 3:
                 break
             
-            mouse.move_by_offset(0, 10 * upOrDown)
+            mouse.move_by_offset(0, 25 * upOrDown)
             mouse.perform()
             upOrDown *= -1 
             time.sleep(0.1)
@@ -282,7 +327,7 @@ def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc,
 
 #Main Method
 if __name__ == "__main__":
-    getInternetData("https://www.google.com/get/videoqualityreport/")
+    getInternetData("Pittsburgh, PA")
     
     
     
