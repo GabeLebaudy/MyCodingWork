@@ -369,9 +369,7 @@ if __name__ == "__main__":
     with open(locations_filepath, 'r') as f:
         locations = f.readlines()
     
-    # for location in locations:
-    #     getInternetData(location.rstrip())
-
-    getInternetData("Chicago, IL")
+    for location in locations:
+        getInternetData(location.rstrip())
 
     
