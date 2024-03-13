@@ -13,6 +13,7 @@ from PIL import Image
 import time
 import sys
 import os
+import re
 
 #Get the website driver object, and the object for controlling the mouse positioning
 def prepWebsite():
@@ -47,7 +48,16 @@ def getInternetData(zip = None):
     time.sleep(1)
 
     #Find the compare providers button, and click on it
-    if not zip:
+    try:
+        compare_button_info_div = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='results-wrapper']/div[2]"))
+        )
+        class_string_contents = compare_button_info_div.get_attribute('class').split()
+    except:
+        driver.quit()
+        sys.exit()
+    
+    if len(class_string_contents) < 2:
         compare_providers_button = driver.find_element(By.CLASS_NAME, 'tab-label')
         mouse.move_to_element(compare_providers_button)
         mouse.click()
@@ -89,9 +99,9 @@ def getInternetData(zip = None):
     provider_buttons = getProviderButtons(driver)
 
     #Prep Data File
-    data_output_path = os.path.join(os.path.dirname(__file__), 'DataOutput.csv')
+    data_output_path = os.path.join(os.path.dirname(__file__), "{}_DataOutput.csv".format(zip))
     with open(data_output_path, 'w') as f:
-        f.write("Provider,6 AM,7 AM,8 AM,9 AM,10 AM,11 AM,12 PM,1 PM,2 PM,3 PM,4 PM,5 PM,6 PM,7 PM,8 PM,9 PM,10 PM,11 PM,12 AM,1 AM,2 AM,3 AM,4 AM,5 AM\n")
+        f.write("Provider,Definition,6 AM,7 AM,8 AM,9 AM,10 AM,11 AM,12 PM,1 PM,2 PM,3 PM,4 PM,5 PM,6 PM,7 PM,8 PM,9 PM,10 PM,11 PM,12 AM,1 AM,2 AM,3 AM,4 AM,5 AM\n")
     
     #Loop through all providers, Pulling all data
     for i in range(len(provider_buttons)):
@@ -105,12 +115,12 @@ def getInternetData(zip = None):
             mouse.perform()
             time.sleep(1)
 
-            filename_string = "{}({})".format(element.text, stream_definition_text[i])
+            filename_string = "{}_{}({})".format(element.text, stream_definition_text[i], zip)
             #Get percentage of streams that are HD
             graph_location, graph_size, full_data = getHighDefinitionStreams(driver, mouse, mouse_cords)
             
             with open(data_output_path, 'a') as f:
-                f.write("{},".format(filename_string))
+                f.write("{},{},".format(element.text, stream_definition_text[i]))
                 for j in range(len(full_data) - 1):
                     f.write("{},".format(full_data[j][0]))
                 
@@ -156,10 +166,31 @@ def selectLocation(driver, mouse, zip):
 
     location_input_element.send_keys(zip)
     
-    time.sleep(2)
+    #Find table elements that contain names of available locations from the search
+    correct_table_entry = None
+    try:
+        table_entrys = WebDriverWait(driver, 5).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, 'autocomplete-row'))
+        )
+        for entry in table_entrys:
+            if entry.text == zip:
+                correct_table_entry = entry
+
+    except:
+        print("Location Not Found.")
+        driver.quit()
+        sys.exit()
+
+    time.sleep(1)
+
+    mouse.move_to_element(correct_table_entry)
+    mouse.click()
+    mouse.perform()
+
+    time.sleep(0.25)
 
     mouse.move_to_element(ok_button)
-    mouse.double_click()
+    mouse.click()
     mouse.perform()
 
     time.sleep(1)
@@ -173,11 +204,10 @@ def getProviderButtons(driver):
     ]
 
     is_more_buttons = True
-    xpath_filler = ['hd row', 'sd row', 'ld row no-bottom']
     button_num, row_id = 1, 0
     while is_more_buttons:
         try:
-            xpath_string = "//div[@class='{}']/div[3]/div[1]/div[{}]".format(xpath_filler[row_id], button_num)
+            xpath_string = "//div[@class='rating-rows revealed']/div[{}]/div[3]/div[1]/div[{}]".format(row_id + 3, button_num)
             element = WebDriverWait(driver, 3).until(
                 EC.presence_of_element_located((By.XPATH, xpath_string))
             )
@@ -236,6 +266,14 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
             time.sleep(0.1)
             gotData = processToolTipText(data_storage_element.text)
             num_trys += 1
+
+        if not gotData:
+            all_entries.append(("NULL", "NULL"))
+            continue
+
+        if not re.search("[0-9+][%+]", gotData[0]):
+            all_entries.append(("NULL", "NULL"))
+            continue
 
         all_entries.append(gotData)
     
@@ -327,8 +365,13 @@ def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc,
 
 #Main Method
 if __name__ == "__main__":
-    getInternetData("Pittsburgh, PA")
+    locations_filepath = os.path.join(os.path.dirname(__file__), 'locations.txt')
+    with open(locations_filepath, 'r') as f:
+        locations = f.readlines()
     
-    
-    
+    # for location in locations:
+    #     getInternetData(location.rstrip())
+
+    getInternetData("Chicago, IL")
+
     

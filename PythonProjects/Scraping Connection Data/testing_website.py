@@ -12,6 +12,7 @@ from PIL import Image
 import time
 import sys
 import os
+import re
 
 #Helper Methods
 def prepWebsite(url):
@@ -146,7 +147,17 @@ def testCropImage():
     test_image.show()
     test_image.save(image_path)
 
+#Test the regular expression to ensure a digit is within the text pulled from the tooltip
+def testRegularExpression(text):
+    return re.search("[0-9+][%+]", text)
+
 #Main Method
 if __name__ == "__main__":
-    testToggleButton("https://www.google.com/get/videoqualityreport/")
-    #testCropImage()
+    # testToggleButton("https://www.google.com/get/videoqualityreport/")
+    #testCropIma
+    print(testRegularExpression("89% 12PM"))
+    print(testRegularExpression("0%"))
+    print(testRegularExpression("100"))
+    print(testRegularExpression("--"))
+    print(testRegularExpression("seventy two"))
+    
