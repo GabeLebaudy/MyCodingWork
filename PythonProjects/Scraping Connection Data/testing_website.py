@@ -154,7 +154,7 @@ def testRegularExpression(text):
 
 #Testing the Subprocess module for sending commands to the terminal for connecting to NordVPN proxy servers
 def testTerminalCommands():
-    command = "nordvpn -c -g new york"
+    command = ["C:\\Program Files\\NordVPN\\nordvpn", "-c", "-g", "manassas"]
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     output, error = process.communicate()
@@ -165,10 +165,12 @@ def testTerminalCommands():
 if __name__ == "__main__":
     # testToggleButton("https://www.google.com/get/videoqualityreport/")
     #testCropIma
-    print(testRegularExpression("89% 12PM"))
-    print(testRegularExpression("0%"))
-    print(testRegularExpression("100"))
-    print(testRegularExpression("--"))
-    print(testRegularExpression("seventy two"))
+    # print(testRegularExpression("89% 12PM"))
+    # print(testRegularExpression("0%"))
+    # print(testRegularExpression("100"))
+    # print(testRegularExpression("--"))
+    # print(testRegularExpression("seventy two"))
+    
+    testTerminalCommands()
     
     
