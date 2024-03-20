@@ -30,6 +30,20 @@ if row:
 else:
     print("SQL Fetch Failed")
 
+player_name = "Christiano Ronaldo"
+
+verification_query = "select player_name from testing_primary_keys where player_name = '{}';".format(player_name)
+cursor.execute(verification_query)
+row = cursor.fetchall()
+
+if row:
+    print("Player name already in use")
+else:
+    input_query = "insert into testing_primary_keys (player_name) values ('{}');".format(player_name)
+    cursor.execute(input_query)
+    sql_conn.commit()
+    print("Inserted {} into database".format(player_name))
+
 cursor.close()
 sql_conn.close()
 

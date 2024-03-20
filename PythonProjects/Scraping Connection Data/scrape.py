@@ -9,6 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
+from SQL_Connection import ServerConnection
 from PIL import Image
 import time
 import sys
@@ -159,7 +160,6 @@ def selectLocation(driver, mouse, zip):
             EC.presence_of_element_located((By.XPATH, "//div[@class='modal-dialog-buttons']/button[1]"))
         )
     except Exception as e:
-        print(e)
         print("Input element not found")
         driver.quit()
         sys.exit()
@@ -286,6 +286,8 @@ def processToolTipText(text):
     
     content = text.split('\n')
     hd_percentage = content[0].split(' ')[0]
+    hd_percentage = hd_percentage[:-1]
+    print(hd_percentage)
     
     time_splits = content[1].split(' ')
     time_frame = "{} {}".format(time_splits[0], time_splits[1])
@@ -369,7 +371,15 @@ if __name__ == "__main__":
     with open(locations_filepath, 'r') as f:
         locations = f.readlines()
     
-    for location in locations:
-        getInternetData(location.rstrip())
+    SQL_Cxn = ServerConnection()
+    area_List = SQL_Cxn.getAreaData()
+
+    areas_text = []
+    for area in area_List:
+        text = area[0] + ', ' + area[1]
+        areas_text.append(text)
+    
+    for city_area in areas_text:
+        getInternetData(city_area)
 
     
