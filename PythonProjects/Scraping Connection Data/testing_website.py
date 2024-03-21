@@ -9,11 +9,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
 from PIL import Image
-import time
-import sys
-import os
-import re
-import subprocess
+import time, sys, os, re, subprocess, requests, sched, socket
+
 
 #Helper Methods
 def prepWebsite(url):
@@ -154,23 +151,54 @@ def testRegularExpression(text):
 
 #Testing the Subprocess module for sending commands to the terminal for connecting to NordVPN proxy servers
 def testTerminalCommands():
-    command = ["C:\\Program Files\\NordVPN\\nordvpn", "-c", "-g", "manassas"]
+    command = ["C:\\Program Files\\NordVPN\\nordvpn", "-c", "-g", "new york"]
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     output, error = process.communicate()
     print(output.decode("ascii"))
     print(error.decode("ascii"))
 
+#Testing current IP address
+def testIP_Grab(current_try):
+    current_try += 1
+    if current_try >= 12:
+        pass
+
+    host_name = socket.gethostname()
+    ip_addr = socket.gethostbyname(host_name)
+    print(ip_addr)
+
+    url = 'https://httpbin.org/ip'
+    response = requests.get(url)
+    ip = response.json()['origin']
+    print(ip)
+
+    return current_try
+
+def do_something(scheduler): 
+    # schedule the next call first
+    scheduler.enter(1, 1, do_something, (scheduler,))
+    print("Doing stuff...")
+    # then do your stuff
+
 #Main Method
 if __name__ == "__main__":
     # testToggleButton("https://www.google.com/get/videoqualityreport/")
-    #testCropIma
+    #testCropImage
     # print(testRegularExpression("89% 12PM"))
     # print(testRegularExpression("0%"))
     # print(testRegularExpression("100"))
     # print(testRegularExpression("--"))
     # print(testRegularExpression("seventy two"))
     
-    testTerminalCommands()
+    # testTerminalCommands()
+
+    my_scheduler = sched.scheduler(time.time, time.sleep)
+    # my_scheduler.enter(0, 5, do_something, (my_scheduler,)) #5 is the number of seconds the program waits before calling the program
+    
+    counter = 0
+    counter = testIP_Grab(counter)
+
+    my_scheduler.run()
     
     
