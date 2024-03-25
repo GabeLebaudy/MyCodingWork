@@ -12,7 +12,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from SQL_Connection import ServerConnection
 from vpn import DynamicIP
 from PIL import Image
-import time, sys, os, re, random, logging
+from datetime import datetime
+import time, sys, os, re, random
 
 #Constants
 from logger import LOG
@@ -61,6 +62,7 @@ def main_data_method():
     random.shuffle(cities)
 
     #Loop through all areas to scan until there are none left
+    provider_bookmark = None #Ensure the same providers aren't scanned twice in case of mid-scan error
     while states or cities:
         driver, mouse = prepWebsite()
 
@@ -89,15 +91,27 @@ def main_data_method():
             #TODO: 
             # For each run, start a timer thread to ensure that data is being sent back. For each step of the process, reset the timer to ensure nothing went wrong during the process.
             LOG.info('Starting scan for {}...'.format(current_area))
-            data_retrieved = getInternetData(driver, mouse, current_area, sql_cxn)
+            #TODO: Return the current provider of what the scan was on. In case of failure. Don't want to add multiple entries if an area re-scans.
+            data_retrieved, provider_bookmark = getInternetData(driver, mouse, current_area, sql_cxn, provider_bookmark)
             if not data_retrieved:
                 if not area_tried:
                     area_tried = True
                     break
                 else:
-                    #TODO: Pass over the current iteration, grab a screenshot, then restart the IP.
+                    #Pass over the current area, grab a screenshot, then restart the IP.
+                    date = datetime.today().strftime('%Y-%m-%d')
+
+                    error_filename = os.path.join(os.path.join(os.path.dirname(__file__), 'Area Errors'), "{}_Error_{}".format(current_area, date))
+                    driver.save_screenshot(error_filename)
+                    
                     area_tried = False
+                    if states:
+                        states.pop(0)
+                    else:
+                        cities.pop(0)
+                        
                     break
+                    
             else: #Successful run
                 if states:
                     states.pop(0)
@@ -105,6 +119,7 @@ def main_data_method():
                     cities.pop(0)
                 
                 area_tried = False
+                provider_bookmark = None
 
         driver.quit()
 
@@ -116,7 +131,7 @@ def main_data_method():
                 
 
 #Method for pulling data given the URL
-def getInternetData(driver, mouse, area, sql_cxn):
+def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
     #TODO: Mess around with the time.sleep functions, see how much time can be saved by trying to lower them as much as possible
     time.sleep(1)
 
@@ -124,7 +139,7 @@ def getInternetData(driver, mouse, area, sql_cxn):
     LOG.info('Navigating to selected area...')
     did_navigate = selectLocation(driver, mouse, area)
     if not did_navigate:
-        return False
+        return False, provider_bookmark
 
     #Get the distance between rectangle elements that when hovered over display the information about HD streams
     try:
@@ -137,7 +152,7 @@ def getInternetData(driver, mouse, area, sql_cxn):
         time.sleep(1)
     except:
         LOG.warning("There was an issue getting the graph rectangles.")
-        return False
+        return False, provider_bookmark
     
     #Find the compare providers button, and click on it
     try:
@@ -147,7 +162,7 @@ def getInternetData(driver, mouse, area, sql_cxn):
         class_string_contents = compare_button_info_div.get_attribute('class').split()
     except:
         LOG.warning("There was an error getting the compare providers button.")
-        return False
+        return False, provider_bookmark
     
     #This is to ensure the compare providers tab is not open before clicking on the button to expand it
     try:
@@ -158,7 +173,7 @@ def getInternetData(driver, mouse, area, sql_cxn):
             mouse.perform()
     except:
         LOG.warning("There was an error expanding the list of providers.")
-        return False
+        return False, provider_bookmark
         
     time.sleep(1)
 
@@ -194,7 +209,7 @@ def getInternetData(driver, mouse, area, sql_cxn):
     
     #Pull all buttons from HD, SD, and LD rows
     stream_definition_text = ['HD', 'SD', 'LD']
-    provider_buttons = getProviderButtons(driver)
+    provider_buttons = getProviderButtons(driver, provider_bookmark)
     
     error_counter = 0
     #Loop through all providers, Pulling all data
@@ -216,7 +231,16 @@ def getInternetData(driver, mouse, area, sql_cxn):
             
             #Get percentage of streams that are HD
             graph_location, graph_size, full_data = getHighDefinitionStreams(driver, mouse, mouse_cords)
-                    
+            if not graph_location:
+                error_counter += 1
+                if error_counter > 3:
+                    #There is an issue with the current area, return False to try again.
+                    LOG.warning("Too many providers for the area {} have failed. Aborting area.".format(area))
+                    return False, element.text
+                
+                LOG.warning("There was an error getting data for the provider: {}.".format(element.text))
+                continue
+            
             #Get a picture of both graphs for each provider
             vol_chart_path, per_chart_path = None, None
             filename_string = "{}({})".format(element.text, area)
@@ -244,7 +268,7 @@ def getInternetData(driver, mouse, area, sql_cxn):
             
     time.sleep(1)
     
-    return True
+    return True, provider_bookmark
 
 #Select location by zip code or city
 def selectLocation(driver, mouse, area):
@@ -329,25 +353,36 @@ def selectLocation(driver, mouse, area):
     return False
 
 #Get all of the button elements that give provider information
-def getProviderButtons(driver):
+def getProviderButtons(driver, provider_bookmark):
     main_storage = [
         [],
         [],
         []
     ]
 
+    #In case the area failed, don't add buttons for areas that already failed.
+    add_provider = False
+    if not provider_bookmark:
+        add_provider = True
+    
     is_more_buttons = True
     button_num, row_id = 1, 0
     #TODO: Mess around with the wait time because it seems like this function takes a good bit of time.
     while is_more_buttons:
         try:
             xpath_string = "//div[@class='rating-rows revealed']/div[{}]/div[3]/div[1]/div[{}]".format(row_id + 3, button_num)
-            element = WebDriverWait(driver, 3).until(
+            element = WebDriverWait(driver, 1).until(
                 EC.presence_of_element_located((By.XPATH, xpath_string))
             )
             
             button_num += 1
-            main_storage[row_id].append(element)
+            if not add_provider:
+                if element.text.lower() == provider_bookmark.lower():
+                    add_provider = True
+                    main_storage[row_id].append(element) 
+            else:
+                main_storage[row_id].append(element)
+                
         except:
             button_num = 1
             row_id += 1
@@ -367,17 +402,20 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
             EC.presence_of_element_located((By.XPATH, "//div[@id ='chart']/div[1]/div[3]"))
         )
     except:
-        #TODO: Return back to main function if theres an error here
-        print("Error getting data elements. Aborting current provider.")
-        return False
+        LOG.warning("There was an error getting the graph data elements. Aborting for current provider.")
+        return False, False, False
 
     #TODO: Work on Time.sleeps to lower time as much as possible    
     #Find the width of the svg element
     distance_to_move = (int(graph_element.get_attribute('width')) // 2) - 5
 
     #Move the mouse to the left side of the graph_element element
-    mouse.move_to_element_with_offset(graph_element, distance_to_move * -1, 0)
-    mouse.perform()
+    try:
+        mouse.move_to_element_with_offset(graph_element, distance_to_move * -1, 0)
+        mouse.perform()
+    except:
+        LOG.warning("There was an error attempting to move the cursor to the graph. Aborting for current provider.")
+        return False, False, False
     
     time.sleep(0.5)
     
@@ -459,7 +497,6 @@ def findRightMovements(coords):
 
 #Get the pictures of both graphs to later process for additional data
 def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc, graph_size):
-    #TODO: Add try blocks for error handling. Return the info back to the main method if there is a problem. 
     #Generate filepaths
     vol_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), "{}_Volume_Chart.png".format(fileprefix))
     per_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), "{}_Percentage_Chart.png".format(fileprefix))
@@ -472,19 +509,27 @@ def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc,
         os.remove(per_chart)
 
     #Switch to percentage chart and save photo
-    mouse.move_to_element(per_button)
-    mouse.click()
-    mouse.perform()
-
+    try:
+        mouse.move_to_element(per_button)
+        mouse.click()
+        mouse.perform()
+    except:
+        LOG.warning("There was an error moving to the graph toggle button. Pictures won't be saved.")
+        return None, None
+    
     time.sleep(0.5)
 
     driver.save_screenshot(per_chart)
 
     #Reset to volume chart
-    mouse.move_to_element(vol_button)
-    mouse.click()
-    mouse.perform()
-
+    try:
+        mouse.move_to_element(vol_button)
+        mouse.click()
+        mouse.perform()
+    except:
+        LOG.warning("There was an error re-selecting the volume chart. Aborting for area.")
+        return None, None
+    
     #Get picture of the volume chart
     driver.save_screenshot(vol_chart)
 
