@@ -79,7 +79,7 @@ class ServerConnection():
             full_query += "(Select * from Openrowset (BULK '{}', Single_blob) as T), (Select * from Openrowset (BULK '{}', Single_blob) as T), '{}')".format(vol_chart_path, per_chart_path, provider_name)
         else:
             full_query += "'{}')".format(provider_name)
-
+                
         self.cursor.execute(full_query)
         self.sql_conn.commit()
         
