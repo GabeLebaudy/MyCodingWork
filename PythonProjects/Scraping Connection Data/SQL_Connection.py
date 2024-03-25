@@ -3,7 +3,7 @@
 #Imports
 import pypyodbc as odbc
 from datetime import datetime
-import random
+import random, os, sys
 
 SERVER_NAME = "LPD-17\SQLEXPRESS"
 DRIVER_NAME = 'SQL SERVER'
@@ -25,10 +25,17 @@ class ServerConnection():
 
     #Pull the data from the areas table to search for on the website
     def getAreaData(self):
+        #Query database for all cities, and the state code
         get_all_areas_query = "select * from Areas;"
         self.cursor.execute(get_all_areas_query)
         all_areas = self.cursor.fetchall()
-        return all_areas
+        
+        #Convert all tuples into a single string
+        website_strings = []
+        for area in all_areas:
+            website_strings.append("{}, {}".format(area[0], area[1]))
+        
+        return website_strings
 
     #Check the providers table if the provider is present. If not, add it to the table.
     def verifyProvider(self, provider):
@@ -43,21 +50,39 @@ class ServerConnection():
 
     #Add an entry to the full data table.
     def addFullDataEntry(self, city, state, provider_name, definition, streaming_data, vol_chart_path, per_chart_path):
-        full_query = "insert into network_streaming_data(city, state, date_retrieved, youtube_assigned_definition,"
+        #Generate the insert statement for adding a row to the database
+        if city:
+            full_query = "insert into network_streaming_data(city, state, date_retrieved, youtube_assigned_definition,"
+        else:
+            full_query = "insert into network_streaming_data(state, date_retrieved, youtube_assigned_definition,"
+
         full_query += self.genColumns()
 
         date = datetime.today().strftime('%Y-%m-%d')
 
-        full_query += "volchart, per_chart, provider) values ('{}', '{}', '{}', '{}', ".format(city, state, date, definition)
+        if city:
+            if vol_chart_path and per_chart_path:
+                full_query += "vol_chart, per_chart, provider) values ('{}', '{}', '{}', '{}', ".format(city, state, date, definition)
+            else:
+                full_query += "provider) values ('{}', '{}', '{}', '{}', ".format(city, state, date, definition)
+        else:
+            if vol_chart_path and per_chart_path:
+                full_query += "vol_chart, per_chart, provider) values ('{}', '{}', '{}', ".format(state, date, definition)
+            else:
+                full_query += "provider) values ('{}', '{}', '{}', ".format(state, date, definition)
         
         for i in range(len(streaming_data)):
             full_query += "{}, ".format(streaming_data[i])
         
-        full_query += "?, ?, {})".format(provider_name)
-        
-        print(full_query)
-        
+        #Smooth handling in case images were unable to be captured. 
+        if vol_chart_path and per_chart_path:
+            full_query += "(Select * from Openrowset (BULK '{}', Single_blob) as T), (Select * from Openrowset (BULK '{}', Single_blob) as T), '{}')".format(vol_chart_path, per_chart_path, provider_name)
+        else:
+            full_query += "'{}')".format(provider_name)
 
+        self.cursor.execute(full_query)
+        self.sql_conn.commit()
+        
     #Generate the hd_stream_columns
     def genColumns(self):
         full_str, am_or_pm, counter = "", "AM", 5
@@ -84,11 +109,3 @@ class ServerConnection():
         self.cursor.close()
         self.sql_conn.close()
 
-
-if __name__ == "__main__":
-    sql_conn = ServerConnection()
-    data = []
-    for i in range(24):
-        data.append(90 + random.randint(1, 8))
-
-    sql_conn.addFullDataEntry("Philadelphia", "PA", "Xfinity", 'HD', data, None, None)

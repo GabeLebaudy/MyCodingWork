@@ -1,0 +1,2 @@
+#This file will be for starting a timer during each website scan. 
+#The timer will reset after each response from the data. If the timer runs out, the current area will be dealt with the same way an error is handled

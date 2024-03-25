@@ -10,11 +10,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
 from SQL_Connection import ServerConnection
+from vpn import DynamicIP
 from PIL import Image
-import time
-import sys
-import os
-import re
+import time, sys, os, re, random, logging
+
+#Constants
+from logger import LOG
 
 #Get the website driver object, and the object for controlling the mouse positioning
 def prepWebsite():
@@ -30,24 +31,114 @@ def prepWebsite():
     
     return driver, mouse_controller
 
-#Method for pulling data given the URL
-def getInternetData(zip = None):
-    driver, mouse = prepWebsite()
+#This is the function that should get called once every 7 days, or whatever time period chosen to select all the data
+def main_data_method():
+    #TODO: Send a call to the scheduler to call this function again in 7 days time
 
-    time.sleep(1)
+    #Initialize SQL Connection and the IP protection
+    LOG.info('Starting up SQL and IP Connections...')
+    sql_cxn = ServerConnection()
+    ip_ctrl = DynamicIP()
+
+    #Ensure VPN is working properly
+    isWorking = ip_ctrl.verifyMyIP()
+    if isWorking:
+        print("My IP: {}, Proxy IP: {}".format(ip_ctrl.getMyIP(), ip_ctrl.getProxyIP()))
+    else:
+        print("There was an error connecting to the VPN. Aborting Program.")
+        sys.exit()
+
+    #Pull data on all areas to scan and store them
+    LOG.info('Getting area data...')
+    states_data_path = os.path.join(os.path.dirname(__file__), 'states.txt')
+    with open(states_data_path, 'r') as f:
+        states = f.readline()
     
-    if zip:
-        selectLocation(driver, mouse, zip)
+    states = states.split(',')
+    random.shuffle(states)
+
+    cities = sql_cxn.getAreaData()
+    random.shuffle(cities)
+
+    #Loop through all areas to scan until there are none left
+    while states or cities:
+        driver, mouse = prepWebsite()
+
+        #Pick a random number of areas to check before switching IP address. (For states 2-3 as they take much longer and the IP will be connected to the site for longer) (For cities 3-5)
+        if states:
+            iter_before_ip = random.randint(2, 3)
+        else:
+            iter_before_ip = random.randint(3, 5)
+
+        #Check to see remaining amount of states or cities to scan. If there is less than the amount of iterations, use that number.
+        if states:
+            if len(states) < iter_before_ip:
+                iter_before_ip = len(states)
+        else:
+            if len(cities) < iter_before_ip:
+                iter_before_ip = len(cities)
+            
+        #For the selected amount of runs, scan each area. Then disconnect the driver, connect to a new area, and repeat until the areas data lists are empty.
+        area_tried = False #Flag to signal if an area has been scanned and failed already. If so, log where the error has happend, and screenshot the page.
+        for i in range(iter_before_ip):
+            if states:
+                current_area = states[0]
+            else:
+                current_area = cities[0]
+            
+            #TODO: 
+            # For each run, start a timer thread to ensure that data is being sent back. For each step of the process, reset the timer to ensure nothing went wrong during the process.
+            LOG.info('Starting scan for {}...'.format(current_area))
+            data_retrieved = getInternetData(driver, mouse, current_area, sql_cxn)
+            if not data_retrieved:
+                if not area_tried:
+                    area_tried = True
+                    break
+                else:
+                    #TODO: Pass over the current iteration, grab a screenshot, then restart the IP.
+                    area_tried = False
+                    break
+            else: #Successful run
+                if states:
+                    states.pop(0)
+                else:
+                    cities.pop(0)
+                
+                area_tried = False
+
+        driver.quit()
+
+        #Connect to a new area, (Not needed the first time, since verifying the IP automatically connects to a random area). Then get the driver and mouse objects
+        ip_ctrl.connectToRandomArea()
+        if not ip_ctrl:
+            LOG.critical("Error: There was an issue with the VPN. Aborting program")
+            sys.exit()
+                
+
+#Method for pulling data given the URL
+def getInternetData(driver, mouse, area, sql_cxn):
+    #TODO: Mess around with the time.sleep functions, see how much time can be saved by trying to lower them as much as possible
+    time.sleep(1)
+
+    #Navigate to the desired location to scan
+    LOG.info('Navigating to selected area...')
+    did_navigate = selectLocation(driver, mouse, area)
+    if not did_navigate:
+        return False
 
     #Get the distance between rectangle elements that when hovered over display the information about HD streams
-    all_rects = driver.find_elements(By.TAG_NAME, 'rect')
-    mouse_cords = processRects(all_rects)
+    try:
+        all_rects = driver.find_elements(By.TAG_NAME, 'rect')
+        mouse_cords = processRects(all_rects)
+        
+        mouse_cords[1:] = findRightMovements(mouse_cords)
+        mouse_cords.pop(-1)
+        
+        time.sleep(1)
+    except:
+        LOG.warning("There was an issue getting the graph rectangles.")
+        return False
     
-    mouse_cords[1:] = findRightMovements(mouse_cords)
-    mouse_cords.pop(-1)
-    
-    time.sleep(1)
-
     #Find the compare providers button, and click on it
     try:
         compare_button_info_div = WebDriverWait(driver, 5).until(
@@ -55,15 +146,20 @@ def getInternetData(zip = None):
         )
         class_string_contents = compare_button_info_div.get_attribute('class').split()
     except:
-        driver.quit()
-        sys.exit()
+        LOG.warning("There was an error getting the compare providers button.")
+        return False
     
-    if len(class_string_contents) < 2:
-        compare_providers_button = driver.find_element(By.CLASS_NAME, 'tab-label')
-        mouse.move_to_element(compare_providers_button)
-        mouse.click()
-        mouse.perform()
-    
+    #This is to ensure the compare providers tab is not open before clicking on the button to expand it
+    try:
+        if len(class_string_contents) < 2:
+            compare_providers_button = driver.find_element(By.CLASS_NAME, 'tab-label')
+            mouse.move_to_element(compare_providers_button)
+            mouse.click()
+            mouse.perform()
+    except:
+        LOG.warning("There was an error expanding the list of providers.")
+        return False
+        
     time.sleep(1)
 
     #Find the show more button if available for each row
@@ -81,9 +177,10 @@ def getInternetData(zip = None):
                 time.sleep(1)
             
     except:
-        print("All providers are shown. No need to expand lists.")
+        pass
 
     #Get buttons to switch charts
+    take_graph_pictures = True
     try:
         vol_chart_button = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[1]"))
@@ -92,65 +189,86 @@ def getInternetData(zip = None):
             EC.presence_of_element_located((By.XPATH, "//div[@class='chart-toggles']/div[2]"))
         )
     except:
-        print("Toggle buttons unavailable. Pictures unable to be captured.")
-        return
+        LOG.warning("Graph toggle buttons couldn't be pulled. Graph picutures unavailable.")
+        take_graph_pictures = False
     
     #Pull all buttons from HD, SD, and LD rows
     stream_definition_text = ['HD', 'SD', 'LD']
     provider_buttons = getProviderButtons(driver)
-
-    #Prep Data File
-    data_output_path = os.path.join(os.path.dirname(__file__), "{}_DataOutput.csv".format(zip))
-    with open(data_output_path, 'w') as f:
-        f.write("Provider,Definition,6 AM,7 AM,8 AM,9 AM,10 AM,11 AM,12 PM,1 PM,2 PM,3 PM,4 PM,5 PM,6 PM,7 PM,8 PM,9 PM,10 PM,11 PM,12 AM,1 AM,2 AM,3 AM,4 AM,5 AM\n")
     
+    error_counter = 0
     #Loop through all providers, Pulling all data
     for i in range(len(provider_buttons)):
         for element in provider_buttons[i]:
             #Make sure not to use hidden buttons in case of failure to press expand more
             if not element.text:
                 continue
+            
+            try:
+                mouse.move_to_element(element)
+                mouse.click()
+                mouse.perform()
+            except:
+                LOG.warning("The provider: {} could not be selected. Unable to get data".format(element.text))
+                continue
 
-            mouse.move_to_element(element)
-            mouse.click()
-            mouse.perform()
             time.sleep(1)
-
-            filename_string = "{}_{}({})".format(element.text, stream_definition_text[i], zip)
+            
             #Get percentage of streams that are HD
             graph_location, graph_size, full_data = getHighDefinitionStreams(driver, mouse, mouse_cords)
-            
-            with open(data_output_path, 'a') as f:
-                f.write("{},{},".format(element.text, stream_definition_text[i]))
-                for j in range(len(full_data) - 1):
-                    f.write("{},".format(full_data[j][0]))
-                
-                f.write("{}\n".format(full_data[-1][0]))
-            
+                    
             #Get a picture of both graphs for each provider
-            getGraphImages(mouse, driver, vol_chart_button, per_chart_button, filename_string, graph_location, graph_size)
-        
+            vol_chart_path, per_chart_path = None, None
+            filename_string = "{}({})".format(element.text, area)
+            if take_graph_pictures:
+                vol_chart_path, per_chart_path = getGraphImages(mouse, driver, vol_chart_button, per_chart_button, filename_string, graph_location, graph_size)
+
+            #Format parameters correctly to upload data to SQL database
+            area = area.split(',')
+            if len(area) < 2:
+                city = None
+                state = area[0].rstrip()
+            else:
+                city = area[0]
+                state = area[1].lstrip()
+            
+            #Add data to database
+            sql_cxn.addFullDataEntry(city, state, element.text, stream_definition_text[i], full_data, vol_chart_path, per_chart_path)
+
+            #Remove images from storage since they 
+            if vol_chart_path:
+                os.remove(vol_chart_path)
+            
+            if per_chart_path:
+                os.remove(per_chart_path)
+            
     time.sleep(1)
     
-    driver.quit()
+    return True
 
 #Select location by zip code or city
-def selectLocation(driver, mouse, zip):
+def selectLocation(driver, mouse, area):
+    #Get element that changes location of area data
     try:
         change_location_element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@class='section_title']/span[1]"))
+            EC.presence_of_element_located((By.XPATH, "//span[@class='location-changer']"))
         )
     except:
-        print("Element Not Found.")
-        driver.quit()
-        sys.exit()
+        LOG.warning("Change location element not found by scraper.")
+        return False
     
-    mouse.move_to_element(change_location_element)
-    mouse.click()
-    mouse.perform()
+    #Click on the link
+    try:
+        mouse.move_to_element(change_location_element)
+        mouse.click()
+        mouse.perform()
+    except:
+        LOG.warning("Unable to select change location element.")
+        return False
     
-    time.sleep(1)
+    time.sleep(0.5)
 
+    #Controls for selecting a new location
     try:
         location_input_element = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//div[@class='modal-dialog-content']/div[1]/input[1]"))
@@ -159,13 +277,17 @@ def selectLocation(driver, mouse, zip):
         ok_button = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//div[@class='modal-dialog-buttons']/button[1]"))
         )
-    except Exception as e:
-        print("Input element not found")
-        driver.quit()
-        sys.exit()
+    except:
+        LOG.warning("Controls for navigating to new location unavailable.")
+        return False
 
-    location_input_element.send_keys(zip)
-    
+    #Type in area to the search bar
+    try:
+        location_input_element.send_keys(area)
+    except:
+        LOG.warning("Unable to type in location.")
+        return False
+
     #Find table elements that contain names of available locations from the search
     correct_table_entry = None
     try:
@@ -173,27 +295,38 @@ def selectLocation(driver, mouse, zip):
             EC.presence_of_all_elements_located((By.CLASS_NAME, 'autocomplete-row'))
         )
         for entry in table_entrys:
-            if entry.text == zip:
+            if entry.text.lower() == area.lower():
                 correct_table_entry = entry
 
     except:
-        print("Location Not Found.")
-        driver.quit()
-        sys.exit()
+        LOG.warning("Location not available as a dropdown option.")
+        return False
 
     time.sleep(1)
 
-    mouse.move_to_element(correct_table_entry)
-    mouse.click()
-    mouse.perform()
+    try:
+        mouse.move_to_element(correct_table_entry)
+        mouse.click()
+        mouse.perform()
 
-    time.sleep(0.25)
+        time.sleep(0.25)
 
-    mouse.move_to_element(ok_button)
-    mouse.click()
-    mouse.perform()
+        mouse.move_to_element(ok_button)
+        mouse.click()
+        mouse.perform()
 
-    time.sleep(1)
+        time.sleep(1)
+    except:
+        LOG.warning("There was an error clicking the ok button on the dialog window.")
+        return False
+    
+    #Ensure the page navigated to a new location
+    try:
+        location_input_element.send_keys("test") #If the element can still receive keys, it did not go to a new page.
+    except:
+        return True #No errors
+    
+    return False
 
 #Get all of the button elements that give provider information
 def getProviderButtons(driver):
@@ -205,6 +338,7 @@ def getProviderButtons(driver):
 
     is_more_buttons = True
     button_num, row_id = 1, 0
+    #TODO: Mess around with the wait time because it seems like this function takes a good bit of time.
     while is_more_buttons:
         try:
             xpath_string = "//div[@class='rating-rows revealed']/div[{}]/div[3]/div[1]/div[{}]".format(row_id + 3, button_num)
@@ -233,10 +367,11 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
             EC.presence_of_element_located((By.XPATH, "//div[@id ='chart']/div[1]/div[3]"))
         )
     except:
+        #TODO: Return back to main function if theres an error here
         print("Error getting data elements. Aborting current provider.")
         return False
 
-    
+    #TODO: Work on Time.sleeps to lower time as much as possible    
     #Find the width of the svg element
     distance_to_move = (int(graph_element.get_attribute('width')) // 2) - 5
 
@@ -287,7 +422,6 @@ def processToolTipText(text):
     content = text.split('\n')
     hd_percentage = content[0].split(' ')[0]
     hd_percentage = hd_percentage[:-1]
-    print(hd_percentage)
     
     time_splits = content[1].split(' ')
     time_frame = "{} {}".format(time_splits[0], time_splits[1])
@@ -325,6 +459,7 @@ def findRightMovements(coords):
 
 #Get the pictures of both graphs to later process for additional data
 def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc, graph_size):
+    #TODO: Add try blocks for error handling. Return the info back to the main method if there is a problem. 
     #Generate filepaths
     vol_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), "{}_Volume_Chart.png".format(fileprefix))
     per_chart = os.path.join(os.path.join(os.path.dirname(__file__), 'Graph Pictures'), "{}_Percentage_Chart.png".format(fileprefix))
@@ -365,21 +500,20 @@ def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc,
     per_image = per_image.crop((left, top, right, bottom))
     per_image.save(per_chart)
 
+    return vol_chart, per_chart
+
 #Main Method
 if __name__ == "__main__":
-    locations_filepath = os.path.join(os.path.dirname(__file__), 'locations.txt')
-    with open(locations_filepath, 'r') as f:
-        locations = f.readlines()
+    area = "Pennsylvania"
+    area = area.split(',')
+    if len(area) < 2:
+        city = None
+        state = area[0].rstrip()
+    else:
+        city = area[0]
+        state = area[1].lstrip()
     
-    SQL_Cxn = ServerConnection()
-    area_List = SQL_Cxn.getAreaData()
-
-    areas_text = []
-    for area in area_List:
-        text = area[0] + ', ' + area[1]
-        areas_text.append(text)
-    
-    for city_area in areas_text:
-        getInternetData(city_area)
+    print(city, state)
+    # main_data_method()
 
     
