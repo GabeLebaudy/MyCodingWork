@@ -63,6 +63,8 @@ def main_data_method():
 
     states = [] #Temporary
     
+    cities = cities[:4] #Temp
+
     #Loop through all areas to scan until there are none left
     provider_bookmark = None #Ensure the same providers aren't scanned twice in case of mid-scan error
     while states or cities:
@@ -72,7 +74,7 @@ def main_data_method():
         if states:
             iter_before_ip = random.randint(2, 3)
         else:
-            iter_before_ip = random.randint(3, 5)
+            iter_before_ip = random.randint(7, 10)
 
         #Check to see remaining amount of states or cities to scan. If there is less than the amount of iterations, use that number.
         if states:
@@ -130,7 +132,6 @@ def main_data_method():
             LOG.critical("Error: There was an issue with the VPN. Aborting program")
             sys.exit()
                 
-
 #Method for pulling data given the URL
 def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
     #TODO: Mess around with the time.sleep functions, see how much time can be saved by trying to lower them as much as possible
@@ -141,6 +142,8 @@ def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
     did_navigate = selectLocation(driver, mouse, area)
     if not did_navigate:
         return False, provider_bookmark
+
+    time.sleep(0.5)
 
     #Get the distance between rectangle elements that when hovered over display the information about HD streams
     try:
@@ -273,15 +276,22 @@ def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
 
 #Select location by zip code or city
 def selectLocation(driver, mouse, area):
+    time.sleep(0.5)
+
     #Get element that changes location of area data
     try:
         change_location_element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//span[@class='location-changer']"))
+            EC.presence_of_element_located((By.XPATH, "//div[@class='results-title ellipsize']/span[3]"))
         )
     except:
         LOG.warning("Change location element not found by scraper.")
         return False
     
+    mouse.move_by_offset(100, 0)
+    mouse.perform()
+
+    time.sleep(0.5)
+
     #Click on the link
     try:
         mouse.move_to_element(change_location_element)
@@ -316,7 +326,7 @@ def selectLocation(driver, mouse, area):
     #Find table elements that contain names of available locations from the search
     correct_table_entry = None
     try:
-        table_entrys = WebDriverWait(driver, 5).until(
+        table_entrys = WebDriverWait(driver, 1).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, 'autocomplete-row'))
         )
         for entry in table_entrys:
@@ -327,7 +337,7 @@ def selectLocation(driver, mouse, area):
         LOG.warning("Location not available as a dropdown option.")
         return False
 
-    time.sleep(1)
+    time.sleep(0.5)
 
     try:
         mouse.move_to_element(correct_table_entry)
@@ -340,7 +350,7 @@ def selectLocation(driver, mouse, area):
         mouse.click()
         mouse.perform()
 
-        time.sleep(1)
+        time.sleep(0.5)
     except:
         LOG.warning("There was an error clicking the ok button on the dialog window.")
         return False
@@ -368,11 +378,10 @@ def getProviderButtons(driver, provider_bookmark):
     
     is_more_buttons = True
     button_num, row_id = 1, 0
-    #TODO: Mess around with the wait time because it seems like this function takes a good bit of time.
     while is_more_buttons:
         try:
             xpath_string = "//div[@class='rating-rows revealed']/div[{}]/div[3]/div[1]/div[{}]".format(row_id + 3, button_num)
-            element = WebDriverWait(driver, 1).until(
+            element = WebDriverWait(driver, 0.5).until(
                 EC.presence_of_element_located((By.XPATH, xpath_string))
             )
             
@@ -406,7 +415,6 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
         LOG.warning("There was an error getting the graph data elements. Aborting for current provider.")
         return False, False, False
 
-    #TODO: Work on Time.sleeps to lower time as much as possible    
     #Find the width of the svg element
     distance_to_move = (int(graph_element.get_attribute('width')) // 2) - 5
 
@@ -418,7 +426,7 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
         LOG.warning("There was an error attempting to move the cursor to the graph. Aborting for current provider.")
         return False, False, False
     
-    time.sleep(0.5)
+    time.sleep(0.1)
     
     #Get the data
     gotData = True
@@ -427,7 +435,7 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
     for movement in mouse_cords:
         mouse.move_by_offset(movement, 0)
         mouse.perform()
-        time.sleep(0.5)
+        time.sleep(0.1)
         gotData = processToolTipText(data_storage_element.text)
         num_trys = 1
         while not gotData:

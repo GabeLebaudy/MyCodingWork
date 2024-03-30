@@ -10,7 +10,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from PIL import Image
 import time, sys, os, re, subprocess, requests, sched, socket
-
+from SQL_Connection import ServerConnection
 
 #Helper Methods
 def prepWebsite(url):
@@ -181,6 +181,21 @@ def do_something(scheduler):
     print("Doing stuff...")
     # then do your stuff
 
+#Testing out my new SQL Database
+def testDatabase():
+    sql_cxn = ServerConnection()
+    
+    all_areas = sql_cxn.getAreaData()
+    new_areas = []
+    dupe_areas = []
+    for area in all_areas:
+        if area in new_areas:
+            dupe_areas.append(area)
+        else:
+            new_areas.append(area)
+
+    print(dupe_areas)
+
 #Main Method
 if __name__ == "__main__":
     # testToggleButton("https://www.google.com/get/videoqualityreport/")
@@ -193,12 +208,13 @@ if __name__ == "__main__":
     
     # testTerminalCommands()
 
-    my_scheduler = sched.scheduler(time.time, time.sleep)
+    # my_scheduler = sched.scheduler(time.time, time.sleep)
     # my_scheduler.enter(0, 5, do_something, (my_scheduler,)) #5 is the number of seconds the program waits before calling the program
     
-    counter = 0
-    counter = testIP_Grab(counter)
+    # counter = 0
+    # counter = testIP_Grab(counter)
 
-    my_scheduler.run()
+    # my_scheduler.run()
+    testDatabase()
     
     
