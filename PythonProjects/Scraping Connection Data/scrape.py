@@ -61,6 +61,10 @@ def main_data_method():
     cities = sql_cxn.getAreaData()
     random.shuffle(cities)
 
+    states = [] #Temporary
+    
+    cities = cities[:4] #Temp
+
     #Loop through all areas to scan until there are none left
     provider_bookmark = None #Ensure the same providers aren't scanned twice in case of mid-scan error
     while states or cities:
@@ -70,7 +74,7 @@ def main_data_method():
         if states:
             iter_before_ip = random.randint(2, 3)
         else:
-            iter_before_ip = random.randint(3, 5)
+            iter_before_ip = random.randint(7, 10)
 
         #Check to see remaining amount of states or cities to scan. If there is less than the amount of iterations, use that number.
         if states:
@@ -91,7 +95,6 @@ def main_data_method():
             #TODO: 
             # For each run, start a timer thread to ensure that data is being sent back. For each step of the process, reset the timer to ensure nothing went wrong during the process.
             LOG.info('Starting scan for {}...'.format(current_area))
-            #TODO: Return the current provider of what the scan was on. In case of failure. Don't want to add multiple entries if an area re-scans.
             data_retrieved, provider_bookmark = getInternetData(driver, mouse, current_area, sql_cxn, provider_bookmark)
             if not data_retrieved:
                 if not area_tried:
@@ -129,7 +132,6 @@ def main_data_method():
             LOG.critical("Error: There was an issue with the VPN. Aborting program")
             sys.exit()
                 
-
 #Method for pulling data given the URL
 def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
     #TODO: Mess around with the time.sleep functions, see how much time can be saved by trying to lower them as much as possible
@@ -140,6 +142,8 @@ def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
     did_navigate = selectLocation(driver, mouse, area)
     if not did_navigate:
         return False, provider_bookmark
+
+    time.sleep(0.5)
 
     #Get the distance between rectangle elements that when hovered over display the information about HD streams
     try:
@@ -212,6 +216,14 @@ def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
     provider_buttons = getProviderButtons(driver, provider_bookmark)
     
     error_counter = 0
+    area = area.split(',')
+    if len(area) < 2:
+        city = None
+        state = area[0].rstrip()
+    else:
+        city = area[0]
+        state = area[1].lstrip()
+    
     #Loop through all providers, Pulling all data
     for i in range(len(provider_buttons)):
         for element in provider_buttons[i]:
@@ -243,20 +255,12 @@ def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
             
             #Get a picture of both graphs for each provider
             vol_chart_path, per_chart_path = None, None
-            filename_string = "{}({})".format(element.text, area)
+            filename_string = "{}({}, {})".format(element.text, city, state)
             if take_graph_pictures:
                 vol_chart_path, per_chart_path = getGraphImages(mouse, driver, vol_chart_button, per_chart_button, filename_string, graph_location, graph_size)
-
-            #Format parameters correctly to upload data to SQL database
-            area = area.split(',')
-            if len(area) < 2:
-                city = None
-                state = area[0].rstrip()
-            else:
-                city = area[0]
-                state = area[1].lstrip()
             
             #Add data to database
+            sql_cxn.verifyProvider(element.text)
             sql_cxn.addFullDataEntry(city, state, element.text, stream_definition_text[i], full_data, vol_chart_path, per_chart_path)
 
             #Remove images from storage since they 
@@ -272,15 +276,22 @@ def getInternetData(driver, mouse, area, sql_cxn, provider_bookmark):
 
 #Select location by zip code or city
 def selectLocation(driver, mouse, area):
+    time.sleep(0.5)
+
     #Get element that changes location of area data
     try:
         change_location_element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//span[@class='location-changer']"))
+            EC.presence_of_element_located((By.XPATH, "//div[@class='results-title ellipsize']/span[3]"))
         )
     except:
         LOG.warning("Change location element not found by scraper.")
         return False
     
+    mouse.move_by_offset(100, 0)
+    mouse.perform()
+
+    time.sleep(0.5)
+
     #Click on the link
     try:
         mouse.move_to_element(change_location_element)
@@ -315,7 +326,7 @@ def selectLocation(driver, mouse, area):
     #Find table elements that contain names of available locations from the search
     correct_table_entry = None
     try:
-        table_entrys = WebDriverWait(driver, 5).until(
+        table_entrys = WebDriverWait(driver, 1).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, 'autocomplete-row'))
         )
         for entry in table_entrys:
@@ -326,7 +337,7 @@ def selectLocation(driver, mouse, area):
         LOG.warning("Location not available as a dropdown option.")
         return False
 
-    time.sleep(1)
+    time.sleep(0.5)
 
     try:
         mouse.move_to_element(correct_table_entry)
@@ -339,7 +350,7 @@ def selectLocation(driver, mouse, area):
         mouse.click()
         mouse.perform()
 
-        time.sleep(1)
+        time.sleep(0.5)
     except:
         LOG.warning("There was an error clicking the ok button on the dialog window.")
         return False
@@ -367,11 +378,10 @@ def getProviderButtons(driver, provider_bookmark):
     
     is_more_buttons = True
     button_num, row_id = 1, 0
-    #TODO: Mess around with the wait time because it seems like this function takes a good bit of time.
     while is_more_buttons:
         try:
             xpath_string = "//div[@class='rating-rows revealed']/div[{}]/div[3]/div[1]/div[{}]".format(row_id + 3, button_num)
-            element = WebDriverWait(driver, 1).until(
+            element = WebDriverWait(driver, 0.5).until(
                 EC.presence_of_element_located((By.XPATH, xpath_string))
             )
             
@@ -405,7 +415,6 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
         LOG.warning("There was an error getting the graph data elements. Aborting for current provider.")
         return False, False, False
 
-    #TODO: Work on Time.sleeps to lower time as much as possible    
     #Find the width of the svg element
     distance_to_move = (int(graph_element.get_attribute('width')) // 2) - 5
 
@@ -417,7 +426,7 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
         LOG.warning("There was an error attempting to move the cursor to the graph. Aborting for current provider.")
         return False, False, False
     
-    time.sleep(0.5)
+    time.sleep(0.1)
     
     #Get the data
     gotData = True
@@ -426,7 +435,7 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
     for movement in mouse_cords:
         mouse.move_by_offset(movement, 0)
         mouse.perform()
-        time.sleep(0.5)
+        time.sleep(0.1)
         gotData = processToolTipText(data_storage_element.text)
         num_trys = 1
         while not gotData:
@@ -439,13 +448,13 @@ def getHighDefinitionStreams(driver, mouse, mouse_cords):
             time.sleep(0.1)
             gotData = processToolTipText(data_storage_element.text)
             num_trys += 1
-
+        
         if not gotData:
-            all_entries.append(("NULL", "NULL"))
+            all_entries.append("NULL")
             continue
 
-        if not re.search("[0-9+][%+]", gotData[0]):
-            all_entries.append(("NULL", "NULL"))
+        if not re.search("[0-9+]", gotData[0]):
+            all_entries.append("NULL")
             continue
 
         all_entries.append(gotData)
@@ -457,14 +466,14 @@ def processToolTipText(text):
     if not text:
         return False
     
-    content = text.split('\n')
-    hd_percentage = content[0].split(' ')[0]
-    hd_percentage = hd_percentage[:-1]
+    try:
+        content = text.split('\n')
+        hd_percentage = content[0].split(' ')[0]
+        hd_percentage = hd_percentage[:-1]
+    except:
+        return False
     
-    time_splits = content[1].split(' ')
-    time_frame = "{} {}".format(time_splits[0], time_splits[1])
-    
-    return (hd_percentage, time_frame)
+    return hd_percentage
 
 #Process which rectangles are the correct ones for mining the data
 def processRects(rects):
@@ -517,7 +526,7 @@ def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc,
         LOG.warning("There was an error moving to the graph toggle button. Pictures won't be saved.")
         return None, None
     
-    time.sleep(0.5)
+    time.sleep(0.75)
 
     driver.save_screenshot(per_chart)
 
@@ -549,16 +558,6 @@ def getGraphImages(mouse, driver, vol_button, per_button, fileprefix, graph_loc,
 
 #Main Method
 if __name__ == "__main__":
-    area = "Pennsylvania"
-    area = area.split(',')
-    if len(area) < 2:
-        city = None
-        state = area[0].rstrip()
-    else:
-        city = area[0]
-        state = area[1].lstrip()
-    
-    print(city, state)
-    # main_data_method()
+    main_data_method()
 
     
