@@ -18,22 +18,37 @@ void mystrcopy(char src[], char dest[]) {
         for (i = 0; i <= lensrc; i++) {
             dest[i] = src[i];
         }
-        dest[i] = '\0'; // add the null terminator
+        dest[i] = '\0';
 
     } else {
         int count = 0;
         while(*src != '\0') {
-            dest[count] = src[count];
+            dest[count] = src[0];
             count++;
             src++;
         }
-        dest[count] = '\0';
     }
     printf("dest is %s", dest);
 }
 
+void mystrcat(char src[], char dest[]) {
+    int lensrc = mystrlen(src);
+    int lendest = mystrlen(dest);
+    int total_length = lensrc + lendest;
+
+    // dest[total_length] = *dest;
+    int index_counter = 0;
+    for (int i = lendest;i < total_length;i++) {
+        dest[i] = src[index_counter];
+        index_counter++;
+    }
+    dest[total_length] = '\0';
+    printf("Dest is: %s\n", dest); 
+}
+
 int main(int argc, char *argv[]) {
-   char x[] = "abc";
-   char y[] = "defg";
-   mystrcopy(x, y);
+   char x[] = "defgh";
+   char y[] = "abc";
+
+   mystrcat(x, y);
 }

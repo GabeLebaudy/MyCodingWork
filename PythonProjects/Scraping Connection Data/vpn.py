@@ -46,6 +46,7 @@ class DynamicIP:
                 #VPN Commands are not working abort the program
                 return False
             else:
+                self.my_ip = new_ip
                 return True
 
     #Get the current public IP
@@ -89,7 +90,7 @@ class DynamicIP:
         #Ensure VPN is properly connected before proceeding
         count = 0
         new_ip = self.getPublicIP()
-        while prior_ip == new_ip or not new_ip:
+        while (prior_ip == new_ip) or (not new_ip) or (new_ip == self.my_ip):
             count += 1
             if count > 14:
                 return False
