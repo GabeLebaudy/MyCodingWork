@@ -44,7 +44,7 @@ void mystrcat(char src[], char dest[]) {
     }
     dest[total_length] = '\0';
     printf("Dest is: %s\n", dest); 
-}
+}v
 
 int main(int argc, char *argv[]) {
    char x[] = "defgh";
