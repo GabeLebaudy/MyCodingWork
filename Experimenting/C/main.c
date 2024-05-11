@@ -15,4 +15,13 @@ int main(){
     char z[5];
     int2str(num, z);
     printf("%s\n", z);
+
+    int testnum;
+    int testingnum;
+
+    testnum = 5;
+    testingnum = testnum++;
+    testingnum += ++testnum;
+    printf("%d,%d", testnum, testingnum);
+
 }
