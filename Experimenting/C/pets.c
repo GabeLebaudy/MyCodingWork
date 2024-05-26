@@ -9,8 +9,8 @@ struct Pet{
     char species[16];
 };
 
-struct Pet* resize(struct Pet *arr, int n) {
-    arr = (struct Pet*) realloc(arr, n * sizeof(struct Pet));
+struct Pet* resize(struct Pet **arr, int n) {
+    *arr = (struct Pet*) realloc(arr, n * sizeof(struct Pet));
     return arr;
 }
 
@@ -36,24 +36,35 @@ int main() {
         //Resize pet array if necessary
         if (size <= count) {
             size *= 2;
-            resize(pets, size);
+            resize(&pets, size);
         }
 
         if (count % 3 == 0) {
+            if (strlen(s) > 16) {
+                printf("Error: Name or species cannot be longer than 16 characters.");
+                return 1;
+            }
             strncpy(pets[count / 3].name, s, 15);
             pets[count / 3].name[15] = '\0';
         }
 
         if (count % 3 == 1) {
+            
             pets[count / 3].age = atoi(s);
         }
 
         if (count % 3 == 2) {
+            if (strlen(s) > 16) {
+                printf("Error: Name or species cannot be longer than 16 characters.");
+                return 1;
+            }
             strncpy(pets[count / 3].species, s, 15);
             pets[count / 3].species[15] = '\0';
         }
         count++;
     }
+    
+    printf("Out of the loop!");
     free(s);
     fclose(input);
 
