@@ -37,11 +37,14 @@ int main() {
             size *= 2;
             resize(&pets, size);
         }
+
+        //Ensure input < 16 characters
+        if (strlen(s) > 16) {
+            printf("Error: Name or species cannot be longer than 16 characters.");
+            return 1;
+        }
+
         if (count % 3 == 0) {
-            if (strlen(s) > 16) {
-                printf("Error: Name or species cannot be longer than 16 characters.");
-                return 1;
-            }
             strncpy(pets[count / 3].name, s, 15);
             pets[count / 3].name[15] = '\0';
         }
@@ -52,10 +55,6 @@ int main() {
         }
 
         if (count % 3 == 2) {
-            if (strlen(s) > 16) {
-                printf("Error: Name or species cannot be longer than 16 characters.");
-                return 1;
-            }
             strncpy(pets[count / 3].species, s, 15);
             pets[count / 3].species[15] = '\0';
         }
