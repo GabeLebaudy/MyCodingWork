@@ -12,12 +12,12 @@ struct Pet{
 typedef struct Node Node;
 struct Node{
     struct Pet pet;
-    struct Node *next;
-} 
+    Node *next;
+};
 
 struct LinkedList{
-    struct Node *head;
-}
+    Node *head;
+};
 
 int main() {
     //Initialize Vars
@@ -29,7 +29,9 @@ int main() {
     int count = 0;
     int size = 1;
     struct LinkedList pet_list; 
-    struct Node current_node;
+    Node *current_node;
+    Node *temp_node;
+    struct Pet temp_pet;
 
     // Read lines from the input
     while ((nchars = getline(&s, &nbytes, input)) != -1) {
@@ -39,11 +41,6 @@ int main() {
         s[nchars-1]='\0';
         nchars--;
         
-        if (count % 3 == 0) {
-            struct Pet temp_pet;
-            struct Node temp_node;
-        }
-
         //Ensure input < 16 characters
         if (strlen(s) > 16) {
             printf("Error: Name or species cannot be longer than 16 characters.");
@@ -51,23 +48,27 @@ int main() {
         }
 
         if (count % 3 == 0) {
-            temp_pet->name = s;
+            strncpy(temp_pet.name, s, 15);
+            temp_pet.name[15] = '\0';
         }
 
         if (count % 3 == 1) {
-            temp_pet->age = atoi(s);
+            temp_pet.age = atoi(s);
         }
 
         if (count % 3 == 2) {
-            temp_pet->species = s;
-            temp_node->pet = *temp_pet;
+            strncpy(temp_pet.species, s, 15);
+            temp_pet.species[15] = '\0';
 
-            if (pet_list->head == NULL) {
-                pet_list->head = *temp_pet;
+            temp_node = (Node *)malloc(sizeof(Node));
+            temp_node->pet = temp_pet;
+
+            if (pet_list.head == NULL) {
+                pet_list.head = temp_node;
             } else {
-                current_node->next = *temp_pet;
-                current_node = *temp_pet
+                current_node->next = temp_node;
             }
+            current_node = temp_node;
         }
         count++;
     }
@@ -81,15 +82,14 @@ int main() {
     }
 
     //Print out pet data
-    struct Node head_node;
-    struct Node free_node;
-    head_node = LinkedList->head;
+    Node *head_node;
+    Node *free_node;
+    head_node = pet_list.head;
 
-    while (head_node->next != NULL) {
-        printf("%s, %d, %s",  head_node->name, head_node->age, head_node->species);
-        free_node = *head_node;
+    while (head_node != NULL) {
+        printf("%s, %d, %s",  head_node->pet.name, head_node->pet.age, head_node->pet.species);
+        free_node = head_node;
         head_node = head_node->next;
-        free_node = NULL;
         free(free_node);
     }
 
