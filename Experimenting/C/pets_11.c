@@ -28,8 +28,8 @@ int main() {
     ssize_t nchars;
     int count = 0;
     int size = 1;
-    struct LinkedList pet_list; 
-    Node *current_node;
+    struct LinkedList pet_list = {NULL}; 
+    Node *current_node = NULL;
     Node *temp_node;
     struct Pet temp_pet;
 
