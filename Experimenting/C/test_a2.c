@@ -21,7 +21,7 @@ struct LinkedList{
     Node *head;
 };
 
-void add_node(struct LinkedList grades_list, char **values) {
+void add_node(struct LinkedList *grades_list, char **values) {
     Node *temp_node = (Node *)malloc(sizeof(Node));
     
     strncpy(temp_node->data.studentId, values[0], 10);
@@ -32,9 +32,9 @@ void add_node(struct LinkedList grades_list, char **values) {
 
     temp_node->data.grade = atoi(values[2]);
 
-    Node *current_node = grades_list.head;
+    Node *current_node = grades_list->head;
     if (current_node == NULL) {
-        grades_list.head = temp_node;
+        grades_list->head = temp_node;
     } else {
         while (current_node->next != NULL) {
             current_node = current_node->next;
@@ -102,6 +102,12 @@ int main() {
     char **second_strings = find_values(second_string);
 
     struct LinkedList grade_list = {NULL}; 
-    add_node(grade_list, strings);
-    add_node(grade_list, second_strings);
+    add_node(&grade_list, strings);
+    add_node(&grade_list, second_strings);
+
+    if (grade_list.head == NULL) {
+        printf("Grade list head is null");
+    } else {
+        printf("%s\n", grade_list.head->data.assignmentName); 
+    }
 }
