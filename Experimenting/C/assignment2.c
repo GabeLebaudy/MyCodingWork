@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <string.h>
+
 
 bool file_exists (char *filename) {
     struct stat buffer;
@@ -35,7 +38,7 @@ int main(int ac, char **av) {
         return 1;
     }
     
-    FILE *input = open(*av[1]);
+    FILE *input = fopen(av[1], "r");
     char *s = NULL;
     size_t nbytes = 0;
     ssize_t nchars;
