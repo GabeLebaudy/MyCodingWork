@@ -44,6 +44,34 @@ void add_node(struct LinkedList *grades_list, char **values) {
 
 }
 
+void remove_node(struct LinkedList *grades_list, char *info) {
+    Node *temp_node = grades_list.head;
+    int did_find = 0;
+    while (temp_node != NULL) {
+        if (strcpm(temp_node->data.studentId, values[0]) && strcmp(temp_node->data.assignmentName, values[1])) {
+            did_find = 1;
+            break;
+        } else {
+            temp_node = temp_node->next;
+        }
+    }
+    
+}
+
+void print_list(struct LinkedList *grades_list) {
+    printf("Student ID | Assignment Name     | Grade\n------------------------------------------\n");
+
+    Node *temp_node = grades_list->head;
+    while (temp_node != NULL) {
+        printf("%10s | %-20s| %-3hu\n", temp_node->data.studentId, temp_node->data.assignmentName, temp_node->data.grade);
+        temp_node = temp_node->next;
+    }
+}
+
+void stats_student(struct LinkedList *grades_list, char *studentID) {
+
+}
+
 char** split(const char* str, const char* delim) {
     char* str_copy = strdup(str);
 
