@@ -44,58 +44,41 @@ void add_node(struct LinkedList *grades_list, char **values) {
 
 }
 
-char **find_values(char *s) {
-   int s_len = strlen(s);
-   char *values[3];
-   values[0] = malloc(11);
-   values[1] = malloc(21);
-   values[2] = malloc(4);
+char** split(const char* str, const char* delim) {
+    char* str_copy = strdup(str);
 
-   int char_counter = 0;
-   int item = 0;
-   for (int i = 0; i < s_len; i++) {
-        if (s[i] == ':') {
-            values[item][char_counter] = '\0';
-            item++;
-            char_counter = 0;
-        } else {
-            if (item == 0) {
-                if (char_counter >= 10) {
-                    printf("Error: Student ID must be ten digits");
-                    exit(1);
-                }
-
-                values[item][char_counter] = s[i];
-            } else if (item == 1) {
-                if (char_counter >= 20) {
-                    printf("Error: assignment name must be 20 characters or less.");
-                    exit(1);
-                }
-                values[item][char_counter] = s[i];
-            } else {
-                if (char_counter >= 3) {
-                    printf("Error: Grade must be a 3 digit integer");
-                    exit(1);
-                }
-                values[item][char_counter] = s[i];
-            }
-        char_counter++;
-        }
+    int token_count = 0;
+    char* tmp = str_copy;
+    char* token = strtok(tmp, delim);
+    while (token != NULL) {
+        token_count++;
+        token = strtok(NULL, delim);
     }
 
-    values[item][char_counter] = '\0';
-    char **result = malloc(3 * sizeof(char *));
+    char** result = malloc((token_count + 1) * sizeof(char*));
 
-    for (int j = 0; j < 3; j++) {
-        result[j] = values[j];
+    // Reset the string and tokenize again to fill the result array
+    strcpy(str_copy, str);
+    token = strtok(str_copy, delim);
+    int index = 0;
+    while (token != NULL) {
+        result[index] = strdup(token);
+        index++;
+        token = strtok(NULL, delim);
     }
+
+    // Null-terminate the array
+    result[index] = NULL;
+
+    // Free the copied string
+    free(str_copy);
 
     return result;
 }
 
 int main() {
     char sample_string[] = "9991912292:HW 3:100";
-    char **strings = find_values(sample_string);
+    char **strings = split(sample_string, ":");
     printf("%s,%s,%s\n", strings[0], strings[1], strings[2]);
     
     char second_string[] = "2145902184:HW 1:45";
@@ -110,4 +93,6 @@ int main() {
     } else {
         printf("%s\n", grade_list.head->data.assignmentName); 
     }
+
+    return 0;
 }
