@@ -82,7 +82,7 @@ int main() {
     printf("%s,%s,%s\n", strings[0], strings[1], strings[2]);
     
     char second_string[] = "2145902184:HW 1:45";
-    char **second_strings = find_values(second_string);
+    char **second_strings = split(second_string, ":");
 
     struct LinkedList grade_list = {NULL}; 
     add_node(&grade_list, strings);
@@ -91,7 +91,7 @@ int main() {
     if (grade_list.head == NULL) {
         printf("Grade list head is null");
     } else {
-        printf("%s\n", grade_list.head->data.assignmentName); 
+        printf("%s\n", grade_list.head->next->data.assignmentName); 
     }
 
     return 0;
