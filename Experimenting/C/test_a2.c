@@ -47,6 +47,40 @@ char** split(const char* str, const char* delim) {
     return result;
 }
 
+char **split_command(char *command) {
+    int cmd_len = strlen(command);
+    int word_count = 1;
+    char *values[2];
+    int first_len = 0;
+
+    char *space_ind = strchr(command, ' ');
+
+    if (space_ind != NULL) {
+        word_count++;
+        first_len = space_ind - command;
+    } else {
+        first_len = cmd_len;
+    }
+
+    char values[0] = (char *)malloc(first_len + 1);
+    strncpy(values[0], command, first_len);
+    values[0][first_len] = '\0';
+
+    if (word_count == 2) {
+        values[1] = (char *)malloc(cmd_len-first_len);
+        strcpy(values[1], space_ind + 1);
+    } else {
+        values[1] = NULL;
+    }
+
+
+    char** result = malloc((word_count) * sizeof(char*));
+    result[0] = values[0];
+    result[1] = values[1];
+
+    return result;
+}
+
 void add_node(struct LinkedList *grades_list, char **values) {
     Node *temp_node = (Node *)malloc(sizeof(Node));
     
@@ -150,6 +184,12 @@ void stats_student(struct LinkedList *grades_list, char *assignmentName) {
 
 
 int main() {
+    char test_command[] = "add 9991912292:HW 3:100";
+    char **test_results = split(test_command, " ");
+
+    printf("%s\n", test_command[0]);
+
+    return 0;
     char first_string[] = "9991912292:HW 3:100";
     char **first_items = split(first_string, ":");
     
