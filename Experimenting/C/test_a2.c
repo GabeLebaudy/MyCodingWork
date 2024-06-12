@@ -50,7 +50,7 @@ char** split(const char* str, const char* delim) {
 char **split_command(char *command) {
     int cmd_len = strlen(command);
     int word_count = 1;
-    char *values[2];
+    char *values[2] = {NULL, NULL};
     int first_len = 0;
 
     char *space_ind = strchr(command, ' ');
@@ -62,7 +62,7 @@ char **split_command(char *command) {
         first_len = cmd_len;
     }
 
-    char values[0] = (char *)malloc(first_len + 1);
+    values[0] = (char *)malloc(first_len + 1);
     strncpy(values[0], command, first_len);
     values[0][first_len] = '\0';
 
@@ -184,12 +184,12 @@ void stats_student(struct LinkedList *grades_list, char *assignmentName) {
 
 
 int main() {
-    char test_command[] = "add 9991912292:HW 3:100";
-    char **test_results = split(test_command, " ");
+    char test_command[] = "HW 1";
+    char **test_results = split(test_command, ":");
 
-    printf("%s\n", test_command[0]);
-
+    printf("%s\n", test_results[0]);
     return 0;
+
     char first_string[] = "9991912292:HW 3:100";
     char **first_items = split(first_string, ":");
     
