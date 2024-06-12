@@ -21,6 +21,32 @@ struct LinkedList{
     Node *head;
 };
 
+char** split(const char* str, const char* delim) {
+    char* str_copy = strdup(str);
+    int token_count = 0;
+    char* tmp = str_copy;
+    char* token = strtok(tmp, delim);
+
+    while (token != NULL) {
+        token_count++;
+        token = strtok(NULL, delim);
+    }
+
+    char** result = malloc((token_count) * sizeof(char*));
+    strcpy(str_copy, str);
+    token = strtok(str_copy, delim);
+    int index = 0;
+
+    while (token != NULL) {
+        result[index] = strdup(token);
+        index++;
+        token = strtok(NULL, delim);
+    }
+
+    free(str_copy);
+    return result;
+}
+
 void add_node(struct LinkedList *grades_list, char **values) {
     Node *temp_node = (Node *)malloc(sizeof(Node));
     
@@ -45,14 +71,43 @@ void add_node(struct LinkedList *grades_list, char **values) {
 }
 
 void remove_node(struct LinkedList *grades_list, char *info) {
-    Node *temp_node = grades_list.head;
+    Node *temp_node = grades_list->head;
     int did_find = 0;
-    while (temp_node != NULL) {
-        if (strcpm(temp_node->data.studentId, values[0]) && strcmp(temp_node->data.assignmentName, values[1])) {
+
+    char **remove_items = split(info, ":");
+
+    while (temp_node!= NULL) {
+        if (strcmp(temp_node->data.studentId, remove_items[0]) == 0 && strcmp(temp_node->data.assignmentName, remove_items[1]) == 0) {
             did_find = 1;
             break;
         } else {
             temp_node = temp_node->next;
+        }
+    }
+
+    if (did_find == 0) {
+        printf("Student ID or assignment name is invalid.\n");
+    } else {
+        //Cases: Node is head. Node is at the end, Node is somewhere in the middle
+        if (temp_node == grades_list->head) {
+            if (temp_node->next != NULL) {
+                grades_list->head = temp_node->next;
+            }
+            free(temp_node);  
+        } else if (temp_node->next == NULL) {
+            Node *prior_node = grades_list->head;
+            while (prior_node->next != temp_node) {
+                prior_node = prior_node->next;
+            }
+            prior_node->next = NULL;
+            free(temp_node);
+        } else {
+            Node *prior_node = grades_list->head;
+            while (prior_node->next != temp_node) {
+                prior_node = prior_node->next;
+            }
+            prior_node->next = temp_node->next;
+            free(temp_node);
         }
     }
     
@@ -68,59 +123,62 @@ void print_list(struct LinkedList *grades_list) {
     }
 }
 
-void stats_student(struct LinkedList *grades_list, char *studentID) {
+void stats_student(struct LinkedList *grades_list, char *assignmentName) {
+    Node *temp_node = grades_list->head;
+    int min = 100;
+    int max = 0;
+    int total = 0;
+    int count = 0;
+    while (temp_node != NULL) {
+        if (strcmp(assignmentName, temp_node->data.assignmentName) == 0) {
+            total += temp_node->data.grade;
+            if (temp_node->data.grade > max) {
+                max = temp_node->data.grade;
+            }
 
+            if (temp_node->data.grade < min) {
+                min = temp_node->data.grade;
+            }
+            count++;
+        }
+        temp_node = temp_node->next;
+    }
+    float avg = (float)total / count;
+
+    printf("Min: %d\nMax: %d\nMean: %.2f\n", min, max, avg);
 }
 
-char** split(const char* str, const char* delim) {
-    char* str_copy = strdup(str);
-
-    int token_count = 0;
-    char* tmp = str_copy;
-    char* token = strtok(tmp, delim);
-    while (token != NULL) {
-        token_count++;
-        token = strtok(NULL, delim);
-    }
-
-    char** result = malloc((token_count + 1) * sizeof(char*));
-
-    // Reset the string and tokenize again to fill the result array
-    strcpy(str_copy, str);
-    token = strtok(str_copy, delim);
-    int index = 0;
-    while (token != NULL) {
-        result[index] = strdup(token);
-        index++;
-        token = strtok(NULL, delim);
-    }
-
-    // Null-terminate the array
-    result[index] = NULL;
-
-    // Free the copied string
-    free(str_copy);
-
-    return result;
-}
 
 int main() {
-    char sample_string[] = "9991912292:HW 3:100";
-    char **strings = split(sample_string, ":");
-    printf("%s,%s,%s\n", strings[0], strings[1], strings[2]);
+    char first_string[] = "9991912292:HW 3:100";
+    char **first_items = split(first_string, ":");
     
     char second_string[] = "2145902184:HW 1:45";
     char **second_strings = split(second_string, ":");
 
-    struct LinkedList grade_list = {NULL}; 
-    add_node(&grade_list, strings);
-    add_node(&grade_list, second_strings);
+    char third_string[] = "5352794201:Lab 1:65";
+    char **third_items = split(third_string, ":");
 
-    if (grade_list.head == NULL) {
-        printf("Grade list head is null");
-    } else {
-        printf("%s\n", grade_list.head->next->data.assignmentName); 
-    }
+    char fourth_string[] = "9991912292:Lab 1:100";
+    char **fourth_items = split(fourth_string, ":");
+
+    char fifth_string[] = "2145902184:Lab 1:82";
+    char **fifth_items = split(fifth_string, ":");
+
+    struct LinkedList grade_list = {NULL}; 
+    add_node(&grade_list, first_items);
+    add_node(&grade_list, second_strings);
+    add_node(&grade_list, third_items);
+    add_node(&grade_list, fourth_items);
+    add_node(&grade_list, fifth_items);
+
+    // print_list(&grade_list);
+
+    // remove_node(&grade_list, "5352794201:Lab 1");
+
+    print_list(&grade_list);
+
+    stats_student(&grade_list, "Lab 1");
 
     return 0;
 }
