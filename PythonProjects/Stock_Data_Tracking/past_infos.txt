@@ -1,0 +1,44 @@
+# url = "https://query1.finance.yahoo.com/v8/finance/chart/CMCSA"
+
+    # querystring = {"events":"capitalGain|div|split","formatted":"true","includeAdjustedClose":"true",
+    # "interval":"1d","period1":"1704154618","period2":"1730073600","symbol":"CMCSA","userYfid":"true","lang":"en-US","region":"US"}
+
+    # payload = ""
+    # headers = {
+    #     "accept": "*/*",
+    #     "accept-language": "en-US,en;q=0.9",
+    #     "cookie": "GUC=AQEBCAFnEvFnQkIdegR4&s=AQAAAB8ln8f-&g=ZxGniA; A1=d=AQABBNqpMmUCEB1UX8i1RlDp0_PYmWp2uQMFEgEBCAHxEmdCZ9xN0iMA_eMBAAcI2qkyZWp2uQM&S=AQAAApSESFQLrZS6T_OUo7N79rw; A3=d=AQABBNqpMmUCEB1UX8i1RlDp0_PYmWp2uQMFEgEBCAHxEmdCZ9xN0iMA_eMBAAcI2qkyZWp2uQM&S=AQAAApSESFQLrZS6T_OUo7N79rw; A1S=d=AQABBNqpMmUCEB1UX8i1RlDp0_PYmWp2uQMFEgEBCAHxEmdCZ9xN0iMA_eMBAAcI2qkyZWp2uQM&S=AQAAApSESFQLrZS6T_OUo7N79rw; DSS=sdtp%3Dmcafee%26sdts%3D1729210238%26ts%3D1729210238%26cnt%3D0; PRF=t%3DCMCSA; _cb=Du3I__CJYzBpDnpOQf; gpp=DBAA; gpp_sid=-1; cmp=t=1730157351&j=0&u=1YNN; _chartbeat2=.1729379271728.1730157371706.1100000011.QdSu8BaZnbbBSAblpBZrxOmh2I_L.1; _cb_svref=null; _SUPERFLY_lockout=1",
+    #     "origin": "https://finance.yahoo.com",
+    #     "priority": "u=1, i",
+    #     "referer": "https://finance.yahoo.com/quote/CMCSA/history/?period1=1704154618&period2=1730073600&frequency=1d",
+    #     "sec-ch-ua": '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    #     "sec-ch-ua-mobile": "?0",
+    #     "sec-ch-ua-platform": '"Windows"',
+    #     "sec-fetch-dest": "empty",
+    #     "sec-fetch-mode": "cors",
+    #     "sec-fetch-site": "same-site",
+    #     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+    # }
+
+    # url = "https://query1.finance.yahoo.com/v8/finance/chart/CMCSA"
+
+    # querystring = {"events":"capitalGain|div|split","formatted":"true","includeAdjustedClose":"true",
+    #                "interval":"1d","period1":"322151400","period2":"1729453379","symbol":"CMCSA","userYfid":"true","lang":"en-US","region":"US"}
+
+    # payload = ""
+    # headers = {
+    #     "accept": "*/*",
+    #     "accept-language": "en-US,en;q=0.9",
+    #     "cookie": "GUC=AQEBCAFnEvFnQkIdegR4&s=AQAAAB8ln8f-&g=ZxGniA; A1=d=AQABBNqpMmUCEB1UX8i1RlDp0_PYmWp2uQMFEgEBCAHxEmdCZ9xN0iMA_eMBAAcI2qkyZWp2uQM&S=AQAAApSESFQLrZS6T_OUo7N79rw; A3=d=AQABBNqpMmUCEB1UX8i1RlDp0_PYmWp2uQMFEgEBCAHxEmdCZ9xN0iMA_eMBAAcI2qkyZWp2uQM&S=AQAAApSESFQLrZS6T_OUo7N79rw; A1S=d=AQABBNqpMmUCEB1UX8i1RlDp0_PYmWp2uQMFEgEBCAHxEmdCZ9xN0iMA_eMBAAcI2qkyZWp2uQM&S=AQAAApSESFQLrZS6T_OUo7N79rw; DSS=sdtp%3Dmcafee%26sdts%3D1729210238%26ts%3D1729210238%26cnt%3D0; PRF=t%3DCMCSA; _cb=Du3I__CJYzBpDnpOQf; cmp=t=1730045754&j=0&u=1YNN; gpp=DBAA; gpp_sid=-1; _chartbeat2=.1729379271728.1730049469765.110000001.Cc_F-rDt3TQRCsj4AyDQxUEe0ExXq.1; _cb_svref=null; _SUPERFLY_lockout=1",
+    #     "origin": "https://finance.yahoo.com",
+    #     "priority": "u=1, i",
+    #     "referer": "https://finance.yahoo.com/quote/CMCSA/history/?period1=322151400&period2=1729453379&frequency=1d",
+    #     "sec-ch-ua": '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    #     "sec-ch-ua-mobile": "?0",
+    #     "sec-ch-ua-platform": '"Windows"',
+    #     "sec-fetch-dest": "empty",
+    #     "sec-fetch-mode": "cors",
+    #     "sec-fetch-site": "same-site",
+    #     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+    # }
+    

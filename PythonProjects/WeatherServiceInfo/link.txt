@@ -1,0 +1,1 @@
+https://api.weather.gov/stations/KRIV/observations/latest?require_qc=false
