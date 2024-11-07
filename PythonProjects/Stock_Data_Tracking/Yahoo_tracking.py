@@ -124,7 +124,7 @@ class Scraper(QThread):
         #Click on max amount of data available, to find correct URL
         try:
             button_element = WebDriverWait(driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, "//div[@data-testid='history-table']/div[1]/div[1]/button[1]"))
+                EC.presence_of_element_located((By.XPATH, "//div[@data-testid='history-table']/div[1]/div[1]/buttn[1]"))
             )
         except:
             LOGGER.error("Could not find date selection button.")
@@ -244,21 +244,27 @@ class Scraper(QThread):
         
     def run(self):
         info = self.getStockReqInfo()
-        if not info:
-            return False
-        
-        response = self.getJsonData(info)
-        if not response:
-            self.response_code_signal.emit(6)
-            return False
-        
-        try:
-            self.parseJsonData(response)
-        except:
-            LOGGER.error("%s", response)
-            self.response_code_signal(7)
+        if info:
+            response = self.getJsonData(info)
+            if not response:
+                self.response_code_signal.emit(6)
+                return 
+            else:
+                try:
+                    self.parseJsonData(response)
+                    self.response_code_signal.emit(0)
+                    LOGGER.info("Scrape successfully completed.")
+                except:
+                    LOGGER.error("%s", response)
+                    self.response_code_signal(7)
 
-        self.response_code_signal.emit(0)
-        LOGGER.info("Scrape successfully completed.")
+                
+
+    #Main purpose is from email function in main
+    def logInfo(self, code, info):
+        if code == 0:
+            LOGGER.info(info)
+        else:
+           LOGGER.error(info)
         
         

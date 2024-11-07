@@ -11,12 +11,14 @@ from PyQt6.QtCore import QMutex, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 from Yahoo_tracking import Scraper
 
-import sys, os
+import sys, os, yagmail
 
 ERROR_CODES = ["Unable to find search bar element.", "Could not find stock page.", "Could not find historical data option.", "Unable to find data selection button",
                "Unable to find max button.", "There was an issue with the request.", "There was an issue parsing the JSON data"]
 MAIN_FONT = QFont()
 MAIN_FONT.setPointSize(14)
+YAG_OBJ = yagmail.SMTP("gabe.lebaudy6@gmail.com", "vmek rgmq aceq tfqz")
+YAG_CONST = ["gabe.lebaudy6@gmail.com", "Error logs from Yahoo scraper"]
 
 class MainWindow(QMainWindow):
     #Create get stock info layout
@@ -63,6 +65,7 @@ class MainWindow(QMainWindow):
         self.email_logs_button = QPushButton("Send")
         self.email_logs_button.setFont(MAIN_FONT)
         self.email_logs_button.setEnabled(False)
+        self.email_logs_button.clicked.connect(self.email_logs)
         
         final_layout = QVBoxLayout()
         logs_layout = QHBoxLayout()
@@ -132,7 +135,17 @@ class MainWindow(QMainWindow):
             self.stock_scraper.setOutputPath(folder)
             
     def email_logs(self):
-        pass
+        try:
+            email_body = "Error logs from {}".format(self.stock_abbr_input.text())
+            log_file = os.path.join(os.path.dirname(__file__), "log_file.log")
+
+            YAG_OBJ.send(to=YAG_CONST[0], subject=YAG_CONST[1], contents=[email_body, log_file])
+            self.scrape_info_label.setText("Email successfully sent!")
+        except Exception as e:
+            self.scrape_info_label.setText("There was an issue sending the email.")
+            self.stock_scraper.logInfo(1, e)
+
+        self.email_logs_button.setEnabled(False)
 
     def onOpen(self):
         output_folder_path = os.path.join(os.path.dirname(__file__), "output_folder.txt")
