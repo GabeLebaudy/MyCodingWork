@@ -138,9 +138,85 @@ def main():
     mouse.click()
     mouse.perform()
     
+    time.sleep(1.5)
+
+    #Text purposes
+    try:
+        header_element = WebDriverWait(driver, 3).until(
+            EC.presence_of_element_located((By.XPATH, "//ngb-datepicker-navigation[@class='ng-star-inserted']/div[2]"))
+        )
+        print(header_element.text) #Month and year
+    except Exception as e:
+        print(e)
+
+    i = 2
+    j = 0
+    found = False
+    while True:
+        try:
+            j += 1
+            date_picker = WebDriverWait(driver, 0.5).until(
+                EC.presence_of_all_elements_located((By.XPATH, f"//ngb-datepicker-month[@role='grid']/div[{i}]/div[{j}]"))
+            )
+            element_of_interest = date_picker[0]
+            if not element_of_interest.text:
+                continue
+
+            if element_of_interest.text.strip() == "26":
+                found = True
+                break
+            
+        except Exception as e:
+            print(e)
+            if (j == 1 or i >= 7):
+                break
+            i += 1
+            j = 0
     
-    time.sleep(2)    
+    if i > 2 and found:
+        mouse.move_to_element(element_of_interest)
+        mouse.click()
+        mouse.perform()
+
+    time.sleep(0.5)
+
+    try:
+        done_button = WebDriverWait(driver, 3).until(
+            EC.presence_of_all_elements_located((By.XPATH, "//button[@aria-label='Done']"))
+        )
+        print(len(done_button))
+        for btn in done_button:
+            if btn.text.strip() == "Done":
+                mouse.move_to_element(btn)
+                mouse.click()
+                mouse.perform()
+            else:
+                print(btn.text.strip())
+    except Exception as e:
+        print("Couldn't find done button", e)
+        driver.quit()
+        sys.exit(1)
+
+    time.sleep(1.5)
+
+    try:
+        find_trains_btn = WebDriverWait(driver, 3).until(
+            EC.presence_of_all_elements_located((By.XPATH, "//button[@aria-label='FIND TRAINS']"))
+        )
+        print(len(find_trains_btn))
+        for btn in find_trains_btn:
+            if btn.text.strip() == "FIND TRAINS":
+                mouse.move_to_element(btn)
+                mouse.click()
+                mouse.perform()
+    except Exception as e:
+        print("Couldn't get find trains button", e)
+        driver.quit()
+        sys.exit(1)
+    
+    time.sleep(4)    
     driver.quit()
+    print("Lights off")
 
 if __name__ == "__main__":
     main()

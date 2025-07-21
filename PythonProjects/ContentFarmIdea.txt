@@ -1,0 +1,17 @@
+Thoughts on how to streamline the content.
+
+Example: The office
+Step 1.
+- Get full version of the show whatever it is, store it on the cloud. 
+Step 2.
+- Find forums where people discuss this show online, and share they're posts on it. Some of the clips we can get directly, but we are also looking for images, and memes.
+Step 3.
+- Use these images to find their position in the full video files. Take several clips of different start and end positions + length. 
+Step 4. 
+- Go through these clips manually, find the ones that are pure junk and don't have much value.  
+Step 5. 
+- Sort these videos, and find the ones which can be split up into several parts, ones which can be posted directly.
+Step 6.
+- Sort Clips.
+Step 7. 
+- Automate process of posting the clips, and having bots promote the content on posting. The most important time to boost engagement is the first few minutes. 
