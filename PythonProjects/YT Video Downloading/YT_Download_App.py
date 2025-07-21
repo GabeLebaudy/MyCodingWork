@@ -5,7 +5,7 @@ import guiConstants
 import os
 import urllib.request
 from DownloadThread import Downloader
-from pytube import YouTube
+from pytubefix import YouTube
 from videoQueue import Queue
 
 #GUI Modules

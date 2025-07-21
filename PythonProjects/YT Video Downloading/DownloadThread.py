@@ -2,7 +2,7 @@
 
 #Imports
 from PyQt6.QtCore import QThread, QMutex, QWaitCondition, pyqtSignal
-from pytube import YouTube
+from pytubefix import YouTube
 import ffmpeg
 import os
 import re
