@@ -4,21 +4,25 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QPushButton,
     QLabel, QVBoxLayout, QHBoxLayout,
-    QLineEdit, QWidget
+    QLineEdit, QWidget, QFileDialog
 )
 
 from PyQt6.QtCore import QMutex, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
+from Yahoo_tracking import Scraper
 
-import sys, os
+import sys, os, yagmail
 
+ERROR_CODES = ["Unable to find search bar element.", "Could not find stock page.", "Could not find historical data option.", "Unable to find data selection button",
+               "Unable to find max button.", "There was an issue with the request.", "There was an issue parsing the JSON data"]
 MAIN_FONT = QFont()
 MAIN_FONT.setPointSize(14)
+YAG_OBJ = yagmail.SMTP("gabe.lebaudy6@gmail.com", "vmek rgmq aceq tfqz")
+YAG_CONST = ["gabe.lebaudy6@gmail.com", "Error logs from Yahoo scraper"]
 
 class MainWindow(QMainWindow):
     #Create get stock info layout
     def createGetStockDataLayout(self):
-        self.is_scraping = False
         stock_abbr_label = QLabel("Stock Abbriviation")
         stock_abbr_label.setFont(MAIN_FONT)
         self.stock_abbr_input = QLineEdit()
@@ -61,6 +65,7 @@ class MainWindow(QMainWindow):
         self.email_logs_button = QPushButton("Send")
         self.email_logs_button.setFont(MAIN_FONT)
         self.email_logs_button.setEnabled(False)
+        self.email_logs_button.clicked.connect(self.email_logs)
         
         final_layout = QVBoxLayout()
         logs_layout = QHBoxLayout()
@@ -75,6 +80,11 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowTitle("Yahoo Stock Data Scraper")
+        
+        self.is_scraping = False
+        self.stock_scraper = Scraper()
+        self.stock_scraper.response_code_signal.connect(self.update_from_code)
+        self.stock_scraper.info_response_signal.connect(self.update_from_info)
 
         main_layout = QVBoxLayout()
         main_widget = QWidget()
@@ -88,7 +98,7 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(info_layout)
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
-
+        self.onOpen()
 
     # ---------------------
     # Functional methods
@@ -98,20 +108,66 @@ class MainWindow(QMainWindow):
         self.stock_abbr_input.setText(self.stock_abbr_input.text().upper())
         
     def startScrape(self): 
-        if not self.stock_abbr_input.text() or self.is_scraping:
-            
+        if self.is_scraping:
+            return False
+        
+        if not self.output_folder_line.text() or not os.path.exists(self.output_folder_line.text()):
+            return False
+        
+        if not self.stock_abbr_input.text():
             return False
         
         self.is_scraping = True
         self.start_scrape_button.setEnabled(False)
         abbr = self.stock_abbr_input.text()
+        self.stock_scraper.setStockAbbr(abbr)
+        self.stock_scraper.start()
 
     def changeOutputFolder(self):
-        pass
+        folder = QFileDialog().getExistingDirectory(self, 'Select Folder', '')
+        if folder:
+            self.output_folder_line.setText(folder)
+            
+            configFilePath = os.path.join(os.path.dirname(__file__), 'output_folder.txt')
+            with open(configFilePath, 'w') as file:
+                file.write(folder)
+
+            self.stock_scraper.setOutputPath(folder)
             
     def email_logs(self):
-        pass
-    
+        try:
+            email_body = "Error logs from {}".format(self.stock_abbr_input.text())
+            log_file = os.path.join(os.path.dirname(__file__), "log_file.log")
+
+            YAG_OBJ.send(to=YAG_CONST[0], subject=YAG_CONST[1], contents=[email_body, log_file])
+            self.scrape_info_label.setText("Email successfully sent!")
+        except Exception as e:
+            self.scrape_info_label.setText("There was an issue sending the email.")
+            self.stock_scraper.logInfo(1, e)
+
+        self.email_logs_button.setEnabled(False)
+
+    def onOpen(self):
+        output_folder_path = os.path.join(os.path.dirname(__file__), "output_folder.txt")
+        with open(output_folder_path, 'r') as f:
+            folder_name = f.readline().rstrip()
+
+        self.output_folder_line.setText(folder_name)
+        self.stock_scraper.setOutputPath(folder_name)
+
+    def update_from_code(self, code):
+        if code == 0:
+            self.scrape_info_label.setText("Scrape Complete!")
+        else:
+            self.scrape_info_label.setText(ERROR_CODES[code - 1])
+            self.email_logs_button.setEnabled(True)
+
+        self.start_scrape_button.setEnabled(True)
+        self.is_scraping = False
+
+    def update_from_info(self, info):
+        self.scrape_info_label.setText(info)
+        
 if __name__ == "__main__":
     app = QApplication([])
     window = MainWindow()

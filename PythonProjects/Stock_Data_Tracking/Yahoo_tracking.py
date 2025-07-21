@@ -1,7 +1,7 @@
 #This will be the main file for the yahoo scraping.
 
 #Imports
-import requests, os, time, re
+import requests, os, time, re, logging
 from datetime import datetime
 
 from selenium import webdriver
@@ -11,12 +11,26 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from PyQt6.QtCore import QMutex, QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
+
+
+LOGPATH = os.path.join(os.path.dirname(__file__), 'log_file.log')
+LOGGER = logging.getLogger('Main Logger')
+LOGGER.setLevel(logging.INFO)
+output = logging.FileHandler(LOGPATH, 'w')
+formatter = logging.Formatter('%(name)s: %(levelname)s - %(message)s - %(asctime)s', 'on %m/%d/%Y at %H:%M %p')
+output.setFormatter(formatter)
+
+LOGGER.addHandler(output)
+
+# cookie_names = ['GUC', 'A1', 'A3', 'A1S', 'DSS', 'PRF', 'gpp', 'gpp_sid', 'cmp', '_charbeat2', '_cb_svref', '_SUPERFLY_lockout=1']
 
 class Scraper(QThread):
     response_code_signal = pyqtSignal(int)
-    
+    info_response_signal = pyqtSignal(str)
+
     def __init__(self):
+        super().__init__()
         self.stock_abbr = None
         self.output_path = None
         
@@ -39,6 +53,7 @@ class Scraper(QThread):
         return driver, mouse
 
     def getStockReqInfo(self):
+        LOGGER.info("Starting scrape with for {}".format(self.stock_abbr))
         driver, mouse = self.setup_driver()
 
         time.sleep(1)
@@ -48,7 +63,8 @@ class Scraper(QThread):
                 EC.presence_of_element_located((By.ID, "ybar-sbq"))
             )    
         except:
-            print("Unable to pull search bar element.")
+            LOGGER.error("Issue with the search bar element.")
+            self.response_code_signal.emit(1)
             driver.quit()
             return False
         
@@ -70,7 +86,8 @@ class Scraper(QThread):
                 break
 
         if not found:
-            print("Could not find stock page.")
+            LOGGER.warning("Could not find stock with given abbreviation {}".format(self.stock_abbr))
+            self.response_code_signal.emit(2)
             driver.quit()
             return False
 
@@ -94,7 +111,8 @@ class Scraper(QThread):
                 break
 
         if not found:
-            print("Could not find historical data option.")
+            LOGGER.error("Issue finding the 'historical data' option.")
+            self.response_code_signal.emit(3)
             driver.quit()
             return False
 
@@ -106,10 +124,11 @@ class Scraper(QThread):
         #Click on max amount of data available, to find correct URL
         try:
             button_element = WebDriverWait(driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, "//div[@data-testid='history-table']/div[1]/div[1]/button[1]"))
+                EC.presence_of_element_located((By.XPATH, "//div[@data-testid='history-table']/div[1]/div[1]/buttn[1]"))
             )
         except:
-            print("Unable to get button element")
+            LOGGER.error("Could not find date selection button.")
+            self.response_code_signal.emit(4)
             driver.quit()
             return False
         
@@ -132,7 +151,8 @@ class Scraper(QThread):
                 break
         
         if not found:
-            print("Unable to find max button.")
+            LOGGER.error("Could not find max button to find all available info for {}".format(self.stock_abbr))
+            self.response_code_signal.emit(5)
             driver.quit()
             return False
         
@@ -143,8 +163,7 @@ class Scraper(QThread):
 
         url = driver.current_url
         cookies = driver.get_cookies()
-        # cookie_names = ['GUC', 'A1', 'A3', 'A1S', 'DSS', 'PRF', 'gpp', 'gpp_sid', 'cmp', '_charbeat2', '_cb_svref', '_SUPERFLY_lockout=1']
-        
+
         time.sleep(1)
         driver.quit()
         return (url, cookies)
@@ -184,19 +203,20 @@ class Scraper(QThread):
             "sec-fetch-site": "same-site",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
         }
-
-        response = requests.request("GET", url, data=payload, headers=headers, params=querystring)
-        return response.json()
-
-    def run(self):
-        info = self.getStockReqInfo()
-        if not info:
+        
+        #Log all info for the request
+        LOGGER.info(url)
+        LOGGER.info("Headers %s", headers)
+        LOGGER.info("Query string %s", querystring)
+        try:
+            response = requests.request("GET", url, data=payload, headers=headers, params=querystring).json()
+        except Exception as e:
+            LOGGER.error("%s", e)
             return False
         
-        response = self.getJsonData(info)
-        if not response:
-            return False
-        
+        return response
+
+    def parseJsonData(self, response):
         main_data = response["chart"]["result"][0]
         stock_timestamps = main_data["timestamp"]
         stock_data = main_data["indicators"]["quote"][0]
@@ -221,3 +241,30 @@ class Scraper(QThread):
                 d.write("Date,Amount\n")
                 for key in dividends_dict:
                     d.write("{},{}\n".format(datetime.fromtimestamp(dividends_dict[key]["date"]).strftime("%Y-%m-%d"), dividends_dict[key]["amount"]))
+        
+    def run(self):
+        info = self.getStockReqInfo()
+        if info:
+            response = self.getJsonData(info)
+            if not response:
+                self.response_code_signal.emit(6)
+                return 
+            else:
+                try:
+                    self.parseJsonData(response)
+                    self.response_code_signal.emit(0)
+                    LOGGER.info("Scrape successfully completed.")
+                except:
+                    LOGGER.error("%s", response)
+                    self.response_code_signal(7)
+
+                
+
+    #Main purpose is from email function in main
+    def logInfo(self, code, info):
+        if code == 0:
+            LOGGER.info(info)
+        else:
+           LOGGER.error(info)
+        
+        
